@@ -24,10 +24,28 @@ jobs:
         with:
           sparse-checkout: |
             開発版/source
+            開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
           sparse-checkout-cone-mode: false
-      - name: Compile Python source
+
+      - name: Reconstruct complete source test substrate
         shell: pwsh
-        run: python -m compileall -q "開発版/source/CORE" "開発版/source/TESTS"
-      - name: Run source unit tests
+        run: |
+          $ErrorActionPreference = "Stop"
+          $recovery = Join-Path $PWD "_recovery"
+          Expand-Archive -LiteralPath "開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip" -DestinationPath $recovery -Force
+          $testCore = Get-ChildItem -LiteralPath $recovery -Recurse -Filter "test_core.py" |
+            Where-Object { $_.DirectoryName -match "[\\/]TESTS$" } |
+            Select-Object -First 1
+          if (-not $testCore) { throw "RECOVERY_SOURCE_TEST_ROOT_NOT_FOUND" }
+          $sourceRoot = Split-Path -Parent (Split-Path -Parent $testCore.FullName)
+          Write-Host "Recovered source root: $sourceRoot"
+          Copy-Item -LiteralPath "開発版/source/*" -Destination $sourceRoot -Recurse -Force
+          "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Compile reconstructed Python source
         shell: pwsh
-        run: python -m unittest discover -s "開発版/source/TESTS" -v
+        run: python -m compileall -q "$env:SOURCE_ROOT/CORE" "$env:SOURCE_ROOT/TESTS"
+
+      - name: Run reconstructed source unit tests
+        shell: pwsh
+        run: python -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v
