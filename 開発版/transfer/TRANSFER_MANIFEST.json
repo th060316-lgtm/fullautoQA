@@ -1,14 +1,26 @@
 {
-  "status": "TRANSFER_PARTIAL_PRODUCT_HOLD",
-  "commit": "662a35aa16f79cc676746b31c31072a35e1c1ea9",
-  "source_files_verified": 54,
-  "source_archive": {
-    "file": "FullAutoQA_Recovery_Source_20261102.zip",
-    "bytes": 1714809,
-    "sha256": "bfd9dc6942f6fe4cd8204bedb3d115b2db54cab1ac760729db1e0ad313e4084f",
-    "git_blob_sha": "5f5ea465e400e5e85c602c7ee19540698d6170e3"
+  "status": "COMPLETE_ARCHIVE_TRANSFERRED_PRODUCT_HOLD",
+  "latest_complete_candidate": {
+    "path": "開発版/complete_v033",
+    "state": "TRANSFER_COMPLETE",
+    "complete": true,
+    "version": "0.3.3",
+    "blocks_present": 128,
+    "blocks_required": 128,
+    "archive_size": 1099679545,
+    "archive_sha256": "8858cd388d283a294e13ed3e9d9e87e930b26d84bd83fe548dba10883007816c",
+    "payload_tools_verified": 10,
+    "archive_files_verified": 3840,
+    "zip_entries": 3841,
+    "zip_crc": "PASS",
+    "product_acceptance": "HOLD",
+    "real_game_acceptance_cycles": 0,
+    "join_windows_execution": "NOT_RUN",
+    "restoration": "Saved v0.3.2 complete set plus official v0.3.2-to-v0.3.3 update; reproduced original v0.3.3 archive exactly."
   },
-  "full_runtime_candidate_transferred": false,
-  "acceptance_cycles": 0,
-  "required_cycles": 3
+  "recovery_source": {
+    "path": "開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip",
+    "sha256": "bfd9dc6942f6fe4cd8204bedb3d115b2db54cab1ac760729db1e0ad313e4084f",
+    "runtime_included": false
+  }
 }

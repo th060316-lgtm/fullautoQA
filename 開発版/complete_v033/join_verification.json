@@ -1,0 +1,64 @@
+{
+  "status": "PASS",
+  "scope": "Static PowerShell review and equivalent Python reconstruction; not Windows execution",
+  "windows_powershell_execution": "NOT_RUN",
+  "powershell_available": false,
+  "checks": [
+    {
+      "test": "static_script_and_cmd_checks",
+      "status": "PASS"
+    },
+    {
+      "test": "all_128_block_size_sha_path_validation",
+      "status": "PASS",
+      "count": 128
+    },
+    {
+      "test": "ordered_join_full_size_sha",
+      "status": "PASS",
+      "size": 1099679545,
+      "sha256": "8858cd388d283a294e13ed3e9d9e87e930b26d84bd83fe548dba10883007816c"
+    },
+    {
+      "test": "joined_zip_all_entry_crc_python",
+      "status": "PASS",
+      "entries": 3841
+    },
+    {
+      "test": "existing_identical_reuse_predicate",
+      "status": "PASS"
+    },
+    {
+      "test": "different_existing_output_preservation_predicate",
+      "status": "PASS"
+    },
+    {
+      "test": "reject_missing",
+      "status": "PASS"
+    },
+    {
+      "test": "reject_hash",
+      "status": "PASS"
+    },
+    {
+      "test": "reject_duplicate",
+      "status": "PASS"
+    },
+    {
+      "test": "reject_escape",
+      "status": "PASS"
+    }
+  ],
+  "script_sha256": "eb40c8ad40cf22a102507ad814e5675d94a33254c750cc6a1828af8ccd8e71d6",
+  "cmd_sha256": "df40365e6ddfa4846b5c9ac578e48aac0f8f6431e8571f2a0cc1a730bbee94e6",
+  "readme_sha256": "a58bf8a31899f11cc1ae192a9900520b30857f7aeb3e3e17783d7e8fb7d4644e",
+  "review": {
+    "method": "five lightweight sales perspectives reviewed by one AI; not five independent people",
+    "vice": "No QA acceptance claim from byte reconstruction",
+    "operations": "Offline standard PowerShell and reusable verified output",
+    "audience": "Download all, extract first, one JOIN button",
+    "communication": "JOIN complete differs from QA complete; HOLD explicit",
+    "distribution": "Manifest ordering, per-block SHA, total SHA, preserve existing output"
+  },
+  "temporary_join_removed": true
+}

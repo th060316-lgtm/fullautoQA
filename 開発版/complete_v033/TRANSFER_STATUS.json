@@ -1,8 +1,17 @@
 {
-  "status": "TRANSFER_IN_PROGRESS",
+  "state": "TRANSFER_COMPLETE",
+  "complete": true,
   "version": "0.3.3",
-  "uploaded_blocks": 22,
-  "expected_blocks": 128,
-  "complete": false,
-  "notice": "転送途中の復旧チェックポイント。全128ブロックの到着・結合検証まで完全一式として使用しない。"
+  "blocks_present": 128,
+  "blocks_required": 128,
+  "archive_size": 1099679545,
+  "archive_sha256": "8858cd388d283a294e13ed3e9d9e87e930b26d84bd83fe548dba10883007816c",
+  "payload_tools_verified": 10,
+  "archive_files_verified": 3840,
+  "zip_entries": 3841,
+  "zip_crc": "PASS",
+  "product_acceptance": "HOLD",
+  "real_game_acceptance_cycles": 0,
+  "join_windows_execution": "NOT_RUN",
+  "restoration": "Saved v0.3.2 complete set plus official v0.3.2-to-v0.3.3 update; reproduced original v0.3.3 archive exactly."
 }
