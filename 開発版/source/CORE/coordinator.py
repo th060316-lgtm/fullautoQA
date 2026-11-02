@@ -232,9 +232,9 @@ class Coordinator:
 def build_payload(root, results, summary, identity=None, contract=None, settings=None,
                   result_data=None):
     coordinator = Coordinator(root, settings)
-    context = CoordinatorContext(root=root, results=results, identity=identity,
-                                 contract=contract, settings=settings)
     payload = dict(result_data or {})
+    context = CoordinatorContext(root=root, results=results, identity=identity,
+                                 contract=contract, settings=settings, extras=payload)
     return coordinator.attach(payload, summary, context)
 
 
@@ -268,7 +268,7 @@ def attach_summary_to_result_file(path, root=None, settings=None):
     data = read_json(path)
     coordinator = Coordinator(root if root is not None else path.parent, settings)
     context = CoordinatorContext(root=coordinator.root, results=data.get('results') or [],
-                                 settings=settings)
+                                 settings=settings, extras=data)
     summary = coordinator.evaluate(context)
     data = coordinator.attach(data, summary, context)
     write_json(path, data)
@@ -368,7 +368,13 @@ def execution_finalizer(root, prepared, settings=None, run_mode='target'):
                 row['evidence'] = ['execution_verification.json']
             rows.extend(checks)
             checked = True
-        context = CoordinatorContext(root=root, results=rows, settings=settings, extras=data)
+        evaluation_extras = dict(data)
+        # Management target-generation integrity must see the same frozen identity
+        # that Phase-1 verification is about to attach to the result model.
+        evaluation_extras['target_identity'] = identities
+        evaluation_extras['run_mode'] = run_mode
+        context = CoordinatorContext(root=root, results=rows, settings=settings,
+                                     extras=evaluation_extras)
         summary = coordinator.evaluate(context)
         production = summary.domains[0]
         production.target = identities
