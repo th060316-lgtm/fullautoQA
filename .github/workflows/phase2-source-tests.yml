@@ -1,0 +1,25 @@
+name: Phase 2 Source Tests
+
+on:
+  push:
+    branches:
+      - work/issue1-phase2-two-candidate-integration-20261102
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  source-tests:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Python source
+        shell: pwsh
+        run: python -m compileall -q "開発版/source/CORE" "開発版/source/TESTS"
+      - name: Run source unit tests
+        shell: pwsh
+        run: python -m unittest discover -s "開発版/source/TESTS" -v
