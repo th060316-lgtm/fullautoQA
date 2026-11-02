@@ -1,0 +1,8 @@
+{
+  "status": "TRANSFER_IN_PROGRESS",
+  "version": "0.3.3",
+  "uploaded_blocks": 22,
+  "expected_blocks": 128,
+  "complete": false,
+  "notice": "転送途中の復旧チェックポイント。全128ブロックの到着・結合検証まで完全一式として使用しない。"
+}
