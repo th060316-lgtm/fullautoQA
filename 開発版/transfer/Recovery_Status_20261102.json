@@ -1,0 +1,31 @@
+{
+  "status": "HOLD",
+  "recovered_baseline_version": "0.3.3",
+  "new_version_complete": false,
+  "source_tests": {
+    "executed": 141,
+    "passed": 141,
+    "log": "safety_fix_tests.log"
+  },
+  "acceptance_cycles": {
+    "required": 3,
+    "verified": 0,
+    "scope": "START + actual game + input + evidence + result ZIP"
+  },
+  "restored_fix": "Finalization error clears all boolean top-level *_certified flags; diagnostic archive clears target certification",
+  "lost_work": "Previous v040 working source and E2E logs absent after scratch reset; previous narrative is not acceptance evidence",
+  "baseline_archive": {
+    "archive": "/workspace/scratch/aeef7d51c613/recovery_inputs/FullAutoQA_v0.3.3_RECOVERED.zip",
+    "size": 1099679545,
+    "sha256": "8858cd388d283a294e13ed3e9d9e87e930b26d84bd83fe548dba10883007816c"
+  },
+  "remaining": [
+    "Restore coordinator, capability enforcement, lazy runtime selection and intake changes from reviewed requirements",
+    "Restore browser backend, observational Agent learning and game-side storage QA",
+    "Verify low-burden reproducible game replacement A-B-A without stale target",
+    "Run final immutable candidate in three independent fresh extractions",
+    "Actual user-game acceptance; fixture results cannot substitute",
+    "Independent management and cold-start sales readback",
+    "Final candidate plus exact three raw parts, join/hash/CRC verification and complete delivery"
+  ]
+}
