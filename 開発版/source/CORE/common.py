@@ -3,6 +3,10 @@ from __future__ import annotations
 import hashlib, json, os, time, uuid, zipfile, html, shutil
 from urllib.parse import quote
 from pathlib import Path
+try:
+    import hq_report
+except Exception:
+    hq_report=None
 VERSION = '0.3.3-candidate'
 SCHEMA = 1
 STATUSES = ('PASS','FAIL','INCONCLUSIVE','NOT_RUN','HARNESS_ERROR')
@@ -122,9 +126,14 @@ def report(root,data):
                        'Product Acceptance: HOLD', 'Stable: HOLD']
         page+='<h2>Acceptance status</h2>'+''.join('<p>'+html.escape(line)+'</p>' for line in acceptance)
     for kind,summary in data.get('prototype_results',{}).items():page+='<p>'+html.escape(kind)+': '+html.escape(summary['status'])+'</p>'
+    if hq_report is not None:page+=hq_report.readback_html(data)
     if (root/'video.mp4').exists():page+='<h2>Recorded virtual display</h2><video controls width="720" src="video.mp4"></video>'
     (root/'report.html').write_text(page,encoding='utf-8')
-    (root/'SUMMARY.txt').write_text(f"QA COMPLETE\nOverall Result: {data['overall']}\nRun: {data['run_id']}\nAutomated results only. See report.html and result.json.\n"+'\n'.join(acceptance)+ ('\n' if acceptance else ''),encoding='utf-8')
+    summary_text=f"QA COMPLETE\nOverall Result: {data['overall']}\nRun: {data['run_id']}\nAutomated results only. See report.html and result.json.\n"+'\n'.join(acceptance)+ ('\n' if acceptance else '')
+    if hq_report is not None:
+        readback=hq_report.readback_text(data)
+        if readback:summary_text+=readback+'\n'
+    (root/'SUMMARY.txt').write_text(summary_text,encoding='utf-8')
 
 def archive_eligible(rel):
     rel=Path(rel)
