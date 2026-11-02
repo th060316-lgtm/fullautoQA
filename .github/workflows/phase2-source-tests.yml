@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: phase2-source-tests
+  cancel-in-progress: true
+
 jobs:
   source-tests:
     runs-on: windows-latest
