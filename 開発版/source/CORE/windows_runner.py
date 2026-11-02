@@ -15,6 +15,7 @@ from campaigns import execute_plans,soak_complete,validate_campaigns
 from regression import export_baseline,load_baseline,compare,import_baseline
 from contracts import profile_plan,audit_plan,prototype_summary
 from finalize import finalize_run
+from coordinator import prepare_execution,preflight_execution,execution_finalizer
 from targets import load_target_manifest,selected_profiles,entry_for_profile,validate_target_profile,required_agents,baseline_source,requirement_coverage,target_scope_satisfied
 from collections import deque
 from backends import DisplaySampler
@@ -309,11 +310,11 @@ class Session:
         if any('handles' in x for x in samples):perf['peak_handles']=max(x['handles'] for x in samples if 'handles' in x)
         self.performance[case]=perf
         if s.get('export_baseline') or s['id']==cfg['scenario']:
-            target=inside(self.e.root,'baseline_exports/'+self.p['game_id']+'/'+key);export_baseline(target,self.p,key,seed,state,actions,self.transitions,perf,self.e.root/shot,'SELF_CHECK' if s.get('export_baseline') else 'RECORDED_RUN_NOT_AUTO_APPROVED')
+            target=inside(self.e.root,'baseline_exports/'+self.p['game_id']+'/'+key);export_baseline(target,self.p,key,seed,state,actions,self.transitions,perf,self.e.root/shot,'SELF_CHECK' if s.get('export_baseline') else 'RECORDED_RUN_NOT_AUTO_APPROVED',target_identity=getattr(self,'target_identity',None))
         if s.get('compare_baseline'):
             base=self.comparison_baselines.get(identity)
             if base is None:raise ValueError('REQUIRED_BASELINE_MISSING')
-            baseline=load_baseline(base,self.p,key,seed)
+            baseline=load_baseline(base,self.p,key,seed,identity=getattr(self,'target_identity',None),identity_root=self.root,settings=getattr(self,'binding_settings',None))
             for test,status,reason,proof in compare(baseline,self.p,state,actions,self.transitions,perf,base/'screen.bmp',self.e.root/shot):
                 name=case+'_'+test+'.json';write_json(self.e.root/name,{'baseline_game_version':baseline['game_version'],'current_game_version':self.p['game_version'],'baseline_scope':'USER_SPECIFIED_PREVIOUS_RUN' if self.imported_baselines else 'SAME_RUN_SELF_CHECK',**proof});self.verdict(case+'.'+test,status,reason,[name,shot,str((base/'screen.bmp').relative_to(self.e.root)),str((base/'checkpoint.json').relative_to(self.e.root)),str((base/'bundle.json').relative_to(self.e.root))])
     def behavioral_regression(self,case,agent,states,shot):
@@ -374,7 +375,7 @@ class Session:
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--root',default=str(Path(__file__).resolve().parents[1]));ap.add_argument('--profile',action='append');ap.add_argument('--prototype',choices=['logic','playable']);ap.add_argument('--seed',type=int,default=12345);ap.add_argument('--resume',action='store_true');ap.add_argument('--faults',action=argparse.BooleanOptionalAction,default=True);ap.add_argument('--soak-seconds',type=float);ap.add_argument('--baseline');args=ap.parse_args()
     root=Path(args.root).resolve();settings=read_json(root/'acceptance_manifest.json') if (root/'acceptance_manifest.json').is_file() else {};results_dir=inside(root,settings.get('paths',{}).get('results','RESULTS'));run_id=time.strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:8];out=results_dir/run_id;e=Evidence(out,run_id);start=stamp();results=[];sessions=[];lock=results_dir/'active.lock';lock_owned=False;rec=None
-    run_mode='adhoc' if args.profile else 'target';target_manifest=None;target_entries={};target_contracts={};imported=None
+    run_mode='adhoc' if args.profile else 'target';target_manifest=None;target_entries={};target_contracts={};imported=None;prepared=None
     (out/'FULL_EVIDENCE').mkdir();(out/'WORK').mkdir()
     for kind in ['action','state','process']:(out/(kind+'.jsonl')).touch()
     global_plan=[{'test_case':'preflight.core','gate':'REQUIRED'},{'test_case':'video','gate':'REQUIRED'}]
@@ -404,6 +405,15 @@ def main():
             if alive:raise OSError('ANOTHER_QA_RUN_IS_ACTIVE')
             # Resume means restart interrupted scenarios, never reuse an unverified half-state.
             write_json(out/'interrupted_run.json',previous);lock.unlink();fd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY);os.write(fd,json.dumps({'pid':os.getpid(),'run_id':run_id}).encode());os.close(fd);lock_owned=True
+        # The binding ledger is updated under the run lock, before any Session exists.
+        if run_mode=='target':
+            prepared=prepare_execution(root,target_manifest,settings)
+            preflight=preflight_execution(e,prepared);results+=preflight
+            if preflight:raise ValueError('TARGET_PREFLIGHT_BLOCKED')
+        else:
+            adhoc={'schema_version':1,'targets':[{'id':str(i),'profile':rel,'kind':'selftest'} for i,rel in enumerate(args.profile or [])]}
+            prepared=prepare_execution(root,adhoc,settings)
+            results+=preflight_execution(e,prepared)
         if shutil.disk_usage(root).free<3*1024**3:raise OSError('DISK_GUARD_MIN_3_GIB')
         if os.name!='nt':
             write_json(out/'environment.json',{'platform':sys.platform,'windows_desktop':False,'windows_e2e_executed':False})
@@ -449,7 +459,7 @@ def main():
                     results.append(e.result(case,'HARNESS_ERROR' if missing else 'PASS','TARGET_CONTRACT_INCOMPLETE' if missing else 'TARGET_CONTRACT_VALID',[proof],missing=missing))
                     if missing:continue
                 write_json(out/(profile['game_id']+'_profile.json'),profile)
-                session=Session(root,e,tools,profile);session.rec=rec;session.imported_baselines=imported;sessions.append(session);results+=session.execute(args.seed,{'faults':args.faults,'soak_seconds':args.soak_seconds})
+                session=Session(root,e,tools,profile);session.rec=rec;session.imported_baselines=imported;session.target_identity=prepared['identities'][entry['id']] if run_mode=='target' else None;session.binding_settings=settings;sessions.append(session);results+=session.execute(args.seed,{'faults':args.faults,'soak_seconds':args.soak_seconds})
                 if run_mode=='target':
                     entry=target_entries[profile['game_id']]
                     if 'historical_regression' in entry.get('requirements',[]):
@@ -469,6 +479,7 @@ def main():
             for row in session.results:
                 if id(row) not in known:results.append(row);known.add(id(row))
         data={'run_id':run_id,'core_version':VERSION,'result_schema':SCHEMA,'start_time':start,'end_time':stamp(),'seed':args.seed,'results':results,'run_mode':run_mode,'target_qa_certified':False,'completion_certified':False,'human_test_performed':False,'qualification':'Automated QA evidence is not human satisfaction or product acceptance; review player/product gates separately.'}
+        data['executed_target_ids']=sorted(target_entries[sess.p['game_id']]['id'] for sess in sessions if sess.p['game_id'] in target_entries)
         try:
             if rec:
                 try:
@@ -508,7 +519,7 @@ def main():
                 for row in results:
                     if row['status']=='PASS' and (not row.get('evidence') or any(not inside(out,f).is_file() for f in row['evidence'])):row.update(status='HARNESS_ERROR',reason_code='FINAL_EVIDENCE_AUDIT_FAILED')
                 required=[r['test_case'] for r in global_plan if r['gate']=='REQUIRED']+[c for sess in sessions for c in getattr(sess,'required_cases',[])]
-                target_scope_ok=target_scope_satisfied(run_mode,sessions,target_entries,target_contracts)
+                target_scope_ok=target_scope_satisfied(run_mode,sessions,target_entries,target_contracts) and prepared is not None and set(data['executed_target_ids'])==set(prepared['identities'])
                 data['target_qa_certified']=certify(results,required,VERSION,os.name=='nt' and target_scope_ok)
                 data['completion_certified']=data['target_qa_certified']
                 data['prototype_results']=prototype_summary(sessions,results)
@@ -516,7 +527,7 @@ def main():
                 finalization_issue(e,results,'plan.audit','PLAN_AUDIT_FAILURE',ex);data['completion_certified']=False
             finally:
                 data['overall']=overall(results)
-                published=finalize_run(e,data,cleanup=tuple(sess.stop for sess in sessions),latest_path=results_dir/'latest.json',lock=lock if lock_owned else None)
+                published=finalize_run(e,data,cleanup=tuple(sess.stop for sess in sessions),latest_path=results_dir/'latest.json',lock=lock if lock_owned else None,execution=execution_finalizer(root,prepared,settings,run_mode))
                 data['overall']=published['overall']
                 print('QA COMPLETE\nOverall Result: '+data['overall']+'\nResult ZIP Path: '+str(published.get('result_zip') or 'NOT_CREATED')+'\nResult Folder: '+str(out))
     return 0 if data['overall']=='PASS' and published.get('zip_created') else 2

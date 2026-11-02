@@ -12,13 +12,14 @@ from regression import import_baseline
 from windows_runner import Session,finalization_issue
 from contracts import audit_plan,prototype_summary
 from finalize import finalize_run
+from coordinator import prepare_execution,preflight_execution,execution_finalizer
 class VirtualRecording:
     def __init__(self,ff,probe,path):self.frames=PipeFrameRecorder(ff,probe,path);self.started=self.frames.start;self.p=None
     def frame(self,path):self.frames.frame(path)
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--root',default=str(Path(__file__).resolve().parents[1]));ap.add_argument('--backend',default='rfb');ap.add_argument('--prototype',choices=['logic','playable']);ap.add_argument('--disable-capture',action='store_true');ap.add_argument('--profile',action='append');ap.add_argument('--soak-seconds',type=float);ap.add_argument('--baseline');ap.add_argument('--seed',type=int,default=12345);ap.add_argument('--output');ap.add_argument('--faults',action=argparse.BooleanOptionalAction,default=True);args=ap.parse_args();root=Path(args.root).resolve();out=Path(args.output).resolve() if args.output else inside(root,read_json(root/'acceptance_manifest.json').get('paths',{}).get('results','RESULTS'))/('session_'+time.strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:6])
     if out.exists():raise ValueError('OUTPUT_MUST_NOT_EXIST')
-    e=Evidence(out,out.name);results=[];sessions=[];video=None;profiles=[]
+    e=Evidence(out,out.name);results=[];sessions=[];video=None;profiles=[];prepared=None;settings=read_json(root/'acceptance_manifest.json')
     for kind in ('state','action','process'):(out/(kind+'.jsonl')).touch()
     latest=out.parent/'latest.json'
     global_plan=[{'test_case':'core','gate':'REQUIRED'},{'test_case':'video','gate':'REQUIRED'}]
@@ -26,6 +27,9 @@ def main():
     try:
         errors=verify_core(root);write_json(out/'core_check.json',{'errors':errors});results.append(e.result('core','PASS' if not errors else 'HARNESS_ERROR','CORE_INTEGRITY_VERIFIED' if not errors else 'CORE_INTEGRITY_FAILURE',['core_check.json']))
         if errors:raise ValueError('CORE_INTEGRITY_FAILURE')
+        profiles=args.profile or [p.relative_to(root).as_posix() for p in sorted((root/'VALIDATION_PROFILES').glob('*.json'))]
+        manifest={'schema_version':1,'targets':[{'id':str(i),'profile':rel,'kind':'fixture'} for i,rel in enumerate(profiles)]}
+        prepared=prepare_execution(root,manifest,settings);results+=preflight_execution(e,prepared)
         t=Tools(root,e);t.paths={k:v for k,v in discover_tools().items() if v};video=VirtualRecording(t.get('ffmpeg'),t.get('ffprobe'),out/'video.mp4');imported=import_baseline(args.baseline,out) if args.baseline else None
         profiles=args.profile or [p.relative_to(root).as_posix() for p in sorted((root/'VALIDATION_PROFILES').glob('*.json'))];ids=set()
         for rel in profiles:
@@ -76,7 +80,7 @@ def main():
                 finalization_issue(e,results,'plan.audit','PLAN_AUDIT_FAILURE',ex);data['functional_cases_certified']=False
             finally:
                 data['overall']=overall(results)
-                published=finalize_run(e,data,cleanup=tuple(session.stop for session in sessions),latest_path=latest)
+                published=finalize_run(e,data,cleanup=tuple(session.stop for session in sessions),latest_path=latest,execution=execution_finalizer(root,prepared,settings,'fixture'))
                 data['overall']=published['overall']
     print('QA COMPLETE\nOverall Result: '+data['overall']+'\nResult ZIP Path: '+str(published.get('result_zip') or 'NOT_CREATED')+'\nResult Folder: '+str(out));return 0 if data['overall']=='PASS' and published.get('zip_created') else 2
 if __name__=='__main__':raise SystemExit(main())

@@ -22,11 +22,12 @@ def masked_distance(left,right,masks=()):
     if not differences:raise ValueError('VISUAL_MASK_REMOVES_ALL_PIXELS')
     return sum(differences)/(255*len(differences))
 
-def export_baseline(root,p,scenario,seed,state,actions,transitions,performance,screenshot,scope):
+def export_baseline(root,p,scenario,seed,state,actions,transitions,performance,screenshot,scope,target_identity=None):
     root=Path(root);root.mkdir(parents=True,exist_ok=True);fields=p['qa_plan']['regression']['state_fields'];data={'schema_version':1,'game_id':p['game_id'],'game_version':p['game_version'],'profile_version':p['profile_version'],'scenario':scenario,'seed':seed,'fields':fields,'state':selected(state,fields),'actions':list(actions),'transitions':[selected(x,fields) for x in transitions],'performance':performance,'scope':scope,'human_approved':False}
+    if target_identity is not None:data['target_identity']=target_identity.to_dict() if hasattr(target_identity,'to_dict') else dict(target_identity)
     write_json(root/'checkpoint.json',data);shutil.copy2(screenshot,root/'screen.bmp');write_json(root/'bundle.json',{'schema_version':1,'files':[{'path':name,'size':(root/name).stat().st_size,'sha256':digest(root/name)} for name in ('checkpoint.json','screen.bmp')]});return data
 
-def load_baseline(root,p,scenario,seed):
+def load_baseline(root,p,scenario,seed,identity=None,identity_root=None,settings=None):
     root=Path(root);m=read_json(root/'bundle.json')
     if m.get('schema_version')!=1:raise ValueError('BASELINE_SCHEMA_INCOMPATIBLE')
     if {f['path'] for f in m['files']}!={'checkpoint.json','screen.bmp'}:raise ValueError('BASELINE_FILE_SET')
@@ -36,6 +37,10 @@ def load_baseline(root,p,scenario,seed):
     data=read_json(root/'checkpoint.json')
     if data.get('schema_version')!=1:raise ValueError('BASELINE_SCHEMA_INCOMPATIBLE')
     if data['game_id']!=p['game_id'] or data['scenario']!=scenario or data['seed']!=seed:raise ValueError('BASELINE_IDENTITY_MISMATCH')
+    if identity is not None:
+        from target_identity import check_baseline_reuse
+        violations=check_baseline_reuse(identity,data.get('target_identity'),root=identity_root,settings=settings)
+        if violations:raise ValueError('BASELINE_BINDING_REJECTED:'+','.join(violations))
     if data['fields']!=p['qa_plan']['regression']['state_fields']:raise ValueError('BASELINE_FIELDS_INCOMPATIBLE')
     return data
 
