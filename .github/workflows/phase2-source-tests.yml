@@ -17,6 +17,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            開発版/source
+          sparse-checkout-cone-mode: false
       - name: Compile Python source
         shell: pwsh
         run: python -m compileall -q "開発版/source/CORE" "開発版/source/TESTS"
