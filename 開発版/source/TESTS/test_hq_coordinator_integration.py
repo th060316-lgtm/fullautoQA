@@ -29,7 +29,8 @@ if str(_ROOT) not in sys.path:
 import common  # noqa: F401
 
 from coordinator import (Coordinator, CoordinatorContext, HUMAN_TEST_CLAIM_REVOKED,  # noqa: E402
-                         attach_readbacks, execution_finalizer, production_evaluator)
+                         attach_readbacks, attach_summary_to_result_file,
+                         execution_finalizer, production_evaluator)
 from headquarters import DOMAIN_ORDER, DomainReport  # noqa: E402
 
 MANAGEMENT_EVIDENCE = 'management_evidence.json'
@@ -229,6 +230,19 @@ class ReadbackAttachmentTest(unittest.TestCase):
         attach_readbacks(data, summary)
         self.assertEqual(data['keep'], 'me')
         self.assertEqual(set(first), set(data))
+
+    def test_persisted_readback_is_not_reconsumed_as_fresh_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            coordinator = Coordinator(tmp)
+            first = coordinator.evaluate(CoordinatorContext(root=tmp, results=[]))
+            data = coordinator.attach({'overall': 'PASS', 'results': []}, first)
+            target = Path(tmp) / 'result.json'
+            target.write_text(json.dumps(data), encoding='utf-8')
+            attach_summary_to_result_file(target, root=tmp)
+            stored = json.loads(target.read_text(encoding='utf-8'))
+        statuses = {d['name']: d['status'] for d in stored['headquarters']['domains']}
+        self.assertEqual(statuses['management'], 'NOT_RUN')
+        self.assertEqual(statuses['sales'], 'NOT_RUN')
 
 
 class CompletionGuardTest(unittest.TestCase):
