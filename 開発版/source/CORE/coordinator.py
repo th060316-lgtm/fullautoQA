@@ -130,6 +130,24 @@ def _harness_error_report(name, reason_code, detail):
                                  {'total': 1, 'HARNESS_ERROR': 1}, False, None, [detail],
                                  readback=readback)
 
+def _evaluation_extras(data):
+    """Return evidence-facing result data without prior HQ readback outputs.
+
+    Management/Sales readbacks are derived outputs. Re-consuming them as fresh evidence
+    on a later finalization refresh makes the result order-dependent and can turn an
+    explicit NOT_RUN into FAIL/PASS for reasons unrelated to new evidence.
+    """
+    out = dict(data or {})
+    out.pop('management_readback', None)
+    out.pop('sales_readback', None)
+    headquarters = out.get('headquarters')
+    if isinstance(headquarters, dict) and 'readbacks' in headquarters:
+        headquarters = dict(headquarters)
+        headquarters.pop('readbacks', None)
+        out['headquarters'] = headquarters
+    return out
+
+
 def _readbacks(summary):
     """Map of domain name -> readback, read defensively off the reports."""
     found = {}
@@ -234,7 +252,8 @@ def build_payload(root, results, summary, identity=None, contract=None, settings
     coordinator = Coordinator(root, settings)
     payload = dict(result_data or {})
     context = CoordinatorContext(root=root, results=results, identity=identity,
-                                 contract=contract, settings=settings, extras=payload)
+                                 contract=contract, settings=settings,
+                                 extras=_evaluation_extras(payload))
     return coordinator.attach(payload, summary, context)
 
 
@@ -268,7 +287,7 @@ def attach_summary_to_result_file(path, root=None, settings=None):
     data = read_json(path)
     coordinator = Coordinator(root if root is not None else path.parent, settings)
     context = CoordinatorContext(root=coordinator.root, results=data.get('results') or [],
-                                 settings=settings, extras=data)
+                                 settings=settings, extras=_evaluation_extras(data))
     summary = coordinator.evaluate(context)
     data = coordinator.attach(data, summary, context)
     write_json(path, data)
@@ -368,7 +387,7 @@ def execution_finalizer(root, prepared, settings=None, run_mode='target'):
                 row['evidence'] = ['execution_verification.json']
             rows.extend(checks)
             checked = True
-        evaluation_extras = dict(data)
+        evaluation_extras = _evaluation_extras(data)
         # Management target-generation integrity must see the same frozen identity
         # that Phase-1 verification is about to attach to the result model.
         evaluation_extras['target_identity'] = identities
