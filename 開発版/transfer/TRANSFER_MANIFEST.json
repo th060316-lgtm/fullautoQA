@@ -1,0 +1,14 @@
+{
+  "status": "TRANSFER_PARTIAL_PRODUCT_HOLD",
+  "commit": "662a35aa16f79cc676746b31c31072a35e1c1ea9",
+  "source_files_verified": 54,
+  "source_archive": {
+    "file": "FullAutoQA_Recovery_Source_20261102.zip",
+    "bytes": 1714809,
+    "sha256": "bfd9dc6942f6fe4cd8204bedb3d115b2db54cab1ac760729db1e0ad313e4084f",
+    "git_blob_sha": "5f5ea465e400e5e85c602c7ee19540698d6170e3"
+  },
+  "full_runtime_candidate_transferred": false,
+  "acceptance_cycles": 0,
+  "required_cycles": 3
+}
