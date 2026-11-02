@@ -9,7 +9,7 @@ sys.path.insert(1, str(STUBS))
 
 from agents import Agent
 from storage_qa import StorageInspector, PathEscapeError
-from browser_backend import validate_browser_target
+from browser_backend import validate_browser_target, validate_browser_profile
 
 
 class AgentTests(unittest.TestCase):
@@ -103,6 +103,21 @@ class BrowserValidationTests(unittest.TestCase):
             out=Path(outside)/"x.html"; out.write_text("x")
             with self.assertRaises(OSError):
                 validate_browser_target(out.as_uri(),root)
+
+    def test_relative_file_allowed_and_file_host_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); (root/"index.html").write_text("ok")
+            self.assertEqual(validate_browser_target("index.html",root)["scheme"],"file")
+            with self.assertRaises(OSError):
+                validate_browser_target("file://server/share/game.html",root)
+
+    def test_expanded_launch_arguments_are_validated(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); (root/"index.html").write_text("ok")
+            profile={"display":{"kind":"browser","target":"index.html"},"launch":{"argv":["browser"]}}
+            self.assertEqual(validate_browser_profile(profile,root,["browser","http://127.0.0.1:8080"])["scheme"],"file")
+            with self.assertRaises(OSError):
+                validate_browser_profile(profile,root,["browser","https://example.com/game"])
 
 
 class CoordinatorNonRegressionStaticTests(unittest.TestCase):
