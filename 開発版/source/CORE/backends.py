@@ -140,6 +140,9 @@ def select_display(profile,work,process):
     if kind=='windows' and os.name=='nt':
         from windows import child_pids
         return WindowDisplay(child_pids(process.pid))
+    if kind=='browser':
+        from browser_backend import select_browser_display
+        return select_browser_display(profile,work,process)
     raise OSError('NO_SUPPORTED_DISPLAY_BACKEND')
 def discover_tools(root=None):
     if os.name=='nt' and root:
