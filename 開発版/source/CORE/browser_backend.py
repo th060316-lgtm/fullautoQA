@@ -28,9 +28,21 @@ def _loopback_host(host):
 def validate_browser_target(target, work):
     if not isinstance(target, str) or not target.strip():
         raise OSError("BROWSER_TARGET_MISSING")
-    parsed = urlparse(target.strip())
+    text = target.strip()
+    parsed = urlparse(text)
+    root = Path(work).resolve()
+    if not parsed.scheme:
+        resolved = (root / unquote(text)).resolve()
+        try:
+            resolved.relative_to(root)
+        except ValueError:
+            raise OSError("BROWSER_FILE_TARGET_OUTSIDE_WORK")
+        if not resolved.exists():
+            raise OSError("BROWSER_FILE_TARGET_MISSING")
+        return {"scheme": "file", "target": target, "resolved": str(resolved)}
     if parsed.scheme == "file":
-        root = Path(work).resolve()
+        if parsed.netloc:
+            raise OSError("BROWSER_FILE_HOST_FORBIDDEN")
         raw = url2pathname(unquote(parsed.path or ""))
         # Windows file URLs can encode /C:/...
         if os.name == "nt" and len(raw) >= 3 and raw[0] in "/\\" and raw[2] == ":":
@@ -52,12 +64,18 @@ def validate_browser_target(target, work):
     raise OSError("BROWSER_EXTERNAL_NETWORK_FORBIDDEN")
 
 
-def validate_browser_profile(profile, work):
+def validate_browser_profile(profile, work, launch_args=None):
     display = profile.get("display") or {}
     target = display.get("target") or display.get("url") or display.get("start_url")
     result = validate_browser_target(target, work)
-    # Reject explicit external URLs hidden in launch arguments before the process starts.
-    for arg in (profile.get("launch") or {}).get("argv", []) + (profile.get("launch") or {}).get("extra_args", []):
+    # Validate the actual expanded launch arguments when the caller has them.
+    # This prevents a tool/profile token from expanding into an external URL after
+    # an earlier check of only the literal profile text.
+    args = launch_args
+    if args is None:
+        launch = profile.get("launch") or {}
+        args = list(launch.get("argv", [])) + list(launch.get("extra_args", []))
+    for arg in args:
         text = str(arg)
         if "://" in text:
             validate_browser_target(text, work)
