@@ -87,7 +87,7 @@ class Session:
         # seed is expanded after tool tokens by Tools.expand.
         if self.p.get('display',{}).get('kind')=='browser':
             from browser_backend import validate_browser_profile
-            browser_target=validate_browser_profile(self.p,work)
+            browser_target=validate_browser_profile(self.p,work,launch_args=cmd)
             proof=scenario+'_browser_target.json';write_json(self.e.root/proof,browser_target)
             self.e.event('browser_target',scenario,file=proof,target=browser_target)
         out=(self.e.root/(scenario+'_stdout.log')).open('wb');err=(self.e.root/(scenario+'_stderr.log')).open('wb')
@@ -212,9 +212,14 @@ class Session:
                 proof=case+'_storage_mutation_error.json';write_json(self.e.root/proof,{'error':repr(ex)})
                 self.verdict(case+'.storage','NOT_RUN','STORAGE_POST_MUTATION_UNAVAILABLE',[proof],gate=storage_gate);storage_inspector=None
         fields=cfg.get('state_fields',[])
-        if not fields or all(get(mutated,f)==get(saved,f) for f in fields):
-            self.verdict(case+'.restore','INCONCLUSIVE','SAVE_STATE_NOT_MUTATED',[copyfile.name]);return
+        state_mutated=bool(fields) and any(get(mutated,f)!=get(saved,f) for f in fields)
+        if not state_mutated:
+            self.verdict(case+'.restore','INCONCLUSIVE','SAVE_STATE_NOT_MUTATED',[copyfile.name])
+            # Declared storage QA is independent of an internal bridge. If storage
+            # is observable, continue through load and judge storage restoration.
+            if not storage_inspector:return
         a.act(cfg.get('load_action','load'));time.sleep(.3);restored=a.observe()['internal_state'];shot2,_=self.shot(case,'load')
+        storage_result=None;storage_name=None
         if storage_inspector:
             try:
                 storage_loaded=storage_inspector.snapshot('post_load')
@@ -224,9 +229,12 @@ class Session:
             except Exception as ex:
                 proof=case+'_storage_load_error.json';write_json(self.e.root/proof,{'error':repr(ex)})
                 self.verdict(case+'.storage','NOT_RUN','STORAGE_POST_LOAD_UNAVAILABLE',[proof],gate=storage_gate)
-        ok=all(get(restored,f)==get(saved,f) for f in fields)
-        name=case+'_save_load.json';write_json(self.e.root/name,{'before':before,'saved':saved,'mutated':mutated,'restored':restored,'fields':fields})
-        self.verdict(case+'.save_load','PASS' if ok else 'FAIL','STATE_RESTORED' if ok else 'SAVE_MISMATCH',[name,copyfile.name]+[x for x in [shot,shot2] if x],severity='INFO' if ok else 'MAJOR')
+        name=case+'_save_load.json';write_json(self.e.root/name,{'before':before,'saved':saved,'mutated':mutated,'restored':restored,'fields':fields,'state_mutated_before_load':state_mutated,'storage_evidence':storage_name})
+        if state_mutated:
+            ok=all(get(restored,f)==get(saved,f) for f in fields)
+            self.verdict(case+'.save_load','PASS' if ok else 'FAIL','STATE_RESTORED' if ok else 'SAVE_MISMATCH',[name,copyfile.name]+[x for x in [shot,shot2] if x],severity='INFO' if ok else 'MAJOR')
+        else:
+            self.verdict(case+'.save_load','INCONCLUSIVE','STATE_RESTORE_UNVERIFIED',[name,copyfile.name]+[x for x in [shot,shot2] if x])
         # Only the per-run working copy is ever corrupted.
         original=file.read_bytes()
         try:
