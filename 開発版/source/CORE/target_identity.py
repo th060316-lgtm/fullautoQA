@@ -126,7 +126,7 @@ class TargetIdentity:
                 'target_id': self.target_id,
                 'kind': self.kind,
                 'fingerprint': self.fingerprint,
-                'components': self.components,
+                'components': json.loads(canonical(self.components)),
                 'generation': self.generation,
                 'certifies_real_target': self.certifies_real_target,
                 'lineage_broken': self.lineage_broken,
@@ -160,6 +160,21 @@ def load_bindings(root, settings=None):
     if (not isinstance(data, dict) or data.get('schema_version') != SCHEMA_VERSION
             or not isinstance(data.get('targets'), dict)):
         raise ValueError('TARGET_BINDINGS_INVALID')
+    for key, record in data['targets'].items():
+        if not isinstance(key,str) or not isinstance(record,dict):
+            raise ValueError('TARGET_BINDINGS_INVALID')
+        generation = record.get('generation')
+        history = record.get('history')
+        if (not isinstance(generation,int) or isinstance(generation,bool) or generation < 1
+                or not isinstance(history,list) or len(history) != generation
+                or record.get('kind') not in ('target','fixture','selftest')):
+            raise ValueError('TARGET_BINDINGS_INVALID')
+        for index, item in enumerate(history,1):
+            if (not isinstance(item,dict) or item.get('generation') != index
+                    or not isinstance(item.get('fingerprint'),str) or len(item['fingerprint']) != 64):
+                raise ValueError('TARGET_BINDINGS_INVALID')
+        if history[-1]['fingerprint'] != record.get('fingerprint'):
+            raise ValueError('TARGET_BINDINGS_INVALID')
     return data
 
 
@@ -188,7 +203,7 @@ def bind_target(root, entry, profile=None, settings=None, observed_at=None):
     except OSError:
         persisted = False
     identity = TargetIdentity(target_id, kind, fingerprint, components, generation,
-                              certifies_real_target=(kind == 'target'),
+                              certifies_real_target=(kind == 'target' and persisted),
                               lineage_broken=bool(previous) and previous != fingerprint,
                               ledger_persisted=persisted)
     return identity
@@ -198,6 +213,8 @@ def check_result_binding(identity, recorded):
     if not isinstance(recorded, dict) or not recorded:
         return ['TARGET_IDENTITY_MISSING']
     violations = []
+    if recorded.get('target_id') != identity.target_id:
+        violations.append('TARGET_ID_MISMATCH')
     if recorded.get('fingerprint') != identity.fingerprint:
         violations.append('TARGET_FINGERPRINT_MISMATCH')
     if recorded.get('generation') != identity.generation:
@@ -213,12 +230,18 @@ def check_baseline_reuse(identity, recorded, root=None, settings=None):
     violations = []
     if recorded.get('fingerprint') != identity.fingerprint:
         violations.append('BASELINE_FINGERPRINT_MISMATCH')
+    if recorded.get('target_id') != identity.target_id or recorded.get('kind') != identity.kind:
+        violations.append('BASELINE_TARGET_MISMATCH')
     generation = recorded.get('generation')
+    if not isinstance(generation, int) or isinstance(generation, bool) or generation < 1:
+        violations.append('BASELINE_GENERATION_INVALID')
     if isinstance(generation, int) and generation > identity.generation:
         violations.append('BASELINE_GENERATION_AHEAD')
     if root is not None:
         ledger = load_bindings(root, settings)
         history = (ledger['targets'].get(str(identity.target_id)) or {}).get('history') or []
+        if not any(item.get('generation') == generation and item.get('fingerprint') == recorded.get('fingerprint') for item in history):
+            violations.append('BASELINE_GENERATION_UNVERIFIABLE')
         if not history:
             violations.append('BASELINE_LINEAGE_UNVERIFIABLE')
         else:

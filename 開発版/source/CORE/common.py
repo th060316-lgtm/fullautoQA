@@ -111,10 +111,20 @@ def report(root,data):
     rows=''.join('<tr>'+''.join(cell(r,k) for k in ('test_case','status','reason_code','severity','evidence'))+'</tr>' for r in data['results'])
     page='<!doctype html><meta charset="utf-8"><title>QA Result</title><style>body{font:16px system-ui;margin:2em;background:#101827;color:#eee}td,th{padding:.5em;border:1px solid #667}table{border-collapse:collapse}a{color:#9cf}</style>'
     page+='<h1>'+html.escape(data['overall'])+'</h1><p>Automated proxy evaluation; no human satisfaction claim.</p><p>Run '+html.escape(data['run_id'])+'</p><table><tr><th>Test</th><th>Status</th><th>Reason</th><th>Severity</th><th>Evidence</th></tr>'+rows+'</table><p><a href="result.json">JSON</a> · <a href="evidence_manifest.json">Evidence manifest</a></p>'
+    acceptance=[]
+    if 'headquarters' in data:
+        hq=data['headquarters']
+        acceptance=['QA COMPLETE means processing finished.',
+                    'Headquarters Overall: '+str(hq.get('overall','NOT_RUN'))]
+        acceptance += [str(domain.get('name'))+': '+str(domain.get('status','NOT_RUN')) for domain in hq.get('domains',[])]
+        acceptance += ['Target QA certified: '+str(bool(data.get('target_qa_certified'))),
+                       'Completion certified: '+str(bool(data.get('completion_certified'))),
+                       'Product Acceptance: HOLD', 'Stable: HOLD']
+        page+='<h2>Acceptance status</h2>'+''.join('<p>'+html.escape(line)+'</p>' for line in acceptance)
     for kind,summary in data.get('prototype_results',{}).items():page+='<p>'+html.escape(kind)+': '+html.escape(summary['status'])+'</p>'
     if (root/'video.mp4').exists():page+='<h2>Recorded virtual display</h2><video controls width="720" src="video.mp4"></video>'
     (root/'report.html').write_text(page,encoding='utf-8')
-    (root/'SUMMARY.txt').write_text(f"QA COMPLETE\nOverall Result: {data['overall']}\nRun: {data['run_id']}\nAutomated results only. See report.html and result.json.\n",encoding='utf-8')
+    (root/'SUMMARY.txt').write_text(f"QA COMPLETE\nOverall Result: {data['overall']}\nRun: {data['run_id']}\nAutomated results only. See report.html and result.json.\n"+'\n'.join(acceptance)+ ('\n' if acceptance else ''),encoding='utf-8')
 
 def archive_eligible(rel):
     rel=Path(rel)

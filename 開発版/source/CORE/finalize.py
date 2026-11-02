@@ -3,7 +3,7 @@ from pathlib import Path
 import os,shutil,traceback,uuid
 from common import Evidence,overall,report,write_json,result_zip,validate_result_zip,stamp
 
-def finalize_run(e,data,cleanup=(),latest_path=None,lock=None):
+def finalize_run(e,data,cleanup=(),latest_path=None,lock=None,execution=None):
     root=e.root;rows=data.setdefault('results',[]);issues=[];published=None;failure=None
     data['qa_status_before_finalization']=data.get('overall',overall(rows))
     def problem(stage,ex):
@@ -15,6 +15,12 @@ def finalize_run(e,data,cleanup=(),latest_path=None,lock=None):
         except Exception:
             rows.append({'test_case':'finalization.'+stage,'status':'HARNESS_ERROR','reason_code':'HARNESS_FINALIZATION_FAILED','evidence':[],'gate':'REQUIRED','detail':repr(ex)})
     def refresh():
+        if execution is not None:
+            try:execution(e,data)
+            except Exception as ex:
+                problem('coordination',ex)
+                data['completion_certified']=False
+                data['target_qa_certified']=False
         data['overall']=overall(rows)
         if data['overall']!='PASS':
             data['completion_certified']=False
@@ -65,6 +71,7 @@ def finalize_run(e,data,cleanup=(),latest_path=None,lock=None):
                 write_json(recovery/'packaging_error.json',{'issues':issues,'original_run_directory':str(root),'full_evidence_packaged':False,'original_overall':data['qa_status_before_finalization']})
                 diagnostic_rows=[diagnostic.result('result.packaging','HARNESS_ERROR','RESULT_ARCHIVE_FAILED',['packaging_error.json'],gate='REQUIRED')]
                 recovered={'run_id':e.run_id,'core_version':data.get('core_version'),'overall':'HARNESS_ERROR','completion_certified':False,'target_qa_certified':False,'results':diagnostic_rows,'original_run_directory':str(root),'diagnostic_archive':True,'full_evidence_packaged':False}
+                if execution is not None:execution(diagnostic,recovered)
                 report(recovery,recovered);diagnostic.manifest();source=result_zip(recovery,require_manifest=True)
                 temporary=root/'result_recovery.tmp';shutil.copyfile(source,temporary);os.replace(temporary,root/'RESULT_FOR_CHATGPT.zip');published=root/'RESULT_FOR_CHATGPT.zip'
                 data['overall']='HARNESS_ERROR';data['completion_certified']=False

@@ -103,16 +103,15 @@ def required_agents(profile, entry):
 def target_kind(profile, entry):
     """Kind of a target declaration: 'target', 'fixture' or 'selftest'.
 
-    An explicit declaration wins, then the profile role, and a plain target otherwise.
-    Only an explicit declaration can mark a target as a fixture or a selftest, so an
-    existing manifest keeps its meaning.
+    A fixture/selftest profile cannot be relabelled as a real target by its manifest.
+    An explicit fixture/selftest entry also narrows an otherwise real profile.
     """
-    kind = (entry or {}).get('kind')
-    if kind:
-        return kind
     role = (profile or {}).get('qa_role')
     if role in ('selftest','fixture'):
         return role
+    kind = (entry or {}).get('kind')
+    if kind:
+        return kind
     return 'target'
 
 

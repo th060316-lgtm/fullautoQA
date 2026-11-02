@@ -14,6 +14,7 @@ Standard library only.
 """
 from __future__ import annotations
 
+import json
 from common import CAPABILITIES, inside, read_json
 
 SCHEMA_VERSION = 1
@@ -90,12 +91,19 @@ def target_required_capabilities(entry):
 class CapabilityContract:
     def __init__(self, required, declared=None, requirements=None, target_capabilities=None,
                  frozen_at=None, schema_version=SCHEMA_VERSION):
-        self.required = dict(required or {})
-        self.declared = dict(declared) if declared else None
-        self.requirements = dict(requirements or {})
-        self.target_capabilities = dict(target_capabilities or {})
-        self.frozen_at = frozen_at
-        self.schema_version = schema_version
+        self._snapshot = json.dumps({'required': required or {}, 'declared': declared,
+                                     'requirements': requirements or {},
+                                     'target_capabilities': target_capabilities or {},
+                                     'frozen_at': frozen_at, 'schema_version': schema_version},
+                                    sort_keys=True)
+
+    # Return detached values: neither callers nor serialized payloads can mutate a freeze.
+    required = property(lambda self: json.loads(self._snapshot)['required'])
+    declared = property(lambda self: json.loads(self._snapshot)['declared'])
+    requirements = property(lambda self: json.loads(self._snapshot)['requirements'])
+    target_capabilities = property(lambda self: json.loads(self._snapshot)['target_capabilities'])
+    frozen_at = property(lambda self: json.loads(self._snapshot)['frozen_at'])
+    schema_version = property(lambda self: json.loads(self._snapshot)['schema_version'])
 
     @classmethod
     def freeze(cls, root, entries, settings=None, frozen_at=None):
@@ -164,6 +172,8 @@ class CapabilityContract:
                        for entry in entries_after}
             current_caps = {str(entry.get('id')): sorted(entry.get('required_capabilities') or [])
                             for entry in entries_after}
+            if set(current) != set(self.requirements):
+                violations.append({'kind': 'TARGET_SET_CHANGED', 'subject': 'targets'})
             for target_id in sorted(self.requirements):
                 if self.requirements[target_id] != current.get(target_id, []):
                     violations.append({'kind': 'REQUIREMENT_SET_CHANGED', 'subject': target_id})
