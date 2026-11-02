@@ -9,6 +9,11 @@ KNOWN_REQUIREMENTS = {
     'faults','technical_tests','seed_replay','player_review_evidence','build'
 }
 KNOWN_AGENTS = {'Smoke','Goal','Explorer','Random'}
+# Optional per target declaration of the Phase 1 foundation. The kind separates a real
+# target from a fixture or a selftest, so a fixture can never certify a real target.
+KNOWN_TARGET_KINDS = {'target','fixture','selftest'}
+# Optional relative paths that take part in the target identity.
+KNOWN_IDENTITY_PATHS = ('source','config','instance_marker')
 
 
 def manifest_path(root, settings=None):
@@ -39,6 +44,20 @@ def load_target_manifest(root, settings=None):
         if not isinstance(rel, str) or not rel.strip():
             raise ValueError('TARGET_PROFILE_REQUIRED:'+ident)
         inside(root, rel)
+        kind = row.get('kind')
+        if kind is not None and kind not in KNOWN_TARGET_KINDS:
+            raise ValueError('TARGET_KIND_INVALID:'+ident)
+        for key in KNOWN_IDENTITY_PATHS:
+            value = row.get(key)
+            if value is None: continue
+            if not isinstance(value,str) or not value.strip():
+                raise ValueError('TARGET_PATH_INVALID:'+ident)
+            inside(root, value)
+        caps = row.get('required_capabilities')
+        if caps is not None and (not isinstance(caps,list) or any(not isinstance(c,str) or not c.strip() for c in caps)):
+            raise ValueError('TARGET_CAPABILITY_INVALID:'+ident)
+        if caps is not None and len(caps) != len(set(caps)):
+            raise ValueError('TARGET_CAPABILITY_DUPLICATE:'+ident)
         req = row.get('requirements', [])
         if not isinstance(req, list) or any(x not in KNOWN_REQUIREMENTS for x in req):
             raise ValueError('TARGET_REQUIREMENT_UNKNOWN:'+ident)
@@ -81,6 +100,22 @@ def required_agents(profile, entry):
     return {s.get('agent') for s in profile.get('scenarios', []) if s.get('agent') in KNOWN_AGENTS}
 
 
+def target_kind(profile, entry):
+    """Kind of a target declaration: 'target', 'fixture' or 'selftest'.
+
+    An explicit declaration wins, then the profile role, and a plain target otherwise.
+    Only an explicit declaration can mark a target as a fixture or a selftest, so an
+    existing manifest keeps its meaning.
+    """
+    kind = (entry or {}).get('kind')
+    if kind:
+        return kind
+    role = (profile or {}).get('qa_role')
+    if role in ('selftest','fixture'):
+        return role
+    return 'target'
+
+
 def _has_goal(profile):
     return bool(profile.get('goals')) and any(s.get('goal') for s in profile.get('scenarios', []))
 
@@ -114,6 +149,11 @@ def requirement_coverage(profile, entry):
 def validate_target_profile(profile, entry):
     if profile.get('qa_role') == 'selftest':
         return ['SELFTEST_PROFILE_CANNOT_BE_TARGET']
+    kind = target_kind(profile, entry)
+    if kind == 'selftest':
+        return ['SELFTEST_PROFILE_CANNOT_BE_TARGET']
+    if kind == 'fixture':
+        return ['FIXTURE_PROFILE_CANNOT_BE_TARGET']
     coverage = requirement_coverage(profile, entry)
     missing = [key for key, ok in coverage.items() if not ok]
     agents = required_agents(profile, entry)
