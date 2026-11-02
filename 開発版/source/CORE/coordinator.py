@@ -23,9 +23,33 @@ from target_identity import (TargetIdentity, bind_target, canonical, identity_co
                              sha256_value, load_bindings, check_result_binding)
 from targets import load_target_manifest
 
+# The Management and Sales headquarters evaluators are optional imports: if a
+# deployment does not ship them the corresponding domain must degrade to
+# NOT_RUN (never to PASS) instead of breaking the whole coordinator.
+try:
+    from hq_evidence import ReadbackDomainReport
+except Exception:  # pragma: no cover - defensive import guard
+    class ReadbackDomainReport(DomainReport):
+        def __init__(self,*args,readback=None,**kwargs):
+            super().__init__(*args,**kwargs)
+            self.readback=readback
+try:
+    from management_evaluator import evaluate_management
+except Exception:  # pragma: no cover - defensive import guard
+    evaluate_management = None
+try:
+    from sales_evaluator import evaluate_sales
+except Exception:  # pragma: no cover - defensive import guard
+    evaluate_sales = None
+
 MANAGEMENT_NOT_RUN = 'MANAGEMENT_EVALUATION_NOT_PERFORMED'
 SALES_NOT_RUN = 'SALES_EVALUATION_NOT_PERFORMED'
+MANAGEMENT_EVALUATOR_UNAVAILABLE = 'MANAGEMENT_EVALUATOR_UNAVAILABLE'
+SALES_EVALUATOR_UNAVAILABLE = 'SALES_EVALUATOR_UNAVAILABLE'
 TARGET_NOT_REAL = 'TARGET_IDENTITY_NOT_REAL_TARGET'
+HQ_EVALUATOR_EXCEPTION = 'HQ_EVALUATOR_EXCEPTION'
+HQ_DOMAIN_NAME_MISMATCH = 'HQ_DOMAIN_NAME_MISMATCH'
+HUMAN_TEST_CLAIM_REVOKED = 'HUMAN_TEST_CLAIM_REVOKED'
 
 
 class CoordinatorContext:
@@ -63,10 +87,75 @@ def production_evaluator(context):
     return report
 
 
+def _not_run_readback(domain, reason_code, detail):
+    """A readback for a domain that could not be evaluated at all."""
+    readback = {'schema_version': 1, 'domain': domain, 'status': 'NOT_RUN',
+                'reason_code': reason_code, 'accepted': False, 'evidence_present': False,
+                'evidence_sources': [], 'unavailable': [], 'gates': [], 'risks': [],
+                'notes': [detail], 'generated_at': str(stamp())}
+    if domain == 'sales':
+        readback['human_test_performed'] = False
+        readback['human_test_evidence'] = {'present': False, 'kind': 'unknown',
+                                           'reason_code': reason_code, 'determinate': False,
+                                           'note': 'a model proxy review is never reported as a '
+                                                   'human test'}
+        readback['certifications'] = {}
+        readback['phases'] = {}
+        readback['claims'] = {}
+    if domain == 'management':
+        readback['measurements'] = {}
+        readback['signals'] = {}
+        readback['thresholds'] = {}
+        readback['real_game_acceptance'] = False
+    return readback
+
 def not_run_evaluator(domain, reason_code):
     def evaluator(context):
-        return DomainReport.not_run(domain, reason_code)
+        report = ReadbackDomainReport(domain, 'NOT_RUN', reason_code, [], {'total': 0}, False,
+                                      None, [reason_code],
+                                      readback=_not_run_readback(domain, reason_code, reason_code))
+        return report
     return evaluator
+
+def _harness_error_report(name, reason_code, detail):
+    """A domain report for an evaluator that blew up."""
+    gates = [{'name': 'headquarters.' + name, 'status': 'HARNESS_ERROR', 'required': True,
+              'reason_code': reason_code, 'evidence': [], 'severity': 'ERROR'}]
+    readback = {'schema_version': 1, 'domain': name, 'status': 'HARNESS_ERROR',
+                'reason_code': reason_code, 'accepted': False, 'evidence_present': False,
+                'evidence_sources': [], 'unavailable': [], 'gates': gates,
+                'risks': [{'code': reason_code, 'severity': 'ERROR', 'detail': detail}],
+                'notes': [detail], 'generated_at': str(stamp())}
+    return ReadbackDomainReport(name, 'HARNESS_ERROR', reason_code, gates,
+                                 {'total': 1, 'HARNESS_ERROR': 1}, False, None, [detail],
+                                 readback=readback)
+
+def _readbacks(summary):
+    """Map of domain name -> readback, read defensively off the reports."""
+    found = {}
+    for domain in getattr(summary, 'domains', None) or []:
+        readback = getattr(domain, 'readback', None)
+        if readback is not None:
+            found[domain.name] = readback
+    return found
+
+def attach_readbacks(result_data, summary):
+    """Attach the Management / Sales readbacks to the result model.
+
+    This is the point where the readbacks enter the result model - before the
+    evidence manifest and ``RESULT_FOR_CHATGPT.zip`` are sealed by the
+    existing finalization path.
+    """
+    data = result_data if isinstance(result_data, dict) else {}
+    readbacks = _readbacks(summary)
+    for name, readback in readbacks.items():
+        data[name + '_readback'] = readback
+    headquarters = data.get('headquarters')
+    if isinstance(headquarters, dict):
+        # The readbacks also travel inside the headquarters payload so they
+        # survive a result writer that only copies known top level keys.
+        headquarters['readbacks'] = readbacks
+    return data
 
 
 class Coordinator:
@@ -75,15 +164,15 @@ class Coordinator:
         self.settings = settings or {}
         self._evaluators = {
             'production': production_evaluator,
-            'management': not_run_evaluator('management', MANAGEMENT_NOT_RUN),
-            'sales': not_run_evaluator('sales', SALES_NOT_RUN),
+            'management': (evaluate_management if evaluate_management is not None
+                           else not_run_evaluator('management', MANAGEMENT_EVALUATOR_UNAVAILABLE)),
+            'sales': (evaluate_sales if evaluate_sales is not None
+                      else not_run_evaluator('sales', SALES_EVALUATOR_UNAVAILABLE)),
         }
 
     def register(self, domain, evaluator):
-        if domain not in DOMAIN_ORDER:
-            raise ValueError('UNKNOWN_DOMAIN:' + str(domain))
-        if not callable(evaluator):
-            raise ValueError('EVALUATOR_NOT_CALLABLE:' + str(domain))
+        if domain not in DOMAIN_ORDER: raise ValueError('UNKNOWN_DOMAIN:' + str(domain))
+        if not callable(evaluator): raise ValueError('EVALUATOR_NOT_CALLABLE:' + str(domain))
         self._evaluators[domain] = evaluator
         return self
 
@@ -91,13 +180,21 @@ class Coordinator:
         reports = []
         for name in DOMAIN_ORDER:
             evaluator = self._evaluators.get(name)
-            if evaluator is None:
-                continue
-            report = evaluator(context)
-            if report is None:
-                continue
+            if evaluator is None: continue
+            try:
+                report = evaluator(context)
+            except Exception as ex:
+                # A broken evaluator may only make its own domain worse; the
+                # other headquarters keep their own meaning.
+                report = _harness_error_report(
+                    name, HQ_EVALUATOR_EXCEPTION,
+                    'the %s evaluator raised %r' % (name, ex))
+                report.notes.append('HQ_EVALUATOR_EXCEPTION:' + name + ':' + repr(ex))
+            if report is None: continue
             if report.name != name:
-                raise ValueError('DOMAIN_NAME_MISMATCH:' + str(report.name))
+                report = _harness_error_report(
+                    name, HQ_DOMAIN_NAME_MISMATCH,
+                    'the %s evaluator returned a report named %r' % (name, report.name))
             reports.append(report)
         return HeadquartersSummary(reports)
 
@@ -111,20 +208,33 @@ class Coordinator:
     def attach(self, result_data, summary, context=None):
         data = dict(result_data or {})
         data['headquarters'] = summary.to_dict()
+        attach_readbacks(data, summary)
         if context is not None:
-            if context.contract is not None:
-                data['capability_contract'] = context.contract.to_dict()
-            if context.identity is not None:
-                data['target_identity'] = context.identity.to_dict()
+            if context.contract is not None: data['capability_contract'] = context.contract.to_dict()
+            if context.identity is not None: data['target_identity'] = context.identity.to_dict()
+        # Completion may never be certified while any headquarters domain is
+        # unresolved, and a model-proxy review may never stand in for a human
+        # test.
+        if not summary.accepted:
+            data['completion_certified'] = False
+        sales_readback = _readbacks(summary).get('sales')
+        if isinstance(sales_readback, dict):
+            evidence = sales_readback.get('human_test_evidence') or {}
+            if (sales_readback.get('human_test_performed') is False
+                    and evidence.get('determinate') is True
+                    and data.get('human_test_performed') is True):
+                data['human_test_performed'] = False
+                data['human_test_note'] = (HUMAN_TEST_CLAIM_REVOKED + ': the Sales evaluation '
+                                            'found no real human review evidence')
         return data
 
 
 def build_payload(root, results, summary, identity=None, contract=None, settings=None,
                   result_data=None):
     coordinator = Coordinator(root, settings)
-    context = CoordinatorContext(root=root, results=results, identity=identity,
-                                 contract=contract, settings=settings)
     payload = dict(result_data or {})
+    context = CoordinatorContext(root=root, results=results, identity=identity,
+                                 contract=contract, settings=settings, extras=payload)
     return coordinator.attach(payload, summary, context)
 
 
@@ -158,12 +268,11 @@ def attach_summary_to_result_file(path, root=None, settings=None):
     data = read_json(path)
     coordinator = Coordinator(root if root is not None else path.parent, settings)
     context = CoordinatorContext(root=coordinator.root, results=data.get('results') or [],
-                                 settings=settings)
+                                 settings=settings, extras=data)
     summary = coordinator.evaluate(context)
     data = coordinator.attach(data, summary, context)
     write_json(path, data)
     return summary
-
 
 
 def preflight_execution(e, prepared):
@@ -211,7 +320,6 @@ def verify_execution(root, prepared, settings=None, current_manifest=None):
         check = dict(record, target_id=key)
         for reason in check_result_binding(identity, check):
             violations.append({'kind': reason, 'subject': key})
-        # An in-memory identity replacement is as invalid as replacing the ledger.
         for reason in check_result_binding(identity, prepared['identities'][key].to_dict()):
             violations.append({'kind': reason, 'subject': key})
     return contract.outcome_rows(contract.missing(declared), violations)
@@ -260,17 +368,33 @@ def execution_finalizer(root, prepared, settings=None, run_mode='target'):
                 row['evidence'] = ['execution_verification.json']
             rows.extend(checks)
             checked = True
-        context = CoordinatorContext(root=root, results=rows, settings=settings)
+        evaluation_extras = dict(data)
+        # Management target-generation integrity must see the same frozen identity
+        # that Phase-1 verification is about to attach to the result model.
+        evaluation_extras['target_identity'] = identities
+        evaluation_extras['run_mode'] = run_mode
+        context = CoordinatorContext(root=root, results=rows, settings=settings,
+                                     extras=evaluation_extras)
         summary = coordinator.evaluate(context)
         production = summary.domains[0]
         production.target = identities
         production.certifies_real_target = bool(identities) and run_mode == 'target' and all(
             i.get('certifies_real_target') for i in identities.values()) and production.status == 'PASS'
         data['headquarters'] = summary.to_dict()
+        attach_readbacks(data, summary)
         data['capability_contract'] = prepared['contract'].to_dict() if prepared else None
         data['target_identity'] = identities
         if not production.certifies_real_target:
             data['target_qa_certified'] = False
         if not summary.accepted:
             data['completion_certified'] = False
+        sales_readback = _readbacks(summary).get('sales')
+        if isinstance(sales_readback, dict):
+            evidence = sales_readback.get('human_test_evidence') or {}
+            if (sales_readback.get('human_test_performed') is False
+                    and evidence.get('determinate') is True
+                    and data.get('human_test_performed') is True):
+                data['human_test_performed'] = False
+                data['human_test_note'] = (HUMAN_TEST_CLAIM_REVOKED + ': Sales evidence '
+                                           'does not establish a real human review')
     return attach

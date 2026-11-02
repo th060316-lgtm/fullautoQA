@@ -1,0 +1,51 @@
+name: Phase 2 Source Tests
+
+on:
+  push:
+    branches:
+      - work/issue1-phase2-two-candidate-integration-20261102
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase2-source-tests
+  cancel-in-progress: true
+
+jobs:
+  source-tests:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            開発版/source
+            開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
+          sparse-checkout-cone-mode: false
+
+      - name: Reconstruct complete source test substrate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $recovery = Join-Path $PWD "_recovery"
+          Expand-Archive -LiteralPath "開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip" -DestinationPath $recovery -Force
+          $testCore = Get-ChildItem -LiteralPath $recovery -Recurse -Filter "test_core.py" |
+            Where-Object { $_.DirectoryName -match "[\\/]TESTS$" } |
+            Select-Object -First 1
+          if (-not $testCore) { throw "RECOVERY_SOURCE_TEST_ROOT_NOT_FOUND" }
+          $sourceRoot = Split-Path -Parent (Split-Path -Parent $testCore.FullName)
+          Write-Host "Recovered source root: $sourceRoot"
+          Copy-Item -Path "開発版/source/*" -Destination $sourceRoot -Recurse -Force
+          "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Compile reconstructed Python source
+        shell: pwsh
+        run: python -m compileall -q "$env:SOURCE_ROOT/CORE" "$env:SOURCE_ROOT/TESTS"
+
+      - name: Run reconstructed source unit tests
+        shell: pwsh
+        run: python -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v

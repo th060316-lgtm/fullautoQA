@@ -85,6 +85,11 @@ class Session:
         cmd=self.tools.expand(self.p['launch']['argv']+self.p['launch'].get('extra_args',[]),work,self.p)
         cmd=[str(v).replace('{seed}',str(seed)) for v in cmd]
         # seed is expanded after tool tokens by Tools.expand.
+        if self.p.get('display',{}).get('kind')=='browser':
+            from browser_backend import validate_browser_profile
+            browser_target=validate_browser_profile(self.p,work,launch_args=cmd)
+            proof=scenario+'_browser_target.json';write_json(self.e.root/proof,browser_target)
+            self.e.event('browser_target',scenario,file=proof,target=browser_target)
         out=(self.e.root/(scenario+'_stdout.log')).open('wb');err=(self.e.root/(scenario+'_stderr.log')).open('wb')
         start=time.monotonic();supervisor=ProcessSupervisor();p=supervisor.start(cmd,work,out,err,env=self.environment(work));self.processes.append((p,out,err));self.job=supervisor.job;self.active_supervisor=supervisor
         self.e.event('process',scenario,pid=p.pid,event='start',argv=cmd)
@@ -124,6 +129,14 @@ class Session:
         self.e.event('screenshot',case,file=rel,event=event)
         if self.rec and hasattr(self.rec,'frame'):self.rec.frame(self.e.root/rel)
         return rel,image_features(self.e.root/rel)
+    def observe_features(self,case):
+        if getattr(self,'disable_capture',False) or not self.desktop:return None
+        if self.active_supervisor and self.active_supervisor.p.poll() is not None:return None
+        path=self.e.root/'WORK'/'_agent_observation.bmp';path.parent.mkdir(parents=True,exist_ok=True)
+        try:
+            self.desktop.capture(path);return image_features(path)
+        except Exception as ex:
+            self.e.event('observation_unavailable',case,reason='SCREEN_OBSERVATION_FAILED',detail=repr(ex));return None
     def disk_guard(self):
         if time.monotonic()-self.last_disk_guard<1:return
         self.last_disk_guard=time.monotonic()
@@ -169,19 +182,59 @@ class Session:
         if not cfg:
             self.verdict(case+'.save_load','NOT_RUN','SAVE_NOT_SUPPORTED');return
         file=self.snapshot_save(work);before=a.observe()['internal_state'];old=digest(file) if file.exists() else None;previous=file.stat().st_mtime_ns if file.exists() else None
+        storage_cfg=self.p.get('storage') or {};storage_inspector=None;storage_pre=None;storage_saved=None;storage_mutated=None
+        storage_gate='REQUIRED' if storage_cfg.get('required') else 'OPTIONAL'
+        if storage_cfg.get('locations'):
+            try:
+                from storage_qa import StorageInspector
+                storage_root=inside(work,storage_cfg.get('root','isolated_user'))
+                storage_inspector=StorageInspector(storage_root,storage_cfg.get('locations'))
+                storage_pre=storage_inspector.snapshot('pre_save')
+            except Exception as ex:
+                proof=case+'_storage_unavailable.json';write_json(self.e.root/proof,{'error':repr(ex),'config':storage_cfg})
+                self.verdict(case+'.storage','NOT_RUN','STORAGE_UNAVAILABLE',[proof],gate=storage_gate)
+        else:self.verdict(case+'.storage','NOT_RUN','NO_STORAGE_CONTRACT',gate='OPTIONAL')
         a.act(cfg.get('save_action','save'));time.sleep(.3);saved=a.observe()['internal_state'];shot,_=self.shot(case,'save')
+        if storage_inspector:
+            try:storage_saved=storage_inspector.snapshot('post_save')
+            except Exception as ex:
+                proof=case+'_storage_save_error.json';write_json(self.e.root/proof,{'error':repr(ex)})
+                self.verdict(case+'.storage','NOT_RUN','STORAGE_POST_SAVE_UNAVAILABLE',[proof],gate=storage_gate);storage_inspector=None
         if not file.exists() or (previous is not None and file.stat().st_mtime_ns==previous):
             self.verdict(case+'.save','FAIL','SAVE_FAIL',[shot] if shot else [],severity='MAJOR');return
         copyfile=self.e.root/(case+'_save_copy.json');shutil.copy2(file,copyfile)
         save_event=self.e.event('save',case,file=copyfile.name,previous_hash=old,hash=digest(file))
         a.act(cfg.get('mutate_action','confirm'));time.sleep(.2)
-        mutated=a.observe()['internal_state'];fields=cfg.get('state_fields',[])
-        if not fields or all(get(mutated,f)==get(saved,f) for f in fields):
-            self.verdict(case+'.restore','INCONCLUSIVE','SAVE_STATE_NOT_MUTATED',[copyfile.name]);return
+        mutated=a.observe()['internal_state']
+        if storage_inspector:
+            try:storage_mutated=storage_inspector.snapshot('post_mutation')
+            except Exception as ex:
+                proof=case+'_storage_mutation_error.json';write_json(self.e.root/proof,{'error':repr(ex)})
+                self.verdict(case+'.storage','NOT_RUN','STORAGE_POST_MUTATION_UNAVAILABLE',[proof],gate=storage_gate);storage_inspector=None
+        fields=cfg.get('state_fields',[])
+        state_mutated=bool(fields) and any(get(mutated,f)!=get(saved,f) for f in fields)
+        if not state_mutated:
+            self.verdict(case+'.restore','INCONCLUSIVE','SAVE_STATE_NOT_MUTATED',[copyfile.name])
+            # Declared storage QA is independent of an internal bridge. If storage
+            # is observable, continue through load and judge storage restoration.
+            if not storage_inspector:return
         a.act(cfg.get('load_action','load'));time.sleep(.3);restored=a.observe()['internal_state'];shot2,_=self.shot(case,'load')
-        ok=all(get(restored,f)==get(saved,f) for f in fields)
-        name=case+'_save_load.json';write_json(self.e.root/name,{'before':before,'saved':saved,'mutated':mutated,'restored':restored,'fields':fields})
-        self.verdict(case+'.save_load','PASS' if ok else 'FAIL','STATE_RESTORED' if ok else 'SAVE_MISMATCH',[name,copyfile.name]+[x for x in [shot,shot2] if x],severity='INFO' if ok else 'MAJOR')
+        storage_result=None;storage_name=None
+        if storage_inspector:
+            try:
+                storage_loaded=storage_inspector.snapshot('post_load')
+                storage_result=storage_inspector.check_persistence(storage_pre,storage_saved,storage_mutated,storage_loaded)
+                storage_name=case+'_storage_qa.json';write_json(self.e.root/storage_name,{'config':storage_cfg,'pre_save':storage_pre.to_dict(),'post_save':storage_saved.to_dict(),'post_mutation':storage_mutated.to_dict(),'post_load':storage_loaded.to_dict(),'result':storage_result})
+                self.verdict(case+'.storage',storage_result['status'],storage_result['reason_code'],[storage_name],gate=storage_gate)
+            except Exception as ex:
+                proof=case+'_storage_load_error.json';write_json(self.e.root/proof,{'error':repr(ex)})
+                self.verdict(case+'.storage','NOT_RUN','STORAGE_POST_LOAD_UNAVAILABLE',[proof],gate=storage_gate)
+        name=case+'_save_load.json';write_json(self.e.root/name,{'before':before,'saved':saved,'mutated':mutated,'restored':restored,'fields':fields,'state_mutated_before_load':state_mutated,'storage_evidence':storage_name})
+        if state_mutated:
+            ok=all(get(restored,f)==get(saved,f) for f in fields)
+            self.verdict(case+'.save_load','PASS' if ok else 'FAIL','STATE_RESTORED' if ok else 'SAVE_MISMATCH',[name,copyfile.name]+[x for x in [shot,shot2] if x],severity='INFO' if ok else 'MAJOR')
+        else:
+            self.verdict(case+'.save_load','INCONCLUSIVE','STATE_RESTORE_UNVERIFIED',[name,copyfile.name]+[x for x in [shot,shot2] if x])
         # Only the per-run working copy is ever corrupted.
         original=file.read_bytes()
         try:
@@ -214,6 +267,7 @@ class Session:
                 if not caps.get(capability):self.verdict(case+'.'+capability,'NOT_RUN','CAPABILITY_UNAVAILABLE')
             stall=StallDetector(s.get('stall_seconds',self.p.get('stall_seconds',8)));goal=next((g for g in self.p['goals'] if g['id']==s.get('goal')),None)
             goal_reached=False;iterations=0;replay_index=0
+            observational=not bool(self.p.get('bridge')) or bool(s.get('observational_learning'))
             while not agent.exhausted():
                 if s.get('soak') and soak_complete(time.monotonic()-play_started,iterations,s,p.poll() is None):break
                 self.disk_guard();now=time.monotonic()
@@ -250,17 +304,21 @@ class Session:
                         agent.mode='Explorer';self.e.event('recovery',case,method='refocus_cancel_explore',evidence=[name]);stall=StallDetector(s.get('stall_seconds',self.p.get('stall_seconds',8)))
                     else:
                         self.verdict(case+'.stall','FAIL',warning,[name]+([sh] if sh else []),severity='MAJOR');break
+                screen_before=self.observe_features(case) if observational else None
                 if replay is not None:
                     if replay_index>=len(replay):break
                     action=replay[replay_index];replay_index+=1;agent.history.append(action);agent.total_actions+=1
                 else:
-                    prior_loops=agent.loops;action=agent.choose(state)
+                    prior_loops=agent.loops;action=agent.choose(state,screen=screen_before)
                     if agent.loops>prior_loops:
                         name=case+'_action_loop_'+str(agent.loops)+'.json';write_json(self.e.root/name,{'history':agent.history,'strategy':agent.mode,'loop_count':agent.loops})
                         self.e.event('strategy_change',case,reason_code='ACTION_LOOP',strategy=agent.mode,evidence=[name])
                         if prior_loops==0:self.verdict(case+'.agent_loop','FAIL' if s.get('loop_failure') else 'INCONCLUSIVE','ACTION_LOOP',[name],gate='REQUIRED' if s.get('loop_failure') else 'INFORMATIONAL',recovery='Explorer fallback')
                         if s.get('loop_failure'):break
-                before=state;tick=time.monotonic();a.act(action);time.sleep(s.get('observation_delay',.15));after=a.observe()['internal_state'];observed.append(after);agent.feedback(before,after,action);iterations+=1
+                before=state;tick=time.monotonic();a.act(action);time.sleep(s.get('observation_delay',.15));after=a.observe()['internal_state'];observed.append(after)
+                screen_after=self.observe_features(case) if observational else None
+                agent.feedback(before,after,action,screen_before=screen_before,screen_after=screen_after);iterations+=1
+                if screen_after is not None:features=screen_after
                 if not s.get('soak'):self.transitions.append(after)
                 self.coverage['actions'].add(action);self.e.event('action',case,agent=agent.mode,action=action,input=self.p['actions'][action].get('inputs'),target=self.p['actions'][action].get('target'),reason='replay' if replay is not None else s['agent'],result={'changed':agent.signature(before)!=agent.signature(after),'response_delay_upper_bound_seconds':time.monotonic()-tick},seed=seed)
             if goal and not goal_reached:

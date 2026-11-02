@@ -136,6 +136,18 @@ class HeadquartersSummary:
         """True only when every domain of the pipeline resolved to PASS."""
         return bool(self.domains) and self.overall == 'PASS'
 
+    def readback(self, name):
+        """Return one optional domain evidence readback without changing Phase-1 serialization."""
+        for domain in self.domains:
+            if domain.name == name:
+                return getattr(domain, 'readback', None)
+        return None
+
+    def readbacks(self):
+        """Return available evidence readbacks keyed by independent headquarters domain."""
+        return {domain.name: getattr(domain, 'readback')
+                for domain in self.domains if getattr(domain, 'readback', None) is not None}
+
     def to_dict(self):
         return {'schema_version': self.schema_version,
                 'generated_at': self.generated_at,

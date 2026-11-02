@@ -162,10 +162,16 @@ def validate_target_profile(profile, entry):
 
 
 def baseline_source(root, manifest, cli_value=None):
+    # Validate containment with the canonical resolved path, but preserve the caller's
+    # lexical absolute path. On Windows Path.resolve() may expose an 8.3 alias
+    # (RUNNER~1) and break stable identity/equality even though it is the same file.
     if cli_value:
-        return Path(cli_value).resolve()
+        return Path(cli_value).absolute()
     rel = manifest.get('baseline') if manifest else None
-    return inside(root, rel) if rel else None
+    if not rel:
+        return None
+    inside(root, rel)  # containment validation
+    return Path(root) / rel
 
 
 def target_scope_satisfied(run_mode, sessions, entries, contracts):
