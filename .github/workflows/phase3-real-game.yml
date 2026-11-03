@@ -1,0 +1,126 @@
+name: Phase 3 Selected Real Game E2E
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/phase3-real-game.yml'
+      - '開発版/acceptance_targets/**'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: real-game-e2e-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  real-game:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            開発版/source
+            開発版/acceptance_targets
+          sparse-checkout-cone-mode: false
+      - name: Locate Candidate for the latest source change
+        id: candidate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            let sha = context.payload.pull_request?.head.sha || context.sha;
+            for (let n=0; n<100; n++) {
+              const commit = (await github.rest.repos.getCommit({owner,repo,ref:sha,per_page:100})).data;
+              let changed = commit.files || [];
+              if (changed.length === 100) {
+                for (let page=2;;page++) {
+                  const more=(await github.rest.repos.getCommit({owner,repo,ref:sha,per_page:100,page})).data.files || [];
+                  changed.push(...more); if(more.length<100) break;
+                }
+              }
+              if (changed.some(f=>f.filename.startsWith('開発版/source/') || f.filename==='.github/workflows/phase3-windows-candidate-build.yml')) break;
+              if(!commit.parents.length) throw new Error('SOURCE_CHANGE_NOT_FOUND');
+              sha=commit.parents[0].sha;
+            }
+            for(let attempt=0;attempt<180;attempt++) {
+              const runs=(await github.rest.actions.listWorkflowRuns({owner,repo,workflow_id:'phase3-windows-candidate-build.yml',head_sha:sha,per_page:10})).data.workflow_runs;
+              const run=runs.find(r=>r.status==='completed');
+              if(run) {
+                const artifacts=(await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:run.id,per_page:100})).data.artifacts;
+                const candidate=artifacts.find(a=>a.name.startsWith('FullAutoQA-Phase3-Candidate-')&&!a.expired);
+                const evidence=artifacts.find(a=>a.name.startsWith('FullAutoQA-Phase3-Build-Evidence-')&&!a.expired);
+                if(!candidate || !evidence) throw new Error('CANDIDATE_BUILD_ARTIFACTS_MISSING');
+                core.setOutput('run_id',String(run.id));core.setOutput('archive_name',candidate.name);core.setOutput('evidence_name',evidence.name);
+                core.setOutput('source_sha',sha); return;
+              }
+              await new Promise(resolve=>setTimeout(resolve,5000));
+            }
+            throw new Error('CANDIDATE_WAIT_TIMEOUT');
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.candidate.outputs.archive_name }}
+          run-id: ${{ steps.candidate.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: _candidate_download
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.candidate.outputs.evidence_name }}
+          run-id: ${{ steps.candidate.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: _candidate_evidence
+      - name: Verify identity and fresh extract without host Python
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archives = @(Get-ChildItem _candidate_download -Recurse -Filter FullAutoQA_PHASE3_CANDIDATE.zip)
+          $ids = @(Get-ChildItem _candidate_evidence -Recurse -Filter PHASE3_CANDIDATE_IDENTITY.json)
+          if ($archives.Count -ne 1 -or $ids.Count -ne 1) { throw 'CANDIDATE_IDENTITY_AMBIGUOUS' }
+          $id = Get-Content -LiteralPath $ids[0].FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+          $zip = $archives[0]
+          if ($zip.Length -ne [long]$id.candidate_size -or (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne $id.candidate_sha256) { throw 'CANDIDATE_IDENTITY_MISMATCH' }
+          $fresh = Join-Path $PWD '_real_game_fresh'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::OpenRead($zip.FullName)
+          try {
+            foreach ($entry in $archive.Entries) {
+              $name = $entry.FullName.Replace('\','/')
+              if ($name.StartsWith('/') -or $name.Contains(':') -or @($name.Split('/')) -contains '..') { throw 'UNSAFE_CANDIDATE_ARCHIVE' }
+            }
+          } finally { $archive.Dispose() }
+          [IO.Compression.ZipFile]::ExtractToDirectory($zip.FullName,$fresh)
+          $python = Join-Path $fresh 'RUNTIME/python/python.exe'
+          New-Item -ItemType Directory '_real_game_evidence' -Force | Out-Null
+          & $python -B -E -s (Join-Path $fresh 'scripts/package_integrity.py') --root $fresh --full-payload --require-fresh-marker --json-out (Join-Path $PWD '_real_game_evidence/PRISTINE_PACKAGE_INTEGRITY.json')
+          if ($LASTEXITCODE -ne 0) { throw 'REAL_GAME_FRESH_INTEGRITY_FAILED' }
+          # Compare every tracked Source file to the actual Candidate; reject stale overlays.
+          foreach ($file in (git -c core.quotepath=false ls-files -- 開発版/source)) {
+            $relative = $file.Substring('開発版/source/'.Length)
+            $packed = Join-Path $fresh $relative
+            if (-not (Test-Path -LiteralPath $packed -PathType Leaf)) { throw "CANDIDATE_SOURCE_MISSING:$relative" }
+            if ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $packed -Algorithm SHA256).Hash) { throw "STALE_CANDIDATE_SOURCE:$relative" }
+          }
+          "FRESH_ROOT=$fresh" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "BUNDLED_PYTHON=$python" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Prepare selected game snapshot and data-only Profile
+        shell: pwsh
+        run: |
+          & "$env:BUNDLED_PYTHON" -B -E -s './開発版/acceptance_targets/codegeas/prepare_target.py' --candidate-root "$env:FRESH_ROOT"
+          if ($LASTEXITCODE -ne 0) { throw 'TARGET_PREPARATION_FAILED' }
+      - name: START_QA real game E2E
+        shell: pwsh
+        run: |
+          & "$env:BUNDLED_PYTHON" -B -E -s './開発版/acceptance_targets/codegeas/run_target.py' --candidate-root "$env:FRESH_ROOT" --evidence (Join-Path $PWD '_real_game_evidence')
+          if ($LASTEXITCODE -ne 0) { throw "REAL_GAME_REQUIRED_NONPASS:$LASTEXITCODE" }
+      - name: Preserve all real-game evidence including non-PASS
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FullAutoQA-RealGame-Evidence-${{ github.run_id }}
+          path: |
+            _real_game_evidence/**
+            _real_game_fresh/RESULTS/**
+            _real_game_fresh/TARGET_PREPARATION.json
+            _candidate_evidence/**/*.json
+          if-no-files-found: warn
+          retention-days: 30
