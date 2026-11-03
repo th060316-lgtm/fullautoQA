@@ -204,16 +204,43 @@ class StorageInspector:
         post_save: StorageSnapshot,
         post_mutation: StorageSnapshot,
         post_load: StorageSnapshot,
+        *, contract: str = "disk_restore", state_mutated: bool = False,
+        state_restored: bool = False,
     ) -> dict:
         """Verify observable save -> mutation -> load restoration.
 
-        PASS requires all three facts:
+        The default disk_restore contract requires all three facts:
         1. save changed declared storage relative to pre-save;
         2. the declared storage was then observably changed before load;
         3. load restored declared storage exactly to the post-save snapshot.
 
-        This prevents "nothing changed, therefore load worked" false positives.
+        persisted_save instead requires a real save write, stable stored bytes,
+        and separately observed game-state mutation and restoration. Neither
+        contract infers a successful load from unchanged bytes alone.
         """
+        if contract not in ("disk_restore", "persisted_save"):
+            raise StorageQAError("UNKNOWN_STORAGE_CONTRACT:" + str(contract))
+        if any(snapshot.root.resolve() != self.root.resolve() for snapshot in
+               (pre_save,post_save,post_mutation,post_load)):
+            raise StorageQAError("STORAGE_SNAPSHOT_ROOT_MISMATCH")
+        if contract == "persisted_save":
+            save_diff = diff_snapshots(pre_save,post_save)
+            mutation_diff = diff_snapshots(post_save,post_mutation)
+            load_diff = diff_snapshots(post_save,post_load)
+            reasons = []
+            if not save_diff.changed:reasons.append("SAVE_NO_OBSERVABLE_EFFECT")
+            if not state_mutated:reasons.append("GAME_STATE_NOT_MUTATED_BEFORE_LOAD")
+            if not state_restored:reasons.append("GAME_STATE_RESTORE_UNVERIFIED")
+            if mutation_diff.changed or load_diff.changed:reasons.append("PERSISTED_SAVE_CHANGED")
+            return {
+                "status": "PASS" if not reasons else "FAIL" if (not save_diff.changed or mutation_diff.changed or load_diff.changed) else "INCONCLUSIVE",
+                "reason_code": reasons[0] if reasons else "PERSISTED_SAVE_AND_GAME_RESTORE_VERIFIED",
+                "reasons": reasons, "contract": contract,
+                "scope": "same-process stored-save persistence and observed game-state restoration; no restart/migration claim",
+                "save_diff": save_diff.to_dict(), "mutation_diff": mutation_diff.to_dict(),
+                "load_diff": load_diff.to_dict(), "state_mutated": bool(state_mutated),
+                "state_restored": bool(state_restored),
+            }
         save_diff = diff_snapshots(pre_save, post_save)
         mutation_diff = diff_snapshots(post_save, post_mutation)
         load_diff = diff_snapshots(post_save, post_load)

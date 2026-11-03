@@ -54,8 +54,9 @@ HUMAN_TEST_CLAIM_REVOKED = 'HUMAN_TEST_CLAIM_REVOKED'
 
 class CoordinatorContext:
     def __init__(self, root=None, results=(), identity=None, contract=None, settings=None,
-                 extras=None):
+                 extras=None, evidence_root=None):
         self.root = Path(root) if root is not None else Path('.')
+        self.evidence_root = Path(evidence_root) if evidence_root is not None else self.root
         self.results = list(results)
         self.identity = identity
         self.contract = contract
@@ -392,7 +393,7 @@ def execution_finalizer(root, prepared, settings=None, run_mode='target'):
         # that Phase-1 verification is about to attach to the result model.
         evaluation_extras['target_identity'] = identities
         evaluation_extras['run_mode'] = run_mode
-        context = CoordinatorContext(root=root, results=rows, settings=settings,
+        context = CoordinatorContext(root=root, evidence_root=e.root, results=rows, settings=settings,
                                      extras=evaluation_extras)
         summary = coordinator.evaluate(context)
         production = summary.domains[0]

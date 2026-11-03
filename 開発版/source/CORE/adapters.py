@@ -11,19 +11,24 @@ class Adapter:
     def observe(self):
         s={};status={'internal_state':'NOT_CONFIGURED'}
         if self.profile.get('bridge'):
-            path=inside(self.context['work'],self.profile['bridge'])
             timeout=float(self.profile.get('observation_read_timeout',.2))
             if not math.isfinite(timeout) or not 0<timeout<=5:raise ValueError('OBSERVATION_READ_TIMEOUT_INVALID')
             deadline=time.monotonic()+timeout;attempts=0
             while True:
                 attempts+=1
                 try:
+                    # Resolve inside the retry: Windows replacement can briefly
+                    # make GetFinalPathNameByHandle expose a different alias.
+                    path=inside(self.context['work'],self.profile['bridge'])
                     s=read_json(path)
                     if not isinstance(s,dict):raise ValueError('OBSERVATION_BRIDGE_NOT_OBJECT')
                     status={'internal_state':'FRESH_READ','attempts':attempts,'source':self.profile['bridge']}
                     break
-                except (OSError,json.JSONDecodeError) as ex:
-                    if time.monotonic()>=deadline:raise OSError('OBSERVATION_BRIDGE_UNAVAILABLE:'+self.profile['bridge']) from ex
+                except (OSError,json.JSONDecodeError,ValueError) as ex:
+                    if isinstance(ex,ValueError) and not isinstance(ex,json.JSONDecodeError) and not str(ex).startswith('PATH_ESCAPE:'):raise
+                    if time.monotonic()>=deadline:
+                        if isinstance(ex,ValueError) and str(ex).startswith('PATH_ESCAPE:'):raise
+                        raise OSError('OBSERVATION_BRIDGE_UNAVAILABLE:'+self.profile['bridge']) from ex
                     time.sleep(min(.005,max(0,deadline-time.monotonic())))
         return {'observation_status':status,'internal_state':s,'numeric_state':{k:v for k,v in s.items() if isinstance(v,(int,float))},'scene':s.get('scene'),'menu':s.get('menu'),'object':s.get('objects'),'grid':s.get('grid'),'position':s.get('position'),'timer':s.get('timer'),'ocr':None,'audio':None,'window':self.desktop.state()}
     def act(self,name):

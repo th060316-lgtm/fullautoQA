@@ -208,6 +208,30 @@ class ReadbackAttachmentTest(unittest.TestCase):
         domains = {domain['name']: domain['status'] for domain in data['headquarters']['domains']}
         self.assertEqual(set(domains), {'production', 'management', 'sales'})
 
+    def test_finalizer_reads_current_run_evidence_not_stale_package_root(self):
+        with tempfile.TemporaryDirectory() as package, tempfile.TemporaryDirectory() as run:
+            stale = management_bundle()
+            stale['measurements']['ram_mb'] = {'value': 99999, 'unit': 'mb'}
+            write(package, MANAGEMENT_EVIDENCE, stale)
+            write(run, MANAGEMENT_EVIDENCE, management_bundle())
+            write(run, SALES_EVIDENCE, sales_bundle())
+            attach = execution_finalizer(package, None, settings={'management_thresholds': THRESHOLDS})
+            data = {'results': []}
+            attach(FakeExecution(run), data)
+            readback = data['management_readback']
+            self.assertTrue(readback['evidence_present'])
+            self.assertNotEqual(readback['measurements']['ram_mb']['value'], 99999)
+            self.assertTrue(data['sales_readback']['evidence_present'])
+
+    def test_run_without_evidence_cannot_reuse_package_root_bundle(self):
+        with tempfile.TemporaryDirectory() as package, tempfile.TemporaryDirectory() as run:
+            write(package, MANAGEMENT_EVIDENCE, management_bundle())
+            write(package, SALES_EVIDENCE, sales_bundle())
+            data = {'results': []}
+            execution_finalizer(package, None)(FakeExecution(run), data)
+            self.assertFalse(data['management_readback']['evidence_present'])
+            self.assertFalse(data['sales_readback']['evidence_present'])
+
     def test_readbacks_are_attached_before_the_result_model_is_sealed(self):
         from common import write_json
         with tempfile.TemporaryDirectory() as tmp:

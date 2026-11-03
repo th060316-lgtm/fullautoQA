@@ -35,6 +35,12 @@ if any(c in app_name for c in '/\\:'):
 text = text.replace('[autoload]', '[autoload]\nFullAutoQAObserver="*res://qa_observer.gd"', 1)
 project.write_text(text, encoding='utf-8')
 shutil.copy2(here / 'observer.gd', dest / 'qa_observer.gd')
+shutil.copy2(here / 'save_observer.gd', dest / 'qa_save_observer.gd')
+scene = dest / 'scenes/Main.tscn'
+scene_text = scene.read_text(encoding='utf-8')
+if scene_text.count('path="res://save/SaveManager.gd"') != 1:
+    raise SystemExit('SAVE_OBSERVER_BINDING_AMBIGUOUS')
+scene.write_text(scene_text.replace('path="res://save/SaveManager.gd"', 'path="res://qa_save_observer.gd"', 1), encoding='utf-8')
 profile = json.loads((here / 'profile.json').read_text(encoding='utf-8'))
 profile['save']['file'] = 'isolated_user/APPDATA/Godot/app_userdata/' + app_name + '/saves/slot1.json'
 profile['storage']['locations'] = ['APPDATA/Godot/app_userdata/' + app_name + '/saves']
@@ -55,7 +61,7 @@ if missing:
     raise SystemExit('TARGET_CONTRACT_INCOMPLETE:' + ','.join(missing))
 (root / 'QA_TARGETS.json').write_text(json.dumps(target, indent=2), encoding='utf-8')
 proof = {'origin': meta, 'original_source_inventory': original_rows,
-         'instrumentation': {'read_only_observer': 'qa_observer.gd', 'autoload_added': 'FullAutoQAObserver'},
+         'instrumentation': {'read_only_observer': 'qa_observer.gd', 'autoload_added': 'FullAutoQAObserver', 'save_method_return_observer': 'qa_save_observer.gd'},
          'profile': profile, 'target_manifest': target,
          'product_acceptance': 'HOLD', 'human_test': 'NOT_RUN'}
 (root / 'TARGET_PREPARATION.json').write_text(json.dumps(proof, ensure_ascii=False, indent=2), encoding='utf-8')

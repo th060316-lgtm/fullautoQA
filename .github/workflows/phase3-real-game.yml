@@ -108,6 +108,8 @@ jobs:
       - name: Prepare selected game snapshot and data-only Profile
         shell: pwsh
         run: |
+          & "$env:BUNDLED_PYTHON" -B -E -s './開発版/acceptance_targets/codegeas/test_driver.py'
+          if ($LASTEXITCODE -ne 0) { throw 'ACCEPTANCE_DRIVER_REGRESSION_FAILED' }
           & "$env:BUNDLED_PYTHON" -B -E -s './開発版/acceptance_targets/codegeas/prepare_target.py' --candidate-root "$env:FRESH_ROOT"
           if ($LASTEXITCODE -ne 0) { throw 'TARGET_PREPARATION_FAILED' }
       - name: START_QA real game E2E
