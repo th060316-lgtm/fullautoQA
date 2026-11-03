@@ -45,6 +45,16 @@ function Find-CandidateRoot([string]$Extracted) {
 
 $SourceRoot=[IO.Path]::GetFullPath($SourceRoot)
 $OutputDir=[IO.Path]::GetFullPath($OutputDir)
+if ([IO.Path]::GetFileName($CandidateName) -ne $CandidateName -or [IO.Path]::GetExtension($CandidateName) -ne '.zip') { throw 'CANDIDATE_NAME_INVALID' }
+if ($PSCmdlet.ParameterSetName -eq 'Tree') {
+  $DonorExtracted=Find-CandidateRoot $DonorExtracted
+  $donorRoot=[IO.Path]::GetFullPath($DonorExtracted).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+  $outFull=[IO.Path]::GetFullPath($OutputDir).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+  if ($outFull.Equals($donorRoot,[StringComparison]::OrdinalIgnoreCase) -or
+      $outFull.StartsWith($donorRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) {
+    throw 'OUTPUT_INSIDE_DONOR_TREE'
+  }
+}
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 $stage=Join-Path $OutputDir ('.phase3-stage-'+[Guid]::NewGuid().ToString('N'))
 $fresh=Join-Path $OutputDir ('.phase3-fresh-'+[Guid]::NewGuid().ToString('N'))
@@ -61,7 +71,6 @@ try {
     [IO.Compression.ZipFile]::ExtractToDirectory($DonorArchive,$stage)
     $donorSha=Get-SHA256 $DonorArchive
   } else {
-    $DonorExtracted=Find-CandidateRoot $DonorExtracted
     Copy-Tree $DonorExtracted $stage
     $donorSha=$null
   }
@@ -109,7 +118,9 @@ try {
   [IO.Compression.ZipFile]::ExtractToDirectory($tmpZip,$fresh)
   $freshRoot=Find-CandidateRoot $fresh
   $freshPython=Join-Path $freshRoot 'RUNTIME\python\python.exe'
-  $freshIntegrity=Join-Path $freshRoot 'scripts\package_integrity.py'`n  & $freshPython '-B' '-E' '-s' $freshIntegrity --root $freshRoot --full-payload --require-fresh-marker
+  $freshIntegrity=Join-Path $freshRoot 'scripts\package_integrity.py'
+  if (-not (Test-Path -LiteralPath $freshIntegrity -PathType Leaf)) { throw 'FRESH_INTEGRITY_SCRIPT_MISSING' }
+  & $freshPython '-B' '-E' '-s' $freshIntegrity --root $freshRoot --full-payload --require-fresh-marker
   if ($LASTEXITCODE -ne 0) { throw ('FRESH_EXTRACTION_INTEGRITY_FAILED:'+ $LASTEXITCODE) }
 
   [IO.File]::Move($tmpZip,$output)

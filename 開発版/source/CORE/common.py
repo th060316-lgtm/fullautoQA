@@ -139,13 +139,14 @@ def archive_eligible(rel):
     rel=Path(rel)
     return rel.name!='RESULT_FOR_CHATGPT.zip' and 'WORK' not in rel.parts and 'video_frames' not in rel.parts
 
-def validate_result_zip(path,require_manifest=False):
+def validate_result_zip(path,require_manifest=False,expected_run_id=None):
     with zipfile.ZipFile(path) as z:
         names=z.namelist()
         if len(names)!=len(set(names)):raise OSError('DUPLICATE_ZIP_ENTRY')
         if z.testzip() is not None:raise OSError('RESULT_ZIP_CRC_FAILURE')
         if 'result.json' not in names:raise OSError('RESULT_JSON_MISSING')
         data=json.loads(z.read('result.json').decode('utf-8-sig'))
+        if expected_run_id is not None and str(data.get('run_id'))!=str(expected_run_id):raise OSError('RESULT_RUN_ID_MISMATCH')
         manifest=None
         if 'evidence_manifest.json' in names:
             manifest=json.loads(z.read('evidence_manifest.json').decode('utf-8-sig'))
