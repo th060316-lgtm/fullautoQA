@@ -123,6 +123,13 @@ class Phase3IntegratedTests(unittest.TestCase):
         self.assertIn('TOOL_PREPARED_FUNCTIONAL_PROBE_DEFERRED',src)
         self.assertNotIn('"FUNCTIONAL_PROBE_REQUIRED"',src)
 
+    def test_overlay_replaces_all_source_directories_except_runtime_payload_results(self):
+        overlay=(ROOT/'scripts/PHASE3_OVERLAY_REBUILD.ps1').read_text(encoding='utf-8')
+        self.assertIn("$preserveDirs=@('RUNTIME','PAYLOAD','RESULTS')",overlay)
+        self.assertIn("Get-ChildItem -LiteralPath $src -Directory",overlay)
+        self.assertIn("$regen=Join-Path $work 'scripts\\PHASE3_REGEN_MANIFEST.ps1'",overlay)
+        self.assertIn("$freshIntegrity=Join-Path $freshRoot 'scripts\\package_integrity.py'",overlay)
+
     def test_overlay_and_regen_contracts(self):
         overlay=(ROOT/'scripts/PHASE3_OVERLAY_REBUILD.ps1').read_text(encoding='utf-8')
         regen=(ROOT/'scripts/PHASE3_REGEN_MANIFEST.ps1').read_text(encoding='utf-8')
