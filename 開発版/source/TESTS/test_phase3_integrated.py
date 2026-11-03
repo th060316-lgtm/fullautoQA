@@ -103,6 +103,25 @@ class Phase3IntegratedTests(unittest.TestCase):
                                            run_mode='target',prepared=prepared)
             self.assertEqual(data['evidence_kind'],'unknown')
 
+    def test_management_integrity_not_claimed_when_pass_evidence_is_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            (root/'core_check.json').write_text('{}',encoding='utf-8')
+            sess=SimpleNamespace(p={'game_id':'g'},metrics=[])
+            prepared={'identity_snapshot':json.dumps({'T':{
+                'certifies_real_target':True,'generation':3,'fingerprint':'abc'}})}
+            results=[
+                {'test_case':'preflight.core','status':'PASS','evidence':['core_check.json'],'gate':'REQUIRED'},
+                {'test_case':'g.s.launch','status':'PASS','evidence':[],'gate':'REQUIRED'},
+            ]
+            ev=Evidence(root,'run-phase3')
+            data=build_management_evidence(e=ev,sessions=[sess],results=results,
+                                           run_mode='target',prepared=prepared)
+            self.assertNotIn('integrity',data)
+            audit=json.loads((root/'phase3_preseal_integrity.json').read_text(encoding='utf-8'))
+            self.assertFalse(audit['ok'])
+            self.assertTrue(any(x.startswith('PASS_WITHOUT_EVIDENCE:g.s.launch') for x in audit['problems']))
+
     def test_sales_recording_is_observation_not_positive_review(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td);(root/'FULL_EVIDENCE').mkdir()
