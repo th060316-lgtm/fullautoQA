@@ -53,7 +53,9 @@ def finalize_run(e,data,cleanup=(),latest_path=None,lock=None,execution=None):
             # Fresh Evidence has the same scanner; a persistent scanner failure goes to diagnostic packaging below.
             try:report(root,data);Evidence(root,e.run_id).manifest()
             except Exception as ex:problem('minimal_manifest',ex)
-        try:published=result_zip(root,require_manifest=True)
+        try:
+            published=result_zip(root,require_manifest=True)
+            validate_result_zip(published,require_manifest=True)  # re-open final path before publication pointer
         except Exception as ex:
             problem('archive',ex);refresh();failure=repr(ex)
             try:report(root,data)
