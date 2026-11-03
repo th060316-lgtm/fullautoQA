@@ -1,0 +1,144 @@
+name: Phase 3 Windows Candidate Build
+
+on:
+  push:
+    branches:
+      - work/phase3-windows-candidate-build-20261103
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase3-windows-candidate-build
+  cancel-in-progress: false
+
+jobs:
+  build-candidate:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            開発版/complete_v033
+            開発版/source
+          sparse-checkout-cone-mode: false
+
+      - name: Show disk capacity
+        shell: pwsh
+        run: Get-PSDrive -PSProvider FileSystem | Format-Table -AutoSize
+
+      - name: JOIN preserved v0.3.3 donor
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $complete = Resolve-Path "開発版/complete_v033"
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $complete "JOIN_COMPLETE.ps1")
+          if ($LASTEXITCODE -ne 0) { throw "DONOR_JOIN_FAILED:$LASTEXITCODE" }
+          $manifest = Get-Content -LiteralPath (Join-Path $complete "manifest.json") -Raw -Encoding UTF8 | ConvertFrom-Json
+          $donor = Join-Path $complete ([string]$manifest.file)
+          if (-not (Test-Path -LiteralPath $donor -PathType Leaf)) { throw "DONOR_NOT_CREATED" }
+          $actualSize = (Get-Item -LiteralPath $donor).Length
+          $actualHash = (Get-FileHash -LiteralPath $donor -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualSize -ne [long]$manifest.size) { throw "DONOR_SIZE_MISMATCH" }
+          if ($actualHash -ne ([string]$manifest.sha256).ToLowerInvariant()) { throw "DONOR_SHA_MISMATCH" }
+          "DONOR=$donor" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "JOIN_STATUS=PASS" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "JOIN PASS size=$actualSize sha256=$actualHash"
+
+      - name: Build Phase 3 complete Candidate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $source = Resolve-Path "開発版/source"
+          $out = Join-Path $PWD "_phase3_build"
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          $script = Join-Path $source "scripts/PHASE3_OVERLAY_REBUILD.ps1"
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -DonorArchive "$env:DONOR" -SourceRoot "$source" -OutputDir "$out" -SourceBaseline "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
+          if ($LASTEXITCODE -ne 0) { throw "PHASE3_CANDIDATE_BUILD_FAILED:$LASTEXITCODE" }
+          $candidate = Join-Path $out "FullAutoQA_PHASE3_CANDIDATE.zip"
+          $identity = Join-Path $out "PHASE3_CANDIDATE_IDENTITY.json"
+          $report = Join-Path $out "PHASE3_CANDIDATE_BUILD_REPORT.json"
+          foreach ($p in @($candidate,$identity,$report)) { if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { throw "BUILD_OUTPUT_MISSING:$p" } }
+          $id = Get-Content -LiteralPath $identity -Raw -Encoding UTF8 | ConvertFrom-Json
+          $actualSize = (Get-Item -LiteralPath $candidate).Length
+          $actualHash = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualSize -ne [long]$id.candidate_size) { throw "CANDIDATE_SIZE_RECORD_MISMATCH" }
+          if ($actualHash -ne ([string]$id.candidate_sha256).ToLowerInvariant()) { throw "CANDIDATE_SHA_RECORD_MISMATCH" }
+          "BUILD_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CANDIDATE=$candidate" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CANDIDATE_SIZE=$actualSize" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CANDIDATE_SHA256=$actualHash" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "PHASE3 BUILD PASS size=$actualSize sha256=$actualHash"
+
+      - name: Fresh extraction package verification
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $fresh = Join-Path $PWD "_phase3_fresh_acceptance"
+          if (Test-Path -LiteralPath $fresh) { Remove-Item -LiteralPath $fresh -Recurse -Force }
+          Expand-Archive -LiteralPath "$env:CANDIDATE" -DestinationPath $fresh -Force
+          $python = Join-Path $fresh "RUNTIME/python/python.exe"
+          $validator = Join-Path $fresh "scripts/package_integrity.py"
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw "FRESH_PYTHON_MISSING" }
+          if (-not (Test-Path -LiteralPath $validator -PathType Leaf)) { throw "FRESH_VALIDATOR_MISSING" }
+          & $python -B -E -s $validator --root $fresh --full-payload --require-fresh-marker --json-out (Join-Path "$env:BUILD_OUT" "FRESH_EXTRACTION_INTEGRITY.json")
+          if ($LASTEXITCODE -ne 0) { throw "FRESH_EXTRACTION_INTEGRITY_FAILED:$LASTEXITCODE" }
+          "FRESH_ROOT=$fresh" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "FRESH EXTRACTION INTEGRITY PASS"
+
+      - name: Hosted Windows START_QA fixture probe
+        id: fixture_probe
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          Push-Location "$env:FRESH_ROOT"
+          try { & ".\START_QA.cmd" -SelfTest; $code = $LASTEXITCODE } finally { Pop-Location }
+          "exit_code=$code" | Out-File -FilePath (Join-Path "$env:BUILD_OUT" "HOSTED_WINDOWS_FIXTURE_PROBE.txt") -Encoding utf8
+          if ($code -ne 0) { throw "HOSTED_FIXTURE_PROBE_NONZERO:$code" }
+
+      - name: Write Windows acceptance metadata
+        if: always()
+        shell: pwsh
+        run: |
+          $probe = "${{ steps.fixture_probe.outcome }}"
+          $payload = [ordered]@{
+            source_main_sha = "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
+            donor_join = "$env:JOIN_STATUS"
+            candidate_size = "$env:CANDIDATE_SIZE"
+            candidate_sha256 = "$env:CANDIDATE_SHA256"
+            candidate_build = $(if ($env:CANDIDATE_SHA256) { "PASS" } else { "NOT_RUN_OR_FAIL" })
+            fresh_extraction_integrity = $(if (Test-Path -LiteralPath (Join-Path "$env:BUILD_OUT" "FRESH_EXTRACTION_INTEGRITY.json")) { "PASS" } else { "NOT_RUN_OR_FAIL" })
+            hosted_windows_fixture_probe = $probe
+            hosted_probe_is_real_game_acceptance = $false
+            real_game_e2e = "NOT_RUN"
+            human_test = "NOT_RUN"
+            product_acceptance = "HOLD"
+            stable = "HOLD"
+          }
+          $payload | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path "$env:BUILD_OUT" "WINDOWS_PHASE3_ACCEPTANCE.json") -Encoding UTF8
+
+      - name: Upload Phase 3 Candidate
+        if: success() || steps.fixture_probe.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
+          path: ${{ env.CANDIDATE }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+      - name: Upload build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FullAutoQA-Phase3-Build-Evidence-${{ github.sha }}
+          path: |
+            ${{ env.BUILD_OUT }}/PHASE3_CANDIDATE_IDENTITY.json
+            ${{ env.BUILD_OUT }}/PHASE3_CANDIDATE_BUILD_REPORT.json
+            ${{ env.BUILD_OUT }}/FRESH_EXTRACTION_INTEGRITY.json
+            ${{ env.BUILD_OUT }}/HOSTED_WINDOWS_FIXTURE_PROBE.txt
+            ${{ env.BUILD_OUT }}/WINDOWS_PHASE3_ACCEPTANCE.json
+          if-no-files-found: warn
+          retention-days: 30
