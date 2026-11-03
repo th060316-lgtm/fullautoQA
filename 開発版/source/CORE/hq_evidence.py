@@ -340,7 +340,7 @@ def collect_evidence(context, domain, candidate_files=(), scan_dirs=('evidence',
     configured = domain_settings.get('evidence_path') if isinstance(domain_settings, dict) else None
     if isinstance(configured, str) and configured.strip():
         files.insert(0, configured.strip())
-    root = getattr(context, 'root', None) or '.'
+    root = getattr(context, 'evidence_root', None) or getattr(context, 'root', None) or '.'
     for location, bundle in _file_bundles(root, domain, files, scan_dirs):
         path = safe_join(root, location.split(':', 1)[1])
         record = {'kind': 'file', 'location': location, 'present': bundle is not None,

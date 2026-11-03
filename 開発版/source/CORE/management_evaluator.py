@@ -252,7 +252,7 @@ def _frozen_identity(context):
         present, value = lookup(extras, ['target_identity', 'identities'])
         if present and isinstance(value, dict) and value:
             return value, 'context.extras.target_identity'
-    root = Path(getattr(context, 'root', None) or '.')
+    root = Path(getattr(context, 'evidence_root', None) or getattr(context, 'root', None) or '.')
     path = safe_join(root, 'execution_frozen.json')
     if path is not None and path.is_file():
         from hq_evidence import read_json_safe
