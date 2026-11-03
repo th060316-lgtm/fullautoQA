@@ -118,6 +118,11 @@ class Phase3IntegratedTests(unittest.TestCase):
             errs=check_core_manifest(root)
             self.assertIn('CORE_MANIFEST_REQUIRED_FIELD_MISSING:capabilities',errs)
 
+    def test_deferred_tool_preparation_is_a_preparation_pass(self):
+        src=(ROOT/'CORE/tools.py').read_text(encoding='utf-8')
+        self.assertIn('TOOL_PREPARED_FUNCTIONAL_PROBE_DEFERRED',src)
+        self.assertNotIn('"FUNCTIONAL_PROBE_REQUIRED"',src)
+
     def test_overlay_and_regen_contracts(self):
         overlay=(ROOT/'scripts/PHASE3_OVERLAY_REBUILD.ps1').read_text(encoding='utf-8')
         regen=(ROOT/'scripts/PHASE3_REGEN_MANIFEST.ps1').read_text(encoding='utf-8')
