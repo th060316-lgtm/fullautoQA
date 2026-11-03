@@ -5,7 +5,6 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/phase3-real-game.yml'
-      - '開発版/acceptance_targets/**'
 permissions:
   contents: read
   actions: read
@@ -14,6 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   real-game:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: windows-latest
     timeout-minutes: 90
     steps:
@@ -129,3 +129,4 @@ jobs:
             _candidate_evidence/**/*.json
           if-no-files-found: warn
           retention-days: 30
+

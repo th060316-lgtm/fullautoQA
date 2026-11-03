@@ -6,6 +6,7 @@ on:
     paths:
       - '開発版/acceptance_targets/politicstrasport/**'
       - '.github/workflows/target-a-preflight.yml'
+      - '.gitattributes'
 permissions:
   contents: read
   actions: read
