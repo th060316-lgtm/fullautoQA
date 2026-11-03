@@ -55,7 +55,7 @@ def finalize_run(e,data,cleanup=(),latest_path=None,lock=None,execution=None):
             except Exception as ex:problem('minimal_manifest',ex)
         try:
             published=result_zip(root,require_manifest=True)
-            validate_result_zip(published,require_manifest=True)  # re-open final path before publication pointer
+            validate_result_zip(published,require_manifest=True,expected_run_id=e.run_id)  # re-open final path and bind it to this Run
         except Exception as ex:
             problem('archive',ex);refresh();failure=repr(ex)
             try:report(root,data)
