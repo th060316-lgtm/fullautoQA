@@ -1,0 +1,65 @@
+name: Source overlay Windows selftest
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '開発版/source/**'
+      - '.github/workflows/source-overlay-selftest.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: source-overlay-selftest-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    runs-on: windows-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41636608324
+          name: FullAutoQA-Phase3-Candidate-93cc5ce54d30a9abca6d886ce451bc6b578fc468
+          path: _old_candidate
+      - name: Reconstruct complete current Source
+        shell: pwsh
+        run: |
+          $source = & './開発版/source/scripts/PREPARE_SOURCE.ps1' -RepositoryRoot $PWD -Destination (Join-Path $PWD '_source')
+          "SOURCE_ROOT=$source" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Create diagnostic overlay without rebuilding a Candidate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $zip=Join-Path $PWD '_old_candidate/FullAutoQA_PHASE3_CANDIDATE.zip'
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne '6b2190c79a14f55ef17b4ba1be14e98567a2fa4ade67a1a5d7758c5f59b46b1d') { throw 'DONOR_CANDIDATE_IDENTITY' }
+          $fresh=Join-Path $PWD '_diagnostic'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::ExtractToDirectory($zip,$fresh)
+          $python=Join-Path $fresh 'RUNTIME/python/python.exe'
+          & $python -B -E -s (Join-Path $fresh 'scripts/package_integrity.py') --root $fresh --full-payload --require-fresh-marker
+          if ($LASTEXITCODE -ne 0) { throw 'PRISTINE_PACKAGE_INVALID' }
+          Get-ChildItem $env:SOURCE_ROOT -Force | Where-Object { $_.Name -notin @('RUNTIME','PAYLOAD','RESULTS','core_manifest.json','package_manifest.json') } | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $fresh -Force -Recurse }
+          & (Join-Path $fresh 'scripts/PHASE3_REGEN_MANIFEST.ps1') -Tree $fresh
+          if ($LASTEXITCODE -ne 0) { throw 'CORE_MANIFEST_FAILED' }
+          "FRESH_ROOT=$fresh" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          '{"scope":"SOURCE_OVERLAY_DIAGNOSTIC_NOT_FINAL_CANDIDATE","old_candidate_sha256":"6b2190c79a14f55ef17b4ba1be14e98567a2fa4ade67a1a5d7758c5f59b46b1d"}' | Set-Content DIAGNOSTIC_SCOPE.json
+      - name: START_QA full selftest
+        shell: pwsh
+        run: |
+          Push-Location $env:FRESH_ROOT
+          try { & cmd.exe /d /c 'START_QA.cmd -SelfTest' 2>&1 | Tee-Object (Join-Path $env:GITHUB_WORKSPACE 'SELFTEST.log'); $code=$LASTEXITCODE } finally { Pop-Location }
+          "$code" | Set-Content SELFTEST_EXIT.txt
+          if ($code -ne 0) { throw "SELFTEST_REQUIRED_NONPASS:$code" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Source-Overlay-Selftest-${{ github.run_id }}
+          path: |
+            DIAGNOSTIC_SCOPE.json
+            SELFTEST*.*
+            _diagnostic/RESULTS/**
+          retention-days: 14
+

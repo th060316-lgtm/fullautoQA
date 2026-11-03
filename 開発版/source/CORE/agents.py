@@ -260,14 +260,24 @@ class StallDetector:
 
     def observe(self, now, state_sig, screen_sig, action, waiting=False, reaction=None):
         self.samples.append((now, state_sig, screen_sig, action, reaction))
-        recent = [x for x in self.samples if now - x[0] <= self.seconds]
-        if waiting or len(recent) < 4 or recent[-1][0] - recent[0][0] < self.seconds * 0.9:
+        if waiting:
+            self.samples.clear()
             return None
-        state_static = len({x[1] for x in recent}) == 1
-        screen_static = all(x[2] is not None for x in recent) and len({x[2] for x in recent}) == 1
-        attempts = len({x[3] for x in recent if x[3]}) >= 2
-        reaction_available = all(x[4] is not None for x in recent)
-        no_reaction = reaction_available and len({x[4] for x in recent}) == 1
-        if state_static and attempts and (no_reaction if reaction_available else screen_static):
+        # Preserve the continuous no-progress interval even when capture/input
+        # overhead makes samples farther apart than the configured timeout.
+        # Four real observations and two distinct attempted actions remain required.
+        segment = []
+        for sample in reversed(self.samples):
+            stable = sample[1] == state_sig
+            if reaction is not None:
+                stable = stable and sample[4] == reaction
+            else:
+                stable = stable and screen_sig is not None and sample[2] == screen_sig
+            if not stable:
+                break
+            segment.append(sample)
+        if len(segment) < 4 or now - segment[-1][0] < self.seconds:
+            return None
+        if len({x[3] for x in segment if x[3]}) >= 2:
             return "SOFTLOCK"
         return None

@@ -252,6 +252,14 @@ class Session:
                 name=case+'_migration.json';write_json(self.e.root/name,{'state':state,'baseline':baseline,'checks':checks});self.verdict(case+'.migration','PASS' if ok else 'FAIL' if checks else 'INCONCLUSIVE','MIGRATION_RESTORED' if ok else 'MIGRATION_UNVERIFIED',[name])
             finally:file.write_bytes(original)
         else:self.verdict(case+'.save_migration','NOT_RUN','BASELINE_SAVE_NOT_PROVIDED')
+    def crash_observed(self,p,case,history):
+        code=p.poll()
+        if code is None:return False
+        shot,_=self.shot(case,'crash');name=case+'_crash.json'
+        write_json(self.e.root/name,{'exit_code':code,'unexpected':True,'action_sequence':list(history)})
+        self.verdict(case+'.crash','FAIL','CRASH',[name,case+'_stderr.log']+([shot] if shot else []),severity='CRITICAL')
+        return True
+
     def run_scenario(self,s,seed,replay=None):
         case=self.p['game_id']+'.'+s['id'];work=self.copy_game(case);agent=Agent(self.p,s,seed);self.coverage['agents'].add(s['agent']);self.coverage['scenarios'].add(case)
         write_json(self.e.root/'journal.json',{'run_id':self.e.run_id,'current_profile':self.p['game_id'],'scenario':s['id'],'seed':seed,'state':'running','resume_policy':'restart_current_scenario_from_pristine_copy'})
@@ -280,7 +288,13 @@ class Session:
                 if not obs['window']['exists']:
                     wins=self.desktop.windows(child_pids(p.pid))
                     if wins:self.desktop.hwnd=wins[0][0]
-                    else:self.verdict(case+'.window','INCONCLUSIVE','WINDOW_DISAPPEARED',shots);break
+                    else:
+                        # A window can disappear just before the process exit is
+                        # observable. Never certify execution from the stale bridge.
+                        try:p.wait(timeout=.5)
+                        except subprocess.TimeoutExpired:pass
+                        if self.crash_observed(p,case,agent.history):return agent.export(),list(observed)
+                        self.verdict(case+'.window','INCONCLUSIVE','WINDOW_DISAPPEARED',shots);break
                 if not obs['window'].get('focused'):self.desktop.focus();self.e.event('recovery',case,method='refocus')
                 for error in self.p.get('error_states',[]):
                     if condition(state,error):
@@ -321,6 +335,7 @@ class Session:
                 if screen_after is not None:features=screen_after
                 if not s.get('soak'):self.transitions.append(after)
                 self.coverage['actions'].add(action);self.e.event('action',case,agent=agent.mode,action=action,input=self.p['actions'][action].get('inputs'),target=self.p['actions'][action].get('target'),reason='replay' if replay is not None else s['agent'],result={'changed':agent.signature(before)!=agent.signature(after),'response_delay_upper_bound_seconds':time.monotonic()-tick},seed=seed)
+            if self.crash_observed(p,case,agent.history):return agent.export(),list(observed)
             if goal and not goal_reached:
                 # Observe once more: the final budgeted action may itself complete the goal.
                 final=a.observe()['internal_state']
@@ -617,4 +632,5 @@ def main():
                 print('QA COMPLETE\nOverall Result: '+data['overall']+'\nResult ZIP Path: '+str(published.get('result_zip') or 'NOT_CREATED')+'\nResult Folder: '+str(out))
     return 0 if data['overall']=='PASS' and published.get('zip_created') else 2
 if __name__=='__main__':raise SystemExit(main())
+
 
