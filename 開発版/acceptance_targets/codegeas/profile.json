@@ -1,7 +1,7 @@
 {
   "game_id": "codegeas_development",
   "game_version": "b5a0d2207a77854be5187a0b00fc2d234b0745b8",
-  "profile_version": "1.1-probe",
+  "profile_version": "1.2-probe",
   "schema_version": 1,
   "prototype_type": "playable",
   "qa_role": "target",
@@ -45,6 +45,10 @@
           "kind": "hold",
           "key": "D",
           "duration": 0.25
+        },
+        {
+          "kind": "wait",
+          "duration": 0.4
         }
       ]
     },
@@ -54,6 +58,10 @@
           "kind": "hold",
           "key": "S",
           "duration": 0.25
+        },
+        {
+          "kind": "wait",
+          "duration": 0.4
         }
       ]
     },
@@ -63,6 +71,10 @@
           "kind": "hold",
           "key": "A",
           "duration": 0.25
+        },
+        {
+          "kind": "wait",
+          "duration": 0.4
         }
       ]
     },
@@ -72,6 +84,10 @@
           "kind": "hold",
           "key": "W",
           "duration": 0.25
+        },
+        {
+          "kind": "wait",
+          "duration": 0.4
         }
       ]
     },

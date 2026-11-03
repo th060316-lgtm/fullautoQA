@@ -29,3 +29,14 @@ class BridgeObservationTests(unittest.TestCase):
         value=self.adapter.observe()
         self.assertEqual(value['internal_state'],{})
         self.assertEqual(value['observation_status']['internal_state'],'NOT_CONFIGURED')
+
+    def test_transient_resolution_failure_retries_before_read(self):
+        with patch('adapters.inside',side_effect=[ValueError('PATH_ESCAPE: state.json'),self.root/'state.json']),patch('adapters.read_json',return_value={'x':2}):
+            result=self.adapter.observe()
+        self.assertEqual(result['observation_status']['attempts'],2)
+        self.assertEqual(result['internal_state'],{'x':2})
+
+    def test_actual_escape_still_fails_closed(self):
+        self.adapter.profile['bridge']='../outside.json'
+        with self.assertRaisesRegex(ValueError,'PATH_ESCAPE'):
+            self.adapter.observe()

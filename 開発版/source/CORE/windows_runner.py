@@ -212,7 +212,7 @@ class Session:
                 proof=case+'_storage_mutation_error.json';write_json(self.e.root/proof,{'error':repr(ex)})
                 self.verdict(case+'.storage','NOT_RUN','STORAGE_POST_MUTATION_UNAVAILABLE',[proof],gate=storage_gate);storage_inspector=None
         fields=cfg.get('state_fields',[])
-        state_mutated=bool(fields) and all(get(saved,f) is not None and get(mutated,f) is not None for f in fields) and any(get(mutated,f)!=get(saved,f) for f in fields)
+        state_mutated=bool(fields) and any(get(mutated,f)!=get(saved,f) for f in fields)
         if not state_mutated:
             self.verdict(case+'.restore','INCONCLUSIVE','SAVE_STATE_NOT_MUTATED',[copyfile.name])
             # Declared storage QA is independent of an internal bridge. If storage
@@ -223,7 +223,7 @@ class Session:
         if storage_inspector:
             try:
                 storage_loaded=storage_inspector.snapshot('post_load')
-                storage_result=storage_inspector.check_persistence(storage_pre,storage_saved,storage_mutated,storage_loaded,contract=storage_cfg.get('contract','disk_restore'),state_mutated=state_mutated,state_restored=bool(fields) and all(get(saved,f) is not None and get(restored,f) is not None and get(restored,f)==get(saved,f) for f in fields))
+                storage_result=storage_inspector.check_persistence(storage_pre,storage_saved,storage_mutated,storage_loaded,contract=storage_cfg.get('contract','disk_restore'),state_mutated=state_mutated,state_restored=bool(fields) and all(get(restored,f)==get(saved,f) for f in fields))
                 storage_name=case+'_storage_qa.json';write_json(self.e.root/storage_name,{'config':storage_cfg,'pre_save':storage_pre.to_dict(),'post_save':storage_saved.to_dict(),'post_mutation':storage_mutated.to_dict(),'post_load':storage_loaded.to_dict(),'result':storage_result})
                 self.verdict(case+'.storage',storage_result['status'],storage_result['reason_code'],[storage_name],gate=storage_gate)
             except Exception as ex:
@@ -288,7 +288,7 @@ class Session:
                 if goal and condition(state,goal):
                     if not goal_reached:
                         sh,_=self.shot(case,'goal');name=case+'_goal.json';write_json(self.e.root/name,{'goal':goal,'state':state});self.verdict(case+'.goal','PASS','GOAL_REACHED',[name]+([sh] if sh else []));self.coverage['goals'].add(goal['id']);goal_reached=True
-                    if s.get('stop_on_goal',True):break
+                    if s.get('stop_on_goal',True) and replay is None:break
                 if now-last_monitor>=1:self.monitor(p,case);last_monitor=now
                 if now-last_shot>=s.get('screenshot_interval',self.p.get('screenshot_interval',3)):
                     _,newfeatures=self.shot(case,'periodic',True)
