@@ -73,7 +73,10 @@ class Desktop:
         thread=U.GetWindowThreadProcessId(self.hwnd,None) if self.hwnd else 0
         scan=U.MapVirtualKeyExW(n,4,U.GetKeyboardLayout(thread))
         if not scan:raise OSError('KEY_SCAN_CODE_UNAVAILABLE:'+k)
-        flags=8 | (2 if up else 0) | (1 if scan & 0xff00 else 0)
+        # Navigation VKs identify extended keys even when the active layout's
+        # mapper returns only the low scan byte (otherwise RIGHT becomes NUMPAD6).
+        extended=bool(scan & 0xff00) or n in (0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x2d,0x2e,0x5b,0x5c,0xa3,0xa5)
+        flags=8 | (2 if up else 0) | (1 if extended else 0)
         i=INPUT(type=1);i.ki=KEYBDINPUT(0,scan & 0xff,flags,0,0);self.send(i)
         if up:self.held.discard(k)
         else:self.held.add(k)
