@@ -1,0 +1,69 @@
+name: Preserve existing Candidate chunks
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/preserve-candidate-chunks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  preserve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41636608324
+          name: FullAutoQA-Phase3-Candidate-93cc5ce54d30a9abca6d886ce451bc6b578fc468
+          path: original
+      - name: Validate existing bytes and split without rebuilding
+        shell: python
+        run: |
+          import hashlib,json,pathlib,zipfile
+          p=pathlib.Path('original/FullAutoQA_PHASE3_CANDIDATE.zip')
+          expected='6b2190c79a14f55ef17b4ba1be14e98567a2fa4ade67a1a5d7758c5f59b46b1d'
+          assert p.stat().st_size==1021458648
+          assert hashlib.file_digest(p.open('rb'),'sha256').hexdigest()==expected
+          with zipfile.ZipFile(p) as z: assert z.testzip() is None
+          root=pathlib.Path('parts');root.mkdir()
+          rows=[]
+          with p.open('rb') as f:
+            for i in range(1,5):
+              b=f.read(256*1024*1024)
+              assert b
+              name=f'FullAutoQA_PHASE3_CANDIDATE.zip.part{i:03d}'
+              (root/name).write_bytes(b)
+              rows.append(dict(path=name,size=len(b),sha256=hashlib.sha256(b).hexdigest()))
+            assert not f.read(1)
+          (root/'CANDIDATE_PARTS.json').write_text(json.dumps(dict(schema_version=1,filename=p.name,size=p.stat().st_size,sha256=expected,parts=rows,source_main='1423c3c7bdca58f9d5615b8a7c8fbd8d4a8b94f8',source_tree='28957620e5cda8750903b4458524bd8e8cbedc31',product_acceptance='HOLD',stable='HOLD'),indent=2))
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Candidate-Part001
+          path: parts/*.part001
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Candidate-Part002
+          path: parts/*.part002
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Candidate-Part003
+          path: parts/*.part003
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Candidate-Part004
+          path: parts/*.part004
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Candidate-Parts-Identity
+          path: parts/CANDIDATE_PARTS.json
+          retention-days: 90
