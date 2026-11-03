@@ -1,5 +1,5 @@
 """Native, per-process Windows automation. No driver, service or registry writes."""
-import os,time,ctypes as C,struct,subprocess
+import os,time,ctypes as C,struct,subprocess,re
 from ctypes import wintypes as W
 from pathlib import Path
 if os.name=='nt':
@@ -33,6 +33,7 @@ KEYS={'ENTER':13,'ESC':27,'SPACE':32,'TAB':9,'SHIFT':16,'CTRL':17,'ALT':18,'LEFT
 def vk(s):
     s=s.upper()
     if s in KEYS:return KEYS[s]
+    if re.fullmatch(r'F(?:[1-9]|1[0-9]|2[0-4])',s):return 0x70+int(s[1:])-1
     if len(s)==1:return ord(s)
     raise ValueError('UNKNOWN_KEY:'+s)
 
@@ -173,3 +174,4 @@ class Job:
         if not K.AssignProcessToJobObject(self.handle,W.HANDLE(int(p._handle))):raise OSError('ASSIGN_PROCESS_JOB_FAILED')
     def close(self):
         if getattr(self,'handle',None):K.CloseHandle(self.handle);self.handle=None
+
