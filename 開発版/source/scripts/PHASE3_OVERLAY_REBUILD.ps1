@@ -109,7 +109,8 @@ try {
   New-Item -ItemType Directory -Path $fresh -Force | Out-Null
   [IO.Compression.ZipFile]::ExtractToDirectory($tmpZip,$fresh)
   $freshRoot=Find-CandidateRoot $fresh
-  & $python '-B' '-E' '-s' $integrity --root $freshRoot --full-payload --require-fresh-marker
+  $freshPython=Join-Path $freshRoot 'RUNTIME\python\python.exe'
+  & $freshPython '-B' '-E' '-s' $integrity --root $freshRoot --full-payload --require-fresh-marker
   if ($LASTEXITCODE -ne 0) { throw ('FRESH_EXTRACTION_INTEGRITY_FAILED:'+ $LASTEXITCODE) }
 
   [IO.File]::Move($tmpZip,$output)

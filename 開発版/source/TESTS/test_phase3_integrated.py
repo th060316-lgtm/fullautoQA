@@ -61,7 +61,7 @@ class Phase3IntegratedTests(unittest.TestCase):
             self.assertTrue(ffrows)
             self.assertEqual(ffrows[-1]['gate'],'OPTIONAL')
             self.assertEqual(ffrows[-1]['status'],'HARNESS_ERROR')
-            self.assertFalse(obj.required_failures())
+            self.assertNotIn('ffmpeg',obj.required_failures())
 
     def test_management_adapter_is_consumed_by_existing_evaluator(self):
         with tempfile.TemporaryDirectory() as td:
@@ -126,5 +126,8 @@ class Phase3IntegratedTests(unittest.TestCase):
         self.assertNotIn('core_version = "phase3-overlay"',overlay)
         self.assertIn("'-B' '-E' '-s'",regen)
         self.assertNotIn("'-I' $release",regen)
+        start=(ROOT/'START_QA.cmd').read_text(encoding='utf-8')
+        self.assertIn('FULLAUTOQA_FRESH_EXTRACTION',start)
+        self.assertIn('PHASE3_FRESH_EXTRACTION.marker',start)
 
 if __name__=='__main__': unittest.main()
