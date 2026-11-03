@@ -85,6 +85,36 @@ jobs:
         run: |
           & (Join-Path $env:CONTROLLER 'RUNTIME/python/python.exe') -B -E -s (Join-Path $env:CONTROLLER 'ACCEPTANCE/run_series.py') --candidate $env:CANDIDATE --expected-sha $env:CANDIDATE_SHA --output (Join-Path $PWD '_final_series')
           if ($LASTEXITCODE -ne 0) { throw "FINAL_SERIES_NONPASS:$LASTEXITCODE" }
+      - name: Export the accepted Candidate bytes without rebuilding
+        shell: pwsh
+        run: |
+          & (Join-Path $env:CONTROLLER 'RUNTIME/python/python.exe') -B -E -s (Join-Path $env:CONTROLLER 'ACCEPTANCE/split_candidate.py') --archive $env:CANDIDATE --identity (Join-Path $PWD '_local_acceptance_kit/FINAL_CANDIDATE_IDENTITY.json') --output (Join-Path $PWD '_candidate_parts')
+          if ($LASTEXITCODE -ne 0) { throw 'FINAL_CANDIDATE_EXPORT_FAILED' }
+          Copy-Item '_candidate_parts/FINAL_CANDIDATE_PARTS.json' '_local_acceptance_kit/'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Final-Candidate-Part001-${{ github.run_id }}
+          path: _candidate_parts/candidate.part001
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Final-Candidate-Part002-${{ github.run_id }}
+          path: _candidate_parts/candidate.part002
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Final-Candidate-Part003-${{ github.run_id }}
+          path: _candidate_parts/candidate.part003
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Final-Candidate-Part004-${{ github.run_id }}
+          path: _candidate_parts/candidate.part004
+          compression-level: 0
+          retention-days: 90
       - uses: actions/upload-artifact@v4
         if: always()
         with:
