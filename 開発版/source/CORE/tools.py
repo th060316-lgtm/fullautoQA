@@ -203,11 +203,13 @@ class Tools:
                 return
 
             if key in PROBE_DEFERRED:
+                # Payload/executable preparation is complete. Functional acceptance is
+                # a separate case (tool.<id>.functional / linkage) executed later.
                 self.results.append(
                     self.e.result(
-                        "tool." + key,
-                        "NOT_RUN",
-                        "FUNCTIONAL_PROBE_REQUIRED",
+                        "tool." + key + ".prepare",
+                        "PASS",
+                        "TOOL_PREPARED_FUNCTIONAL_PROBE_DEFERRED",
                         [evidence_path],
                         gate=gate,
                     )
