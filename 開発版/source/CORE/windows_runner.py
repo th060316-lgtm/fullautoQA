@@ -479,25 +479,45 @@ def main():
             for gate in ['input','screenshot','video','logic_e2e','playable_e2e','ui_e2e','narrative_e2e','procedural_e2e','obs','toolchain_10_of_10','fresh_extraction_e2e']:results.append(e.result(gate,'NOT_RUN','WINDOWS_DESKTOP_UNAVAILABLE'))
             return 2
         requirements=tool_requirements(read_json(root/'acceptance_manifest.json'))
-        tools=Tools(root,e);results+=tools.prepare()
-        for tool,reason in requirements.items():
-            if tool not in {t['id'] for t in tools.manifest}:results.append(e.result('required_tool.'+tool,'HARNESS_ERROR','REQUIRED_TOOL_NOT_DECLARED',product_reason=reason,gate='REQUIRED'))
+        selected_profile_paths=args.profile or selected_profiles(target_manifest)
+        tools=Tools(root,e);declared_tools={t['id'] for t in tools.manifest}
+        from target_intake import tool_ids_from_profile,optional_tool_ids_from_profile
+        profile_required=set();profile_optional=set()
+        for rel in selected_profile_paths:
+            try:
+                raw_profile=read_json(inside(root,rel))
+                profile_required.update(tool_ids_from_profile(raw_profile,declared_tools))
+                profile_optional.update(optional_tool_ids_from_profile(raw_profile,declared_tools))
+            except Exception:
+                pass  # the authoritative profile loader records the real profile failure later
+        required_tools=set(requirements)|profile_required|{'ffmpeg'}
+        if 'oculix' in required_tools:required_tools.add('java')
+        unknown_required=required_tools-declared_tools
+        for tool in sorted(unknown_required):
+            results.append(e.result('required_tool.'+tool,'HARNESS_ERROR','REQUIRED_TOOL_NOT_DECLARED',
+                product_reason=requirements.get(tool,'PROFILE_OR_HARNESS_REQUIRED'),gate='REQUIRED'))
+        known_required=required_tools & declared_tools
+        optional_tools=((profile_optional|{'ahk','java','oculix','c'}) & declared_tools)-known_required
+        results+=tools.prepare(required=known_required,optional=optional_tools)
         desktop=Desktop()
         # Dedicated self-test is a real GUI window. Input assertions are implemented in the fixture suite.
         for capability in ['ocr','audio','gamepad']:results.append(e.result('selftest.'+capability,'NOT_RUN','NO_VALIDATED_BACKEND'))
         ffmpeg=tools.get('ffmpeg');ffprobe=str(Path(ffmpeg).with_name('ffprobe.exe'))
         rec=select_recording({'desktop_ffmpeg':lambda:Recorder(ffmpeg,ffprobe,out/'FULL_EVIDENCE'/'screen.mp4'),'captured_frames':lambda:threaded_desktop_recorder(ffmpeg,ffprobe,out/'FULL_EVIDENCE'/'screen.mp4')},out,read_json(root/'acceptance_manifest.json').get('recording',{}).get('preferred_backends',['desktop_ffmpeg','captured_frames']))
-        results+=selftest(root,e,tools)
+        results+=selftest(root,e,tools,required_tools)
         write_json(out/'tool_versions.json',tools.manifest)
-        try:
-            obsfile=obs_probe(tools.get('obs'),out/'FULL_EVIDENCE');rel=Path(obsfile).relative_to(out).as_posix()
-            probe=subprocess.run([ffprobe,'-v','error','-show_streams','-show_format','-of','json',obsfile],capture_output=True,timeout=30)
-            (out/'obs_probe.json').write_bytes(probe.stdout);info=json.loads(probe.stdout or b'{}')
-            ok=probe.returncode==0 and float(info.get('format',{}).get('duration',0))>0 and any(x['codec_type']=='video' for x in info.get('streams',[]))
-            results.append(e.result('tool.obs.functional','PASS' if ok else 'HARNESS_ERROR','OBS_RECORDING_PROBED' if ok else 'OBS_RECORDING_INVALID',[rel,'obs_probe.json'],gate=tool_gate('obs',requirements)))
-        except Exception as ex:
-            write_json(out/'obs_error.json',{'error':repr(ex)});results.append(e.result('tool.obs.functional','HARNESS_ERROR','OBS_RECORDING_FAILED',['obs_error.json'],gate=tool_gate('obs',requirements)))
-        profiles=args.profile or selected_profiles(target_manifest)
+        if tools.is_available('obs'):
+            try:
+                obsfile=obs_probe(tools.get('obs'),out/'FULL_EVIDENCE');rel=Path(obsfile).relative_to(out).as_posix()
+                probe=subprocess.run([ffprobe,'-v','error','-show_streams','-show_format','-of','json',obsfile],capture_output=True,timeout=30)
+                (out/'obs_probe.json').write_bytes(probe.stdout);info=json.loads(probe.stdout or b'{}')
+                ok=probe.returncode==0 and float(info.get('format',{}).get('duration',0))>0 and any(x['codec_type']=='video' for x in info.get('streams',[]))
+                results.append(e.result('tool.obs.functional','PASS' if ok else 'HARNESS_ERROR','OBS_RECORDING_PROBED' if ok else 'OBS_RECORDING_INVALID',[rel,'obs_probe.json'],gate=tool_gate('obs',requirements)))
+            except Exception as ex:
+                write_json(out/'obs_error.json',{'error':repr(ex)});results.append(e.result('tool.obs.functional','HARNESS_ERROR','OBS_RECORDING_FAILED',['obs_error.json'],gate=tool_gate('obs',requirements)))
+        else:
+            results.append(e.result('tool.obs.functional','NOT_RUN','TOOL_NOT_PREPARED',gate=tool_gate('obs',requirements)))
+        profiles=selected_profile_paths
         baseline=baseline_source(root,target_manifest,args.baseline)
         imported=import_baseline(baseline,out) if baseline else None
         selected_ids=set()
@@ -584,6 +604,13 @@ def main():
             except Exception as ex:
                 finalization_issue(e,results,'plan.audit','PLAN_AUDIT_FAILURE',ex);data['completion_certified']=False
             finally:
+                try:
+                    from phase3_run_evidence import write_phase3_hq_evidence
+                    hq_files=write_phase3_hq_evidence(e=e,sessions=sessions,results=results,run_mode=run_mode,prepared=prepared)
+                    results.append(e.result('phase3.hq_evidence','PASS','PHASE3_HQ_EVIDENCE_WRITTEN',hq_files,gate='REQUIRED'))
+                except Exception as ex:
+                    name='phase3_hq_evidence_error.json';write_json(out/name,{'error':repr(ex)})
+                    results.append(e.result('phase3.hq_evidence','HARNESS_ERROR','PHASE3_HQ_EVIDENCE_FAILED',[name],gate='REQUIRED'))
                 data['overall']=overall(results)
                 published=finalize_run(e,data,cleanup=tuple(sess.stop for sess in sessions),latest_path=results_dir/'latest.json',lock=lock if lock_owned else None,execution=execution_finalizer(root,prepared,settings,run_mode))
                 data['overall']=published['overall']
