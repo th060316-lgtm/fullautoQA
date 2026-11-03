@@ -199,6 +199,10 @@ class Phase3IntegratedTests(unittest.TestCase):
         self.assertIn("@('TESTS','scripts','PROFILES','GAME','DEVELOPER')",overlay)
         self.assertIn('CANDIDATE_NAME_INVALID',overlay)
         self.assertIn('OUTPUT_INSIDE_DONOR_TREE',overlay)
+        self.assertLess(overlay.index("throw 'OUTPUT_INSIDE_DONOR_TREE'"),
+                        overlay.index("New-Item -ItemType Directory -Path $OutputDir"))
+        self.assertIn("$freshIntegrity=Join-Path $freshRoot 'scripts\\package_integrity.py'",overlay)
+        self.assertIn("'README.md','APPLY_REWORK.cmd','APPLY_REWORK.ps1'",overlay)
         self.assertNotIn('core_version = "phase3-overlay"',overlay)
         self.assertIn("'-B' '-E' '-s'",regen)
         self.assertNotIn("'-I' $release",regen)
