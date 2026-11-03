@@ -71,26 +71,25 @@ try {
   $src=$sourceCandidates | Where-Object { Test-Path -LiteralPath (Join-Path $_ 'CORE') -PathType Container } | Select-Object -First 1
   if (-not $src) { throw 'CURRENT_SOURCE_ROOT_NOT_FOUND' }
 
-  $dstCore=Join-Path $work 'CORE'
-  if (Test-Path -LiteralPath $dstCore) { Remove-Item -LiteralPath $dstCore -Recurse -Force }
-  Copy-Tree (Join-Path $src 'CORE') $dstCore
-
-  $rootFiles=@(
-    'START_QA.cmd','BOOTSTRAP.ps1','START_VALIDATION.sh','START_FUNCTIONAL.cmd','START_LOGIC.cmd',
-    'START_PLAYABLE.cmd','START_LONG_SOAK.cmd','START_SOAK_24H.cmd','START_SELFTEST.cmd',
-    'tool_manifest.json','python_manifest.json','capability_contract.json','git_runtime_manifest.json',
-    'acceptance_manifest.json'
-  )
+  # Overlay the complete current source tree while preserving only the donor's
+  # Runtime/Payload (and transient output areas). This prevents stale donor
+  # PROFILES/GAME/TESTS/scripts from surviving beside a new CORE.
+  $preserveDirs=@('RUNTIME','PAYLOAD','RESULTS')
   $overlaid=@()
-  foreach ($name in $rootFiles) {
-    $p=Join-Path $src $name
-    if (Test-Path -LiteralPath $p -PathType Leaf) {
-      Copy-Item -LiteralPath $p -Destination (Join-Path $work $name) -Force
-      $overlaid += $name
-    }
+  Get-ChildItem -LiteralPath $src -Directory -Force | ForEach-Object {
+    if ($preserveDirs -contains $_.Name) { return }
+    $dst=Join-Path $work $_.Name
+    if (Test-Path -LiteralPath $dst) { Remove-Item -LiteralPath $dst -Recurse -Force }
+    Copy-Tree $_.FullName $dst
+    $overlaid += ($_.Name + '/')
+  }
+  Get-ChildItem -LiteralPath $src -File -Force | ForEach-Object {
+    if ($_.Name -eq 'core_manifest.json') { return } # regenerated below
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $work $_.Name) -Force
+    $overlaid += $_.Name
   }
 
-  $regen=Join-Path $PSScriptRoot 'PHASE3_REGEN_MANIFEST.ps1'
+  $regen=Join-Path $work 'scripts\PHASE3_REGEN_MANIFEST.ps1'
   & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $regen -Tree $work
   if ($LASTEXITCODE -ne 0) { throw ('MANIFEST_REGEN_FAILED:'+ $LASTEXITCODE) }
 
@@ -98,7 +97,7 @@ try {
   Set-Content -LiteralPath (Join-Path $work 'PHASE3_FRESH_EXTRACTION.marker') -Value $markerId -Encoding ASCII
 
   $python=Join-Path $work 'RUNTIME\python\python.exe'
-  $integrity=Join-Path $PSScriptRoot 'package_integrity.py'
+  $integrity=Join-Path $work 'scripts\package_integrity.py'
   & $python '-B' '-E' '-s' $integrity --root $work --full-payload --require-fresh-marker
   if ($LASTEXITCODE -ne 0) { throw ('PACKAGE_INTEGRITY_FAILED:'+ $LASTEXITCODE) }
 
@@ -110,7 +109,7 @@ try {
   [IO.Compression.ZipFile]::ExtractToDirectory($tmpZip,$fresh)
   $freshRoot=Find-CandidateRoot $fresh
   $freshPython=Join-Path $freshRoot 'RUNTIME\python\python.exe'
-  & $freshPython '-B' '-E' '-s' $integrity --root $freshRoot --full-payload --require-fresh-marker
+  $freshIntegrity=Join-Path $freshRoot 'scripts\package_integrity.py'`n  & $freshPython '-B' '-E' '-s' $freshIntegrity --root $freshRoot --full-payload --require-fresh-marker
   if ($LASTEXITCODE -ne 0) { throw ('FRESH_EXTRACTION_INTEGRITY_FAILED:'+ $LASTEXITCODE) }
 
   [IO.File]::Move($tmpZip,$output)
