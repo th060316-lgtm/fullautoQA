@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'CORE'))
 sys.path.insert(0,str(ROOT/'scripts'))
 
-from common import Evidence
+from common import Evidence,validate_result_zip
 from target_intake import validate_profile_structure, tool_ids_from_profile, summarize_discovered
 from phase3_run_evidence import build_management_evidence, build_sales_evidence
 from management_evaluator import evaluate_management
@@ -15,9 +15,11 @@ from sales_evaluator import evaluate_sales
 from package_integrity import check_core_manifest
 from tools import Tools
 
+
 class Ctx:
     def __init__(self,root,extras):
         self.root=Path(root);self.results=[];self.settings={};self.extras=extras
+
 
 class Phase3IntegratedTests(unittest.TestCase):
     def profile(self):
@@ -63,17 +65,24 @@ class Phase3IntegratedTests(unittest.TestCase):
             self.assertEqual(ffrows[-1]['status'],'HARNESS_ERROR')
             self.assertNotIn('ffmpeg',obj.required_failures())
 
-    def test_management_adapter_is_consumed_by_existing_evaluator(self):
+    def test_management_adapter_requires_real_launch_before_real_game_kind(self):
         with tempfile.TemporaryDirectory() as td:
-            root=Path(td);(root/'g_resources.json').write_text('[]',encoding='utf-8')
+            root=Path(td)
+            (root/'g_resources.json').write_text('[]',encoding='utf-8')
+            (root/'core_check.json').write_text('{}',encoding='utf-8')
+            (root/'launch.bmp').write_bytes(b'x')
             sess=SimpleNamespace(p={'game_id':'g'},metrics=[
                 {'pid':1,'ram':100*1024*1024,'handles':20,'cpu_seconds':1.0,'sample_time':10.0},
                 {'pid':1,'ram':120*1024*1024,'handles':25,'cpu_seconds':2.0,'sample_time':20.0},
             ])
             prepared={'identity_snapshot':json.dumps({'T':{
                 'certifies_real_target':True,'generation':3,'fingerprint':'abc'}})}
+            results=[
+                {'test_case':'preflight.core','status':'PASS','evidence':['core_check.json'],'gate':'REQUIRED'},
+                {'test_case':'g.s.launch','status':'PASS','evidence':['launch.bmp'],'gate':'REQUIRED'},
+            ]
             ev=Evidence(root,'run-phase3')
-            data=build_management_evidence(e=ev,sessions=[sess],results=[],
+            data=build_management_evidence(e=ev,sessions=[sess],results=results,
                                            run_mode='target',prepared=prepared)
             report=evaluate_management(Ctx(root,{'management_evidence':data}))
             self.assertEqual(report.readback['evidence_kind'],'real_game')
@@ -81,8 +90,20 @@ class Phase3IntegratedTests(unittest.TestCase):
             self.assertTrue(report.readback['measurements']['ram_mb']['available'])
             self.assertNotEqual(report.reason_code,'MANAGEMENT_EVALUATION_NOT_PERFORMED')
             self.assertTrue((root/'phase3_environment.json').is_file())
+            self.assertTrue((root/'phase3_preseal_integrity.json').is_file())
 
-    def test_sales_adapter_never_claims_human(self):
+    def test_target_identity_without_launch_is_not_real_game(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            sess=SimpleNamespace(p={'game_id':'g'},metrics=[])
+            prepared={'identity_snapshot':json.dumps({'T':{
+                'certifies_real_target':True,'generation':3,'fingerprint':'abc'}})}
+            ev=Evidence(root,'run-phase3')
+            data=build_management_evidence(e=ev,sessions=[sess],results=[],
+                                           run_mode='target',prepared=prepared)
+            self.assertEqual(data['evidence_kind'],'unknown')
+
+    def test_sales_recording_is_observation_not_positive_review(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td);(root/'FULL_EVIDENCE').mkdir()
             (root/'FULL_EVIDENCE/screen.mp4').write_bytes(b'video')
@@ -90,22 +111,50 @@ class Phase3IntegratedTests(unittest.TestCase):
                 {'sample_time':0.0},{'sample_time':310.0}
             ])
             ev=Evidence(root,'run-phase3')
-            old1=os.environ.get('FULLAUTOQA_START_QA');old2=os.environ.get('FULLAUTOQA_FRESH_EXTRACTION')
-            os.environ['FULLAUTOQA_START_QA']='1';os.environ['FULLAUTOQA_FRESH_EXTRACTION']='1'
-            try:data=build_sales_evidence(e=ev,sessions=[sess],results=[],run_mode='target')
+            keys=('FULLAUTOQA_START_QA','FULLAUTOQA_FRESH_EXTRACTION','FULLAUTOQA_FRESH_EXTRACTION_ID')
+            old={k:os.environ.get(k) for k in keys}
+            os.environ['FULLAUTOQA_START_QA']='1'
+            os.environ['FULLAUTOQA_FRESH_EXTRACTION']='1'
+            os.environ['FULLAUTOQA_FRESH_EXTRACTION_ID']='build-123'
+            try:
+                data=build_sales_evidence(e=ev,sessions=[sess],results=[],run_mode='target')
             finally:
-                if old1 is None:os.environ.pop('FULLAUTOQA_START_QA',None)
-                else:os.environ['FULLAUTOQA_START_QA']=old1
-                if old2 is None:os.environ.pop('FULLAUTOQA_FRESH_EXTRACTION',None)
-                else:os.environ['FULLAUTOQA_FRESH_EXTRACTION']=old2
+                for k,v in old.items():
+                    if v is None:os.environ.pop(k,None)
+                    else:os.environ[k]=v
             report=evaluate_sales(Ctx(root,{'sales_evidence':data}))
             self.assertEqual(report.readback['reviewer']['kind'],'model_proxy')
             self.assertFalse(report.readback['human_test_performed'])
             self.assertTrue(report.readback['sessions'][0]['cold_start'])
             gates={x['name']:x['status'] for x in report.readback['gate_status']}
-            self.assertEqual(gates['sales.first_30_seconds'],'PASS')
-            self.assertEqual(gates['sales.first_5_minutes'],'PASS')
+            self.assertEqual(gates['sales.first_30_seconds'],'NOT_RUN')
+            self.assertEqual(gates['sales.first_5_minutes'],'NOT_RUN')
             self.assertNotEqual(report.status,'PASS')
+
+    def test_fresh_flag_without_marker_identity_is_not_cold_start(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);(root/'FULL_EVIDENCE').mkdir()
+            sess=SimpleNamespace(p={'game_id':'g'},metrics=[])
+            ev=Evidence(root,'run-phase3')
+            keys=('FULLAUTOQA_FRESH_EXTRACTION','FULLAUTOQA_FRESH_EXTRACTION_ID')
+            old={k:os.environ.get(k) for k in keys}
+            os.environ['FULLAUTOQA_FRESH_EXTRACTION']='1'
+            os.environ.pop('FULLAUTOQA_FRESH_EXTRACTION_ID',None)
+            try:
+                data=build_sales_evidence(e=ev,sessions=[sess],results=[],run_mode='target')
+            finally:
+                for k,v in old.items():
+                    if v is None:os.environ.pop(k,None)
+                    else:os.environ[k]=v
+            self.assertFalse(data['sessions'][0]['cold_start'])
+
+    def test_result_zip_expected_run_id_rejects_foreign_archive(self):
+        with tempfile.TemporaryDirectory() as td:
+            zpath=Path(td)/'r.zip'
+            with zipfile.ZipFile(zpath,'w') as z:
+                z.writestr('result.json',json.dumps({'run_id':'OTHER','results':[]}))
+            with self.assertRaisesRegex(OSError,'RESULT_RUN_ID_MISMATCH'):
+                validate_result_zip(zpath,expected_run_id='EXPECTED')
 
     def test_manifest_schema_fields_are_required(self):
         with tempfile.TemporaryDirectory() as td:
@@ -128,11 +177,17 @@ class Phase3IntegratedTests(unittest.TestCase):
         regen=(ROOT/'scripts/PHASE3_REGEN_MANIFEST.ps1').read_text(encoding='utf-8')
         self.assertIn('PHASE3_REGEN_MANIFEST.ps1',overlay)
         self.assertIn('PHASE3_FRESH_EXTRACTION.marker',overlay)
+        self.assertIn("@('TESTS','scripts','PROFILES','GAME','DEVELOPER')",overlay)
+        self.assertIn('CANDIDATE_NAME_INVALID',overlay)
+        self.assertIn('OUTPUT_INSIDE_DONOR_TREE',overlay)
         self.assertNotIn('core_version = "phase3-overlay"',overlay)
         self.assertIn("'-B' '-E' '-s'",regen)
         self.assertNotIn("'-I' $release",regen)
         start=(ROOT/'START_QA.cmd').read_text(encoding='utf-8')
         self.assertIn('FULLAUTOQA_FRESH_EXTRACTION',start)
+        self.assertIn('FULLAUTOQA_FRESH_EXTRACTION_ID',start)
         self.assertIn('PHASE3_FRESH_EXTRACTION.marker',start)
+        self.assertIn('if not "%FULLAUTOQA_FRESH_EXTRACTION_ID%"==""',start)
+
 
 if __name__=='__main__': unittest.main()
