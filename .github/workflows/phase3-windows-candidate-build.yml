@@ -11,13 +11,34 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: phase3-windows-candidate-build-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  candidate-inputs:
+    runs-on: windows-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/github-script@v7
+        id: check
+        with:
+          script: |
+            if(context.eventName !== 'pull_request' || context.payload.action !== 'synchronize' || !context.payload.before) {
+              core.setOutput('changed','true'); return;
+            }
+            const {owner,repo}=context.repo;
+            const before=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
+            const after=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
+            if(before.truncated || after.truncated) throw new Error('CANDIDATE_INPUT_TREE_TRUNCATED');
+            const select=t=>JSON.stringify(t.tree.filter(x=>x.path==='開発版/source' || x.path==='開発版/complete_v033' || x.path==='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip').map(x=>[x.path,x.sha]).sort());
+            core.setOutput('changed',String(select(before)!==select(after)));
   build-candidate:
+    needs: candidate-inputs
+    if: needs.candidate-inputs.outputs.changed == 'true'
     runs-on: windows-latest
     timeout-minutes: 120
     env:
@@ -130,22 +151,11 @@ jobs:
           "FRESH_ROOT=$fresh" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "FRESH EXTRACTION INTEGRITY PASS"
 
-      - name: Hosted Windows START_QA fixture probe
-        id: fixture_probe
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Continue"
-          Push-Location "$env:FRESH_ROOT"
-          try { & ".\START_QA.cmd" -SelfTest; $code = $LASTEXITCODE } finally { Pop-Location }
-          "exit_code=$code" | Out-File -FilePath (Join-Path "$env:BUILD_OUT" "HOSTED_WINDOWS_FIXTURE_PROBE.txt") -Encoding utf8
-          if ($code -ne 0) { throw "HOSTED_FIXTURE_PROBE_NONZERO:$code" }
-
       - name: Write Windows acceptance metadata
         if: always()
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path "$env:BUILD_OUT" -Force | Out-Null
-          $probe = "${{ steps.fixture_probe.outcome }}"
           $payload = [ordered]@{
             source_checkout_sha = "$env:SOURCE_SHA"
             source_regression = "${{ steps.source_tests.outcome }}"
@@ -157,7 +167,7 @@ jobs:
             candidate_sha256 = "$env:CANDIDATE_SHA256"
             candidate_build = "${{ steps.build.outcome }}"
             fresh_extraction_integrity = "${{ steps.fresh.outcome }}"
-            hosted_windows_fixture_probe = $probe
+            hosted_windows_fixture_probe = "NOT_RUN_SEPARATE_JOB"
             hosted_probe_is_real_game_acceptance = $false
             real_game_e2e = "NOT_RUN"
             human_test = "NOT_RUN"
@@ -189,3 +199,42 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+
+  fixture-probe:
+    needs: build-candidate
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
+          path: _download
+      - name: Fresh bundled-tool verification
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fresh = Join-Path $PWD '_fixture_fresh'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $PWD '_download/FullAutoQA_PHASE3_CANDIDATE.zip'),$fresh)
+          $python = Join-Path $fresh 'RUNTIME/python/python.exe'
+          & $python -B -E -s (Join-Path $fresh 'scripts/package_integrity.py') --root $fresh --full-payload --require-fresh-marker
+          if ($LASTEXITCODE -ne 0) { throw 'FIXTURE_PACKAGE_INTEGRITY_FAILED' }
+          "FRESH_ROOT=$fresh" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Hosted Windows START_QA fixture probe
+        shell: pwsh
+        run: |
+          Push-Location "$env:FRESH_ROOT"
+          try { & '.\START_QA.cmd' -SelfTest 2>&1 | Tee-Object -FilePath (Join-Path $env:GITHUB_WORKSPACE 'FIXTURE_START_QA.log'); $code=$LASTEXITCODE } finally { Pop-Location }
+          "exit_code=$code" | Set-Content (Join-Path $env:GITHUB_WORKSPACE 'FIXTURE_EXIT.txt')
+          if ($code -ne 0) { throw "HOSTED_FIXTURE_REQUIRED_NONPASS:$code" }
+      - name: Preserve fixture evidence separately from build acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FullAutoQA-Phase3-Fixture-Evidence-${{ github.run_id }}
+          path: |
+            FIXTURE_START_QA.log
+            FIXTURE_EXIT.txt
+            _fixture_fresh/RESULTS/**
+          if-no-files-found: warn
+          retention-days: 30
