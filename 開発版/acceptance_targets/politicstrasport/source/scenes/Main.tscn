@@ -1,0 +1,144 @@
+[gd_scene load_steps=5 format=3 uid="uid://cmainlogicproto"]
+
+[ext_resource type="Script" path="res://scripts/GameController.gd" id="1_gc"]
+[ext_resource type="Script" path="res://scripts/MapView.gd" id="2_map"]
+[ext_resource type="Script" path="res://scripts/UIController.gd" id="3_ui"]
+[ext_resource type="Script" path="res://qa/PoliticsTransportQaAdapter.gd" id="4_qa"]
+
+[node name="Main" type="Node"]
+
+[node name="GameController" type="Node" parent="."]
+script = ExtResource("1_gc")
+
+[node name="QaAdapter" type="Node" parent="."]
+script = ExtResource("4_qa")
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_ui")
+
+[node name="MapView" type="Control" parent="UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("2_map")
+
+[node name="TopBar" type="HBoxContainer" parent="UI"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 34.0
+grow_horizontal = 2
+theme_override_constants/separation = 10
+
+[node name="MoneyLabel" type="Label" parent="UI/TopBar"]
+layout_mode = 2
+text = "資金: 500"
+
+[node name="DayLabel" type="Label" parent="UI/TopBar"]
+layout_mode = 2
+text = "Day 1"
+
+[node name="WarLabel" type="Label" parent="UI/TopBar"]
+layout_mode = 2
+text = "平和"
+
+[node name="SeedLabel" type="Label" parent="UI/TopBar"]
+layout_mode = 2
+text = "Seed: 0"
+
+[node name="BtnX1" type="Button" parent="UI/TopBar"]
+layout_mode = 2
+text = "x1"
+
+[node name="BtnX5" type="Button" parent="UI/TopBar"]
+layout_mode = 2
+text = "x5"
+
+[node name="BtnPause" type="Button" parent="UI/TopBar"]
+layout_mode = 2
+text = "Pause"
+
+[node name="Spacer" type="Control" parent="UI/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActionBar" type="HBoxContainer" parent="UI"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 36.0
+offset_bottom = 72.0
+grow_horizontal = 2
+theme_override_constants/separation = 8
+
+[node name="BtnRoad" type="Button" parent="UI/ActionBar"]
+layout_mode = 2
+text = "道路建設(R)"
+
+[node name="BtnRail" type="Button" parent="UI/ActionBar"]
+layout_mode = 2
+text = "鉄道建設(T)"
+
+[node name="BtnRemove" type="Button" parent="UI/ActionBar"]
+layout_mode = 2
+text = "撤去(X)"
+
+[node name="TestSeparator" type="VSeparator" parent="UI/ActionBar"]
+layout_mode = 2
+
+[node name="TestLabel" type="Label" parent="UI/ActionBar"]
+layout_mode = 2
+text = "テスト操作"
+
+[node name="BtnForceWar" type="Button" parent="UI/ActionBar"]
+layout_mode = 2
+text = "強制開戦"
+
+[node name="FlexibleSpacer" type="Control" parent="UI/ActionBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RightPanel" type="VBoxContainer" parent="UI"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = 78.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="InfoPanel" type="RichTextLabel" parent="UI/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+text = "情報"
+
+[node name="LogPanel" type="RichTextLabel" parent="UI/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+fit_content = false
+scroll_active = true
+text = "イベントログ"
+
+[connection signal="pressed" from="UI/ActionBar/BtnRoad" to="UI" method="_on_road_pressed"]
+[connection signal="pressed" from="UI/ActionBar/BtnRail" to="UI" method="_on_rail_pressed"]
+[connection signal="pressed" from="UI/ActionBar/BtnRemove" to="UI" method="_on_remove_pressed"]
+[connection signal="pressed" from="UI/TopBar/BtnX1" to="UI" method="_on_x1_pressed"]
+[connection signal="pressed" from="UI/TopBar/BtnX5" to="UI" method="_on_x5_pressed"]
+[connection signal="pressed" from="UI/TopBar/BtnPause" to="UI" method="_on_pause_pressed"]
+[connection signal="pressed" from="UI/ActionBar/BtnForceWar" to="UI" method="_on_force_war_pressed"]
+

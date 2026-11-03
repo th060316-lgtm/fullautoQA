@@ -1,0 +1,247 @@
+{
+  "game_id": "politicstrasport_development",
+  "game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+  "profile_version": "1.0-preflight",
+  "schema_version": 1,
+  "prototype_type": "logic",
+  "qa_role": "target",
+  "source": "GAME/targets/politicstrasport",
+  "adapter": "GAME/targets/politicstrasport/qa_adapter.py",
+  "adapter_version": "observed-selectors-1",
+  "bridge": "qa_observation.json",
+  "launch": {
+    "argv": [
+      "{godot}",
+      "--path",
+      "{work}",
+      "--rendering-method",
+      "gl_compatibility"
+    ]
+  },
+  "build": {
+    "argv": [
+      "{godot}",
+      "--headless",
+      "--path",
+      "{work}",
+      "--editor",
+      "--import",
+      "--quit"
+    ],
+    "timeout": 180
+  },
+  "required_assets": [
+    "project.godot",
+    "scenes/Main.tscn",
+    "qa_observer.gd",
+    "qa_adapter.py"
+  ],
+  "generated_paths": [
+    "qa_observation.json",
+    "qa_observation.json.tmp",
+    "isolated_user/"
+  ],
+  "actions": {
+    "build_road": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "R"
+        }
+      ]
+    },
+    "build_rail": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "T"
+        }
+      ]
+    },
+    "cancel": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "ESC"
+        }
+      ]
+    },
+    "build_tile": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "R"
+        }
+      ],
+      "selector": {
+        "kind": "terminal_neighbor"
+      }
+    },
+    "pause": {
+      "inputs": [],
+      "selector": {
+        "kind": "button",
+        "text": "Pause"
+      }
+    },
+    "speed_normal": {
+      "inputs": [],
+      "selector": {
+        "kind": "button",
+        "text": "x1"
+      }
+    }
+  },
+  "allowed_random_actions": [
+    "build_road",
+    "build_rail",
+    "cancel",
+    "pause",
+    "speed_normal"
+  ],
+  "goals": [
+    {
+      "id": "road_input_response",
+      "type": "build",
+      "field": "road_tiles",
+      "op": "ge",
+      "value": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "smoke",
+      "agent": "Smoke",
+      "sequence": [
+        "build_road",
+        "build_rail",
+        "cancel",
+        "pause",
+        "pause"
+      ],
+      "action_budget": 5,
+      "time_budget": 25
+    },
+    {
+      "id": "goal",
+      "agent": "Goal",
+      "goal": "road_input_response",
+      "policy": [
+        {
+          "when": {
+            "field": "road_tiles",
+            "op": "lt",
+            "value": 1
+          },
+          "action": "build_tile"
+        }
+      ],
+      "action_budget": 12,
+      "time_budget": 30
+    },
+    {
+      "id": "explorer",
+      "agent": "Explorer",
+      "action_budget": 20,
+      "time_budget": 20
+    },
+    {
+      "id": "random",
+      "agent": "Random",
+      "action_budget": 20,
+      "time_budget": 20
+    },
+    {
+      "id": "five_minute_observation",
+      "agent": "Random",
+      "action_budget": 1000000,
+      "time_budget": 305,
+      "evaluation": true,
+      "stop_on_goal": false
+    }
+  ],
+  "state_signature": [
+    "scene",
+    "build_mode",
+    "paused",
+    "road_tiles",
+    "rail_tiles"
+  ],
+  "startup_timeout": 45,
+  "stall_seconds": 30,
+  "screenshot_interval": 5,
+  "observations": {
+    "internal_state": "existing qa_get_state, read-only file observer",
+    "screenshots": true
+  },
+  "instructions": "Logic Prototype。道路/鉄道建設モードとタイル敷設、時間進行・経済反応を確認。Save/Loadは現正本に実装なし。",
+  "controls": "R=道路、T=鉄道、ESC=解除。Pause/x1は実測UIから選択。",
+  "tests": [],
+  "qa_plan": {
+    "faults": [],
+    "faults_enabled": false,
+    "regression": {
+      "scenario": "goal",
+      "state_fields": [
+        "build_mode"
+      ],
+      "compare_trajectory": false,
+      "visual_tolerance": 0.08
+    },
+    "soak": {
+      "seconds": 60,
+      "loops": 0,
+      "agent": "Random",
+      "memory_limit": 1024,
+      "observation_delay": 0.15,
+      "screenshot_interval": 10
+    }
+  },
+  "display": {
+    "kind": "windows"
+  },
+  "technical_tests": [
+    {
+      "id": "game_boot",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/GameBootSmokeTest.gd"
+      ],
+      "timeout": 90
+    },
+    {
+      "id": "core_integration",
+      "kind": "unit",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/FullIntegrationTest.gd"
+      ],
+      "timeout": 120
+    }
+  ],
+  "tools_required": [
+    "godot"
+  ],
+  "unsupported_features": {
+    "save_load": {
+      "reason": "Current read-only source README and scripts declare no Save/Load implementation",
+      "source": "README_PLAYTEST.md"
+    },
+    "storage": {
+      "reason": "No game-side persistence contract exists in current source"
+    },
+    "player_review_evidence_requirement": {
+      "reason": "Current formal target requirement is playable-only; target remains logic. Runner still emits mandatory target.review_packet with actual instructions/evidence."
+    }
+  },
+  "acceptance_scope": "Logic Prototype QA; not product completion"
+}

@@ -13,11 +13,34 @@ concurrency:
   group: source-overlay-selftest-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/github-script@v7
+        id: check
+        with:
+          script: |
+            if(context.eventName!=='pull_request'||context.payload.action!=='synchronize'||!context.payload.before) { core.setOutput('changed','true'); return; }
+            const {owner,repo}=context.repo;
+            const before=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
+            const after=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
+            if(before.truncated||after.truncated) throw new Error('SOURCE_TREE_TRUNCATED');
+            const source=t=>t.tree.find(x=>x.path==='開発版/source')?.sha;
+            core.setOutput('changed',String(!source(before)||source(before)!==source(after)));
   diagnostic:
+    needs: inputs
+    if: needs.inputs.outputs.changed == 'true' 
     runs-on: windows-latest
     timeout-minutes: 80
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            開発版/source
+            開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
+          sparse-checkout-cone-mode: false
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}

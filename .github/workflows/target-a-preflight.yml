@@ -1,0 +1,75 @@
+name: Frozen target A compatibility preflight
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '開発版/acceptance_targets/politicstrasport/**'
+      - '.github/workflows/target-a-preflight.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  preflight:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            開発版/source
+            開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
+            開発版/acceptance_targets
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41636608324
+          name: FullAutoQA-Phase3-Candidate-93cc5ce54d30a9abca6d886ce451bc6b578fc468
+          path: _old_candidate
+      - name: Isolated current-Source overlay diagnostic
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $source = & './開発版/source/scripts/PREPARE_SOURCE.ps1' -RepositoryRoot $PWD -Destination (Join-Path $PWD '_source')
+          $zip=Join-Path $PWD '_old_candidate/FullAutoQA_PHASE3_CANDIDATE.zip'
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne '6b2190c79a14f55ef17b4ba1be14e98567a2fa4ade67a1a5d7758c5f59b46b1d') { throw 'PRISTINE_IDENTITY_MISMATCH' }
+          $fresh=Join-Path $PWD '_target_preflight'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::ExtractToDirectory($zip,$fresh)
+          $python=Join-Path $fresh 'RUNTIME/python/python.exe'
+          & $python -B -E -s (Join-Path $fresh 'scripts/package_integrity.py') --root $fresh --full-payload --require-fresh-marker
+          if ($LASTEXITCODE -ne 0) { throw 'PRISTINE_INVALID' }
+          Get-ChildItem $source -Force | Where-Object { $_.Name -notin @('RUNTIME','PAYLOAD','RESULTS','core_manifest.json','package_manifest.json') } | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $fresh -Force -Recurse }
+          & (Join-Path $fresh 'scripts/PHASE3_REGEN_MANIFEST.ps1') -Tree $fresh
+          if ($LASTEXITCODE -ne 0) { throw 'CORE_MANIFEST_FAILED' }
+          & $python -B -E -s './開発版/acceptance_targets/politicstrasport/prepare_target.py' --candidate-root $fresh
+          if ($LASTEXITCODE -ne 0) { throw 'FROZEN_TARGET_PREPARATION_FAILED' }
+          "FRESH_ROOT=$fresh" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "BUNDLED_PYTHON=$python" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: START_QA target compatibility diagnostic, not Final Run 1
+        shell: pwsh
+        run: |
+          & "$env:BUNDLED_PYTHON" -B -E -s './開発版/acceptance_targets/run_target.py' --candidate-root $env:FRESH_ROOT --evidence (Join-Path $PWD '_target_preflight_evidence')
+          if ($LASTEXITCODE -ne 0) { throw "TARGET_PREFLIGHT_NONPASS:$LASTEXITCODE" }
+      - name: Complete Source regression using actual bundled FFmpeg
+        if: always() && env.BUNDLED_PYTHON != ''
+        shell: pwsh
+        run: |
+          $ffmpeg=@(Get-ChildItem (Join-Path $env:FRESH_ROOT 'RUNTIME') -Recurse -Filter ffmpeg.exe)
+          $dirs=@($ffmpeg | ForEach-Object { $_.DirectoryName } | Select-Object -Unique)
+          if ($dirs.Count -eq 0) { throw 'BUNDLED_ENCODER_NOT_PREPARED' }
+          $env:PATH=($dirs -join ';')+';'+$env:PATH
+          & "$env:BUNDLED_PYTHON" -B -E -s -m unittest discover -s (Join-Path $env:FRESH_ROOT 'TESTS') -v 2>&1 | Tee-Object BUNDLED_SOURCE_TESTS.log
+          if ($LASTEXITCODE -ne 0) { throw 'BUNDLED_SOURCE_TESTS_FAILED' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Target-A-Preflight-${{ github.run_id }}
+          path: |
+            _target_preflight_evidence/**
+            _target_preflight/RESULTS/**
+            _target_preflight/TARGET_PREPARATION.json
+            BUNDLED_SOURCE_TESTS.log
+          retention-days: 14
+
