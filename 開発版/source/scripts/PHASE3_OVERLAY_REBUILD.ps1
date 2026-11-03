@@ -45,6 +45,7 @@ function Find-CandidateRoot([string]$Extracted) {
 
 $SourceRoot=[IO.Path]::GetFullPath($SourceRoot)
 $OutputDir=[IO.Path]::GetFullPath($OutputDir)
+if ([IO.Path]::GetFileName($CandidateName) -ne $CandidateName -or [IO.Path]::GetExtension($CandidateName) -ne '.zip') { throw 'CANDIDATE_NAME_INVALID' }
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 $stage=Join-Path $OutputDir ('.phase3-stage-'+[Guid]::NewGuid().ToString('N'))
 $fresh=Join-Path $OutputDir ('.phase3-fresh-'+[Guid]::NewGuid().ToString('N'))
@@ -62,6 +63,9 @@ try {
     $donorSha=Get-SHA256 $DonorArchive
   } else {
     $DonorExtracted=Find-CandidateRoot $DonorExtracted
+    $donorRoot=[IO.Path]::GetFullPath($DonorExtracted).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+    $stageFull=[IO.Path]::GetFullPath($stage)
+    if ($stageFull.StartsWith($donorRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'OUTPUT_INSIDE_DONOR_TREE' }
     Copy-Tree $DonorExtracted $stage
     $donorSha=$null
   }
@@ -74,6 +78,17 @@ try {
   $dstCore=Join-Path $work 'CORE'
   if (Test-Path -LiteralPath $dstCore) { Remove-Item -LiteralPath $dstCore -Recurse -Force }
   Copy-Tree (Join-Path $src 'CORE') $dstCore
+
+  # Keep source-side selftests, profiles and support scripts in lockstep with the overlaid CORE.
+  # Runtime/Payload remain donor-owned and are never replaced here.
+  foreach ($dirName in @('TESTS','scripts','PROFILES','GAME','DEVELOPER')) {
+    $sourceDir=Join-Path $src $dirName
+    if (Test-Path -LiteralPath $sourceDir -PathType Container) {
+      $dstDir=Join-Path $work $dirName
+      if (Test-Path -LiteralPath $dstDir) { Remove-Item -LiteralPath $dstDir -Recurse -Force }
+      Copy-Tree $sourceDir $dstDir
+    }
+  }
 
   $rootFiles=@(
     'START_QA.cmd','BOOTSTRAP.ps1','START_VALIDATION.sh','START_FUNCTIONAL.cmd','START_LOGIC.cmd',
