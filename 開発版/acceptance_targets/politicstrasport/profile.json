@@ -1,7 +1,7 @@
 {
   "game_id": "politicstrasport_development",
   "game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
-  "profile_version": "1.0-preflight",
+  "profile_version": "1.1-acceptance",
   "schema_version": 1,
   "prototype_type": "logic",
   "qa_role": "target",
@@ -226,6 +226,84 @@
         "res://tests/FullIntegrationTest.gd"
       ],
       "timeout": 120
+    },
+    {
+      "id": "EconomicCoreIntegrationTest",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/EconomicCoreIntegrationTest.gd"
+      ],
+      "timeout": 180
+    },
+    {
+      "id": "HoldReleaseAcceptanceTest",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/HoldReleaseAcceptanceTest.gd"
+      ],
+      "timeout": 180
+    },
+    {
+      "id": "MiniMaxIntegrationTest",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/MiniMaxIntegrationTest.gd"
+      ],
+      "timeout": 180
+    },
+    {
+      "id": "WorkCompletionAcceptanceTest",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/WorkCompletionAcceptanceTest.gd"
+      ],
+      "timeout": 180
+    },
+    {
+      "id": "WorldDynamicsAcceptanceTest",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/WorldDynamicsAcceptanceTest.gd"
+      ],
+      "timeout": 180
+    },
+    {
+      "id": "LongRunProfile",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/LongRunProfile.gd"
+      ],
+      "timeout": 180
     }
   ],
   "tools_required": [

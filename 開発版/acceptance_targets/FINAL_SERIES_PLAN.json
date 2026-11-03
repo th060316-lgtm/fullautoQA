@@ -13,7 +13,7 @@
       "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
       "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
       "selected_path": "開発版/runtime",
-      "profile_version": "1.0-preflight",
+      "profile_version": "1.1-acceptance",
       "bundle_path": "politicstrasport"
     },
     "B": {
@@ -30,5 +30,8 @@
   "status": "SOURCE_AND_PROFILE_PREFLIGHT_NOT_FINAL_SERIES",
   "human_test": "NOT_RUN",
   "product_acceptance": "HOLD",
-  "stable": "HOLD"
+  "stable": "HOLD",
+  "historical_run_ids": [
+    "20261103T123711_d00902ba"
+  ]
 }

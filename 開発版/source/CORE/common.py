@@ -1,6 +1,6 @@
 """Offline QA primitives. Python standard library only."""
 from __future__ import annotations
-import hashlib, json, os, time, uuid, zipfile, html, shutil
+import hashlib, json, os, time, uuid, zipfile, html, shutil, stat
 from urllib.parse import quote
 from pathlib import Path
 try:
@@ -23,7 +23,17 @@ def write_json(p,v):
     tmp=p.with_name(p.name+'.tmp'); tmp.write_text(json.dumps(v,ensure_ascii=False,indent=2),encoding='utf-8'); os.replace(tmp,p)
 def read_json(p): return json.loads(Path(p).read_text(encoding='utf-8-sig'))
 def inside(root,rel):
-    p=(Path(root)/rel).resolve(); root=Path(root).resolve()
+    root=Path(root).resolve()
+    candidate=root/rel
+    # A producer may atomically replace a regular file while Windows resolves
+    # its final handle path. Resolve the stable parent instead. Links and
+    # reparse points must still resolve their destination before containment.
+    try:
+        info=candidate.lstat()
+        link=stat.S_ISLNK(info.st_mode) or bool(getattr(info,'st_file_attributes',0)&0x400)
+    except FileNotFoundError:
+        link=False
+    p=candidate.resolve() if link else candidate.parent.resolve()/candidate.name
     if p.is_relative_to(root):return p
     # Windows may expose one spelling as an 8.3 alias while another is long.
     # Prove containment by filesystem identity, after resolving reparse points.
@@ -189,4 +199,5 @@ def result_zip(root,require_manifest=False):
         os.replace(temporary,root/'RESULT_FOR_CHATGPT.zip')
         return root/'RESULT_FOR_CHATGPT.zip'
     finally:temporary.unlink(missing_ok=True)
+
 

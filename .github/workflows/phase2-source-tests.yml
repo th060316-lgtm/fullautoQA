@@ -28,6 +28,7 @@ jobs:
         with:
           sparse-checkout: |
             開発版/source
+            開発版/acceptance_targets
             開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
           sparse-checkout-cone-mode: false
 
@@ -58,3 +59,11 @@ jobs:
             if ($parseErrors.Count) { throw ($_.FullName + ": " + ($parseErrors | Out-String)) }
           }
 
+
+      - name: Acceptance helper integrity tests
+        shell: pwsh
+        run: |
+          Get-ChildItem './開発版/acceptance_targets' -Filter 'test*.py' -Recurse | ForEach-Object {
+            python -B $_.FullName -v
+            if ($LASTEXITCODE -ne 0) { throw ('ACCEPTANCE_HELPER_TEST_FAILED:' + $_.FullName) }
+          }

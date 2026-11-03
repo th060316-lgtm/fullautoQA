@@ -8,9 +8,9 @@ on:
       - '.github/workflows/source-overlay-selftest.yml'
 permissions:
   contents: read
-  actions: read
+  actions: write
 concurrency:
-  group: source-overlay-selftest-${{ github.ref }}
+  group: source-overlay-selftest-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 jobs:
   inputs:
@@ -28,7 +28,16 @@ jobs:
             const after=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
             if(before.truncated||after.truncated) throw new Error('SOURCE_TREE_TRUNCATED');
             const source=t=>t.tree.find(x=>x.path==='開発版/source')?.sha;
-            core.setOutput('changed',String(!source(before)||source(before)!==source(after)));
+            const changed=!source(before)||source(before)!==source(after);
+            core.setOutput('changed',String(changed));
+            if(changed) {
+              const branch=context.payload.pull_request.head.ref;
+              const runs=(await github.rest.actions.listWorkflowRuns({owner,repo,workflow_id:'source-overlay-selftest.yml',branch,per_page:30})).data.workflow_runs;
+              for(const run of runs) if(run.id!==context.runId&&run.head_sha!==context.payload.pull_request.head.sha&&run.status!=='completed') {
+                try { await github.rest.actions.cancelWorkflowRun({owner,repo,run_id:run.id}); } catch(error) { if(![404,409].includes(error.status)) throw error; }
+                core.info('Cancelled superseded Source overlay '+run.id+'; always evidence steps remain enabled');
+              }
+            }
   diagnostic:
     needs: inputs
     if: needs.inputs.outputs.changed == 'true' 
