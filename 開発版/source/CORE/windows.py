@@ -7,6 +7,8 @@ if os.name=='nt':
     K.CloseHandle.argtypes=[W.HANDLE]
     K.SetErrorMode(0x0001|0x0002|0x8000)
     U.SetProcessDPIAware()
+    U.GetKeyboardLayout.argtypes=[W.DWORD];U.GetKeyboardLayout.restype=W.HANDLE
+    U.MapVirtualKeyExW.argtypes=[W.UINT,W.UINT,W.HANDLE];U.MapVirtualKeyExW.restype=W.UINT
     U.GetDesktopWindow.restype=W.HWND
     U.GetForegroundWindow.restype=W.HWND
     for _name in ('IsWindow','IsWindowVisible','IsIconic','SetForegroundWindow'):
@@ -67,7 +69,12 @@ class Desktop:
     def send(self,item):
         if U.SendInput(1,C.byref(item),C.sizeof(INPUT))!=1:raise OSError('SENDINPUT_FAILED_OR_UIPI')
     def key(self,k,up=False):
-        n=vk(k);i=INPUT(type=1);i.ki=KEYBDINPUT(n,0,2 if up else 0,0,0);self.send(i)
+        n=vk(k)
+        thread=U.GetWindowThreadProcessId(self.hwnd,None) if self.hwnd else 0
+        scan=U.MapVirtualKeyExW(n,4,U.GetKeyboardLayout(thread))
+        if not scan:raise OSError('KEY_SCAN_CODE_UNAVAILABLE:'+k)
+        flags=8 | (2 if up else 0) | (1 if scan & 0xff00 else 0)
+        i=INPUT(type=1);i.ki=KEYBDINPUT(0,scan & 0xff,flags,0,0);self.send(i)
         if up:self.held.discard(k)
         else:self.held.add(k)
     def mouse(self,flag,data=0):

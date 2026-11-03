@@ -276,7 +276,7 @@ class Session:
                     self.verdict(case+'.crash','FAIL','CRASH',[name,case+'_stderr.log'],severity='CRITICAL');return agent.export(),list(observed)
                 obs=a.observe();state=obs['internal_state'];observed.append(state);self.coverage['states'].add(agent.signature(state))
                 if s.get('soak') and len(self.coverage['states'])>s.get('memory_limit',1024):self.coverage['states'].pop()
-                self.e.event('state',case,current_state=state,internal_state=state,ocr=obs.get('ocr'),window=obs['window'],scene=obs.get('scene'),goal_progress=condition(state,goal) if goal else None)
+                self.e.event('state',case,current_state=state,internal_state=state,observation_status=obs.get('observation_status'),ocr=obs.get('ocr'),window=obs['window'],scene=obs.get('scene'),goal_progress=condition(state,goal) if goal else None)
                 if not obs['window']['exists']:
                     wins=self.desktop.windows(child_pids(p.pid))
                     if wins:self.desktop.hwnd=wins[0][0]
@@ -617,3 +617,4 @@ def main():
                 print('QA COMPLETE\nOverall Result: '+data['overall']+'\nResult ZIP Path: '+str(published.get('result_zip') or 'NOT_CREATED')+'\nResult Folder: '+str(out))
     return 0 if data['overall']=='PASS' and published.get('zip_created') else 2
 if __name__=='__main__':raise SystemExit(main())
+

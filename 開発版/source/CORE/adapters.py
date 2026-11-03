@@ -9,11 +9,23 @@ class Adapter:
     def capabilities(self):
         return {'internal_state':bool(self.profile.get('bridge')),'ocr':False,'image_recognition':False,'window_automation':True,'save':bool(self.profile.get('save')),'replay':True,'audio':False,'gamepad':False,'adapter':True}
     def observe(self):
-        s={};p=Path(self.context['work'])/self.profile.get('bridge','state.json')
-        if self.profile.get('bridge') and p.is_file():
-            try:s=read_json(p)
-            except (OSError,json.JSONDecodeError):pass
-        return {'internal_state':s,'numeric_state':{k:v for k,v in s.items() if isinstance(v,(int,float))},'scene':s.get('scene'),'menu':s.get('menu'),'object':s.get('objects'),'grid':s.get('grid'),'position':s.get('position'),'timer':s.get('timer'),'ocr':None,'audio':None,'window':self.desktop.state()}
+        s={};status={'internal_state':'NOT_CONFIGURED'}
+        if self.profile.get('bridge'):
+            path=inside(self.context['work'],self.profile['bridge'])
+            timeout=float(self.profile.get('observation_read_timeout',.2))
+            if not math.isfinite(timeout) or not 0<timeout<=5:raise ValueError('OBSERVATION_READ_TIMEOUT_INVALID')
+            deadline=time.monotonic()+timeout;attempts=0
+            while True:
+                attempts+=1
+                try:
+                    s=read_json(path)
+                    if not isinstance(s,dict):raise ValueError('OBSERVATION_BRIDGE_NOT_OBJECT')
+                    status={'internal_state':'FRESH_READ','attempts':attempts,'source':self.profile['bridge']}
+                    break
+                except (OSError,json.JSONDecodeError) as ex:
+                    if time.monotonic()>=deadline:raise OSError('OBSERVATION_BRIDGE_UNAVAILABLE:'+self.profile['bridge']) from ex
+                    time.sleep(min(.005,max(0,deadline-time.monotonic())))
+        return {'observation_status':status,'internal_state':s,'numeric_state':{k:v for k,v in s.items() if isinstance(v,(int,float))},'scene':s.get('scene'),'menu':s.get('menu'),'object':s.get('objects'),'grid':s.get('grid'),'position':s.get('position'),'timer':s.get('timer'),'ocr':None,'audio':None,'window':self.desktop.state()}
     def act(self,name):
         action=self.profile['actions'][name]
         self.desktop.focus()
@@ -76,3 +88,4 @@ class Navigation:
     @staticmethod
     def direction(position,target):
         v=[b-a for a,b in zip(position,target)];norm=math.sqrt(sum(x*x for x in v));return [x/norm for x in v] if norm else v
+
