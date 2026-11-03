@@ -136,7 +136,7 @@ def main():
             shutil.copy2(fresh/'TARGET_PREPARATION.json',slot/'TARGET_PREPARATION.json')
             code=run_logged(['cmd.exe','/d','/c','START_QA.cmd'],fresh,slot/'START_QA.log')
             result=authoritative_result(fresh,set())
-            validate_result_zip(result,expected_run_id=result.parent.name)
+            validate_result_zip(result,require_manifest=True,expected_run_id=result.parent.name)
             with zipfile.ZipFile(result) as z:
                 data=json.loads(z.read('result.json'));identities=data.get('target_identity',{})
                 foreign=(set(data.get('versions',{}))!={target['game_id']} or set(identities)!={target['target_id']})

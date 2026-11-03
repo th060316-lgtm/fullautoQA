@@ -28,14 +28,17 @@ jobs:
             const head=context.payload.pull_request?.head.sha||context.sha;
             for(let i=0;i<840;i++) {
               const runs=(await github.rest.actions.listWorkflowRuns({owner,repo,workflow_id:'phase3-windows-candidate-build.yml',head_sha:head,per_page:20})).data.workflow_runs;
-              const run=runs.find(r=>r.status!=='queued'&&r.status!=='pending');
+              const run=runs[0];
               if(run?.status==='completed') {
                 if(run.conclusion!=='success') throw new Error('FINAL_CANDIDATE_OR_SELFTEST_NONPASS');
                 const files=(await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:run.id,per_page:100})).data.artifacts;
                 const candidate=files.find(x=>x.name.startsWith('FullAutoQA-Phase3-Candidate-')&&!x.expired);
                 const evidence=files.find(x=>x.name.startsWith('FullAutoQA-Phase3-Build-Evidence-')&&!x.expired);
-                if(!candidate||!evidence) throw new Error('FINAL_CANDIDATE_EVIDENCE_MISSING');
-                core.setOutput('run_id',String(run.id));core.setOutput('archive_name',candidate.name);core.setOutput('evidence_name',evidence.name);return;
+                // A completed Draft invocation has no Candidate. Wait for the
+                // ready-for-review build rather than accepting that old run.
+                if(candidate&&evidence) {
+                  core.setOutput('run_id',String(run.id));core.setOutput('archive_name',candidate.name);core.setOutput('evidence_name',evidence.name);return;
+                }
               }
               await new Promise(r=>setTimeout(r,5000));
             }
