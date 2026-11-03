@@ -1,5 +1,5 @@
 """Native, per-process Windows automation. No driver, service or registry writes."""
-import os,time,ctypes as C,struct,subprocess
+import os,time,ctypes as C,struct,subprocess,re
 from ctypes import wintypes as W
 from pathlib import Path
 if os.name=='nt':
@@ -7,6 +7,8 @@ if os.name=='nt':
     K.CloseHandle.argtypes=[W.HANDLE]
     K.SetErrorMode(0x0001|0x0002|0x8000)
     U.SetProcessDPIAware()
+    U.GetKeyboardLayout.argtypes=[W.DWORD];U.GetKeyboardLayout.restype=W.HANDLE
+    U.MapVirtualKeyExW.argtypes=[W.UINT,W.UINT,W.HANDLE];U.MapVirtualKeyExW.restype=W.UINT
     U.GetDesktopWindow.restype=W.HWND
     U.GetForegroundWindow.restype=W.HWND
     for _name in ('IsWindow','IsWindowVisible','IsIconic','SetForegroundWindow'):
@@ -33,6 +35,7 @@ KEYS={'ENTER':13,'ESC':27,'SPACE':32,'TAB':9,'SHIFT':16,'CTRL':17,'ALT':18,'LEFT
 def vk(s):
     s=s.upper()
     if s in KEYS:return KEYS[s]
+    if re.fullmatch(r'F(?:[1-9]|1[0-9]|2[0-4])',s):return 0x70+int(s[1:])-1
     if len(s)==1:return ord(s)
     raise ValueError('UNKNOWN_KEY:'+s)
 
@@ -66,7 +69,15 @@ class Desktop:
     def send(self,item):
         if U.SendInput(1,C.byref(item),C.sizeof(INPUT))!=1:raise OSError('SENDINPUT_FAILED_OR_UIPI')
     def key(self,k,up=False):
-        n=vk(k);i=INPUT(type=1);i.ki=KEYBDINPUT(n,0,2 if up else 0,0,0);self.send(i)
+        n=vk(k)
+        thread=U.GetWindowThreadProcessId(self.hwnd,None) if self.hwnd else 0
+        scan=U.MapVirtualKeyExW(n,4,U.GetKeyboardLayout(thread))
+        if not scan:raise OSError('KEY_SCAN_CODE_UNAVAILABLE:'+k)
+        # Navigation VKs identify extended keys even when the active layout's
+        # mapper returns only the low scan byte (otherwise RIGHT becomes NUMPAD6).
+        extended=bool(scan & 0xff00) or n in (0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x2d,0x2e,0x5b,0x5c,0xa3,0xa5)
+        flags=8 | (2 if up else 0) | (1 if extended else 0)
+        i=INPUT(type=1);i.ki=KEYBDINPUT(0,scan & 0xff,flags,0,0);self.send(i)
         if up:self.held.discard(k)
         else:self.held.add(k)
     def mouse(self,flag,data=0):
@@ -173,3 +184,4 @@ class Job:
         if not K.AssignProcessToJobObject(self.handle,W.HANDLE(int(p._handle))):raise OSError('ASSIGN_PROCESS_JOB_FAILED')
     def close(self):
         if getattr(self,'handle',None):K.CloseHandle(self.handle);self.handle=None
+

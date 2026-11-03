@@ -1,0 +1,304 @@
+{
+  "game_id": "codegeas_development",
+  "game_version": "b5a0d2207a77854be5187a0b00fc2d234b0745b8",
+  "profile_version": "1.0-probe",
+  "schema_version": 1,
+  "prototype_type": "playable",
+  "qa_role": "target",
+  "source": "GAME/targets/codegeas",
+  "launch": {
+    "argv": [
+      "{godot}",
+      "--path",
+      "{work}",
+      "--rendering-method",
+      "gl_compatibility"
+    ]
+  },
+  "build": {
+    "argv": [
+      "{godot}",
+      "--headless",
+      "--path",
+      "{work}",
+      "--editor",
+      "--import",
+      "--quit"
+    ],
+    "timeout": 180
+  },
+  "required_assets": [
+    "project.godot",
+    "scenes/Main.tscn",
+    "qa_observer.gd"
+  ],
+  "bridge": "qa_observation.json",
+  "generated_paths": [
+    "qa_observation.json",
+    "qa_observation.json.tmp",
+    "isolated_user/"
+  ],
+  "actions": {
+    "move_right": {
+      "inputs": [
+        {
+          "kind": "hold",
+          "key": "D",
+          "duration": 0.25
+        }
+      ]
+    },
+    "move_down": {
+      "inputs": [
+        {
+          "kind": "hold",
+          "key": "S",
+          "duration": 0.25
+        }
+      ]
+    },
+    "move_left": {
+      "inputs": [
+        {
+          "kind": "hold",
+          "key": "A",
+          "duration": 0.25
+        }
+      ]
+    },
+    "move_up": {
+      "inputs": [
+        {
+          "kind": "hold",
+          "key": "W",
+          "duration": 0.25
+        }
+      ]
+    },
+    "interact": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "F",
+          "duration": 0.06
+        }
+      ]
+    },
+    "board": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "E",
+          "duration": 0.06
+        }
+      ]
+    },
+    "fire": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "SPACE",
+          "duration": 0.06
+        }
+      ]
+    },
+    "information": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "I",
+          "duration": 0.06
+        }
+      ]
+    },
+    "cancel": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "ESC",
+          "duration": 0.06
+        }
+      ]
+    },
+    "save": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "F5",
+          "duration": 0.06
+        }
+      ]
+    },
+    "load": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "F6",
+          "duration": 0.06
+        }
+      ]
+    }
+  },
+  "allowed_random_actions": [
+    "move_right",
+    "move_left",
+    "move_down",
+    "move_up",
+    "interact",
+    "information",
+    "board"
+  ],
+  "goals": [
+    {
+      "id": "movement_feedback",
+      "type": "reach",
+      "field": "distance_from_start",
+      "op": "ge",
+      "value": 40
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "smoke",
+      "agent": "Smoke",
+      "sequence": [
+        "move_right",
+        "move_down",
+        "move_left",
+        "move_up",
+        "information",
+        "information",
+        "interact"
+      ],
+      "action_budget": 12,
+      "time_budget": 30,
+      "save_load": true
+    },
+    {
+      "id": "goal",
+      "agent": "Goal",
+      "goal": "movement_feedback",
+      "policy": [
+        {
+          "when": {
+            "field": "distance_from_start",
+            "op": "lt",
+            "value": 40
+          },
+          "action": "move_right"
+        }
+      ],
+      "action_budget": 30,
+      "time_budget": 30
+    },
+    {
+      "id": "explorer",
+      "agent": "Explorer",
+      "action_budget": 80,
+      "time_budget": 35,
+      "observational_learning": true
+    },
+    {
+      "id": "random",
+      "agent": "Random",
+      "action_budget": 80,
+      "time_budget": 35,
+      "observational_learning": true
+    },
+    {
+      "id": "five_minute_observation",
+      "agent": "Explorer",
+      "action_budget": 2000,
+      "time_budget": 305,
+      "evaluation": true,
+      "stall_seconds": 20
+    }
+  ],
+  "observations": [
+    "internal_state",
+    "position",
+    "screenshot",
+    "window",
+    "process"
+  ],
+  "instructions": "WASD move; F interacts; E boards/disembarks; I information; F5 save; F6 load. Initial harness goal verifies actual movement feedback, not completion of the game.",
+  "state_signature": [
+    "scene",
+    "position",
+    "mode"
+  ],
+  "startup_timeout": 45,
+  "stall_seconds": 15,
+  "screenshot_interval": 5,
+  "save": {
+    "file": "__derived_from_project_name__",
+    "save_action": "save",
+    "load_action": "load",
+    "mutate_action": "move_down",
+    "state_fields": [
+      "position.x",
+      "position.y",
+      "mode"
+    ]
+  },
+  "storage": {
+    "root": "isolated_user",
+    "locations": [],
+    "required": true
+  },
+  "qa_plan": {
+    "faults": [],
+    "faults_enabled": false,
+    "regression": {
+      "scenario": "goal",
+      "state_fields": [
+        "mode"
+      ],
+      "compare_trajectory": false,
+      "visual_tolerance": 0.08
+    },
+    "soak": {
+      "seconds": 60,
+      "loops": 0,
+      "agent": "Random",
+      "memory_limit": 1024,
+      "observation_delay": 0.15,
+      "screenshot_interval": 10
+    }
+  },
+  "display": {
+    "kind": "windows"
+  },
+  "tests": [],
+  "tools_required": [
+    "godot"
+  ],
+  "acceptance_scope": "Hosted Windows diagnostic first E2E; not local offline, human or final 3-cycle acceptance.",
+  "technical_tests": [
+    {
+      "id": "core_tests",
+      "kind": "unit",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/core/core_regression_runner.gd"
+      ],
+      "timeout": 90
+    },
+    {
+      "id": "day1_scene",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "res://tests/ci/day1_acceptance.tscn"
+      ],
+      "timeout": 120
+    }
+  ]
+}

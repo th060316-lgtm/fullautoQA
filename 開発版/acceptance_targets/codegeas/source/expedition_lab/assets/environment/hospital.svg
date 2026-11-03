@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="200" viewBox="0 0 360 200">
+  <rect x="5" y="18" width="350" height="176" rx="10" fill="#39464b" stroke="#819297" stroke-width="5"/>
+  <rect x="20" y="35" width="320" height="48" rx="4" fill="#47585e"/>
+  <path d="M22 91h316v92H22Z" fill="#303c41"/>
+  <g fill="#789da6" stroke="#a8c0c6" stroke-width="2">
+    <rect x="35" y="48" width="44" height="24"/><rect x="91" y="48" width="44" height="24"/>
+    <rect x="225" y="48" width="44" height="24"/><rect x="281" y="48" width="44" height="24"/>
+    <rect x="36" y="108" width="54" height="34"/><rect x="270" y="108" width="54" height="34"/>
+  </g>
+  <rect x="136" y="96" width="88" height="98" fill="#17242a" stroke="#9fb5ba" stroke-width="4"/>
+  <path d="M151 111h58v21h-58Z" fill="#526970"/>
+  <path d="M151 143h58v51h-58Z" fill="#111b20"/>
+  <path d="M18 160 76 149l31 25 54-12 42 18 48-22 91 10v26H18Z" fill="#272f32" opacity=".82"/>
+  <circle cx="180" cy="24" r="20" fill="#e8f0f1" stroke="#aebec2" stroke-width="2"/>
+  <path d="M173 10h14v8h8v14h-8v8h-14v-8h-8V18h8Z" fill="#d85b61"/>
+  <path d="m294 23 27 11-17 13-18-8Z" fill="#293338"/>
+  <path d="M73 166 98 152M246 169l28-18" stroke="#9c8c72" stroke-width="6"/>
+</svg>

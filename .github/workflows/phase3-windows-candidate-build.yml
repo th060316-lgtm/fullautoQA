@@ -1,39 +1,115 @@
 name: Phase 3 Windows Candidate Build
 
 on:
-  push:
-    branches:
-      - work/phase3-windows-candidate-build-20261103
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/phase3-windows-candidate-build.yml'
+      - '開発版/source/**'
+      - '開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip'
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
-  group: phase3-windows-candidate-build
+  group: phase3-windows-candidate-build-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
+  candidate-inputs:
+    runs-on: windows-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/github-script@v7
+        id: check
+        with:
+          script: |
+            if(context.eventName !== 'pull_request' || context.payload.action !== 'synchronize' || !context.payload.before) {
+              core.setOutput('changed','true'); return;
+            }
+            const {owner,repo}=context.repo;
+            const before=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
+            const after=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
+            if(before.truncated || after.truncated) throw new Error('CANDIDATE_INPUT_TREE_TRUNCATED');
+            const select=t=>JSON.stringify(t.tree.filter(x=>x.path==='.github/workflows/phase3-windows-candidate-build.yml' || x.path==='開発版/source' || x.path==='開発版/complete_v033' || x.path==='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip').map(x=>[x.path,x.sha]).sort());
+            const changed=select(before)!==select(after);
+            core.setOutput('changed',String(changed));
+            if(changed) {
+              // Only superseded runs on this work branch; preserve their always() evidence steps.
+              const branch=context.payload.pull_request.head.ref;
+              for(const workflow_id of ['phase3-windows-candidate-build.yml','phase3-real-game.yml']) {
+                const runs=(await github.rest.actions.listWorkflowRuns({owner,repo,workflow_id,branch,per_page:30})).data.workflow_runs;
+                for(const run of runs) {
+                  if(run.id!==context.runId && run.head_sha!==context.payload.pull_request.head.sha && run.status!=='completed') {
+                    try { await github.rest.actions.cancelWorkflowRun({owner,repo,run_id:run.id}); } catch(error) { if(![404,409].includes(error.status)) throw error; }
+                    core.info('Cancelled superseded '+workflow_id+' run '+run.id+'; replacement source '+context.payload.pull_request.head.sha);
+                  }
+                }
+              }
+            }
   build-candidate:
+    needs: candidate-inputs
+    if: needs.candidate-inputs.outputs.changed == 'true'
     runs-on: windows-latest
     timeout-minutes: 120
+    env:
+      BUILD_OUT: ${{ github.workspace }}/_phase3_build
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
             開発版/complete_v033
             開発版/source
+            開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
           sparse-checkout-cone-mode: false
+
+      - name: Prepare evidence directory and tested source
+        id: prepare
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Path "$env:BUILD_OUT" -Force | Out-Null
+          $checkedOut = (git rev-parse HEAD).Trim()
+          "SOURCE_SHA=$checkedOut" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $sourceRoot = & "./開発版/source/scripts/PREPARE_SOURCE.ps1" -RepositoryRoot $PWD -Destination (Join-Path $PWD "_phase3_source")
+          "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Compile and run complete Source regression before donor JOIN
+        id: source_tests
+        shell: pwsh
+        run: |
+          python -B -m compileall -q "$env:SOURCE_ROOT/CORE" "$env:SOURCE_ROOT/TESTS"
+          if ($LASTEXITCODE -ne 0) { throw "SOURCE_COMPILE_FAILED" }
+          python -B -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v 2>&1 | Tee-Object -FilePath "$env:BUILD_OUT/SOURCE_TESTS.log"
+          if ($LASTEXITCODE -ne 0) { throw "SOURCE_REGRESSION_FAILED:$LASTEXITCODE" }
+          Get-ChildItem -LiteralPath "$env:SOURCE_ROOT" -Directory -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force
+
+      - name: Parse Windows PowerShell scripts before expensive build
+        id: parse
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          Get-ChildItem -LiteralPath "$env:SOURCE_ROOT" -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens = $null; $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count) { throw ($_.FullName + ": " + ($parseErrors | Out-String)) }
+          }
 
       - name: Show disk capacity
         shell: pwsh
         run: Get-PSDrive -PSProvider FileSystem | Format-Table -AutoSize
 
       - name: JOIN preserved v0.3.3 donor
+        id: join
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           $complete = Resolve-Path "開発版/complete_v033"
-          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $complete "JOIN_COMPLETE.ps1")
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $complete "JOIN_COMPLETE.ps1") 2>&1 | Tee-Object -FilePath "$env:BUILD_OUT/DONOR_JOIN.log"
           if ($LASTEXITCODE -ne 0) { throw "DONOR_JOIN_FAILED:$LASTEXITCODE" }
           $manifest = Get-Content -LiteralPath (Join-Path $complete "manifest.json") -Raw -Encoding UTF8 | ConvertFrom-Json
           $donor = Join-Path $complete ([string]$manifest.file)
@@ -47,14 +123,15 @@ jobs:
           Write-Host "JOIN PASS size=$actualSize sha256=$actualHash"
 
       - name: Build Phase 3 complete Candidate
+        id: build
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $source = Resolve-Path "開発版/source"
-          $out = Join-Path $PWD "_phase3_build"
+          $source = "$env:SOURCE_ROOT"
+          $out = "$env:BUILD_OUT"
           New-Item -ItemType Directory -Path $out -Force | Out-Null
           $script = Join-Path $source "scripts/PHASE3_OVERLAY_REBUILD.ps1"
-          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -DonorArchive "$env:DONOR" -SourceRoot "$source" -OutputDir "$out" -SourceBaseline "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -DonorArchive "$env:DONOR" -SourceRoot "$source" -OutputDir "$out" -SourceBaseline "$env:SOURCE_SHA" 2>&1 | Tee-Object -FilePath "$env:BUILD_OUT/CANDIDATE_BUILD.log"
           if ($LASTEXITCODE -ne 0) { throw "PHASE3_CANDIDATE_BUILD_FAILED:$LASTEXITCODE" }
           $candidate = Join-Path $out "FullAutoQA_PHASE3_CANDIDATE.zip"
           $identity = Join-Path $out "PHASE3_CANDIDATE_IDENTITY.json"
@@ -72,6 +149,7 @@ jobs:
           Write-Host "PHASE3 BUILD PASS size=$actualSize sha256=$actualHash"
 
       - name: Fresh extraction package verification
+        id: fresh
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -87,30 +165,23 @@ jobs:
           "FRESH_ROOT=$fresh" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "FRESH EXTRACTION INTEGRITY PASS"
 
-      - name: Hosted Windows START_QA fixture probe
-        id: fixture_probe
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Continue"
-          Push-Location "$env:FRESH_ROOT"
-          try { & ".\START_QA.cmd" -SelfTest; $code = $LASTEXITCODE } finally { Pop-Location }
-          "exit_code=$code" | Out-File -FilePath (Join-Path "$env:BUILD_OUT" "HOSTED_WINDOWS_FIXTURE_PROBE.txt") -Encoding utf8
-          if ($code -ne 0) { throw "HOSTED_FIXTURE_PROBE_NONZERO:$code" }
-
       - name: Write Windows acceptance metadata
         if: always()
         shell: pwsh
         run: |
-          $probe = "${{ steps.fixture_probe.outcome }}"
+          New-Item -ItemType Directory -Path "$env:BUILD_OUT" -Force | Out-Null
           $payload = [ordered]@{
-            source_main_sha = "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
-            donor_join = "$env:JOIN_STATUS"
+            source_checkout_sha = "$env:SOURCE_SHA"
+            source_regression = "${{ steps.source_tests.outcome }}"
+            powershell_parse = "${{ steps.parse.outcome }}"
+            workflow_run_id = "${{ github.run_id }}"
+            workflow_run_attempt = "${{ github.run_attempt }}"
+            donor_join = "${{ steps.join.outcome }}"
             candidate_size = "$env:CANDIDATE_SIZE"
             candidate_sha256 = "$env:CANDIDATE_SHA256"
-            candidate_build = $(if ($env:CANDIDATE_SHA256) { "PASS" } else { "NOT_RUN_OR_FAIL" })
-            fresh_extraction_integrity = $(if (Test-Path -LiteralPath (Join-Path "$env:BUILD_OUT" "FRESH_EXTRACTION_INTEGRITY.json")) { "PASS" } else { "NOT_RUN_OR_FAIL" })
-            hosted_windows_fixture_probe = $probe
+            candidate_build = "${{ steps.build.outcome }}"
+            fresh_extraction_integrity = "${{ steps.fresh.outcome }}"
+            hosted_windows_fixture_probe = "NOT_RUN_SEPARATE_JOB"
             hosted_probe_is_real_game_acceptance = $false
             real_game_e2e = "NOT_RUN"
             human_test = "NOT_RUN"
@@ -120,7 +191,7 @@ jobs:
           $payload | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path "$env:BUILD_OUT" "WINDOWS_PHASE3_ACCEPTANCE.json") -Encoding UTF8
 
       - name: Upload Phase 3 Candidate
-        if: success() || steps.fixture_probe.outcome == 'failure'
+        if: always() && steps.build.outcome == 'success' && steps.fresh.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
@@ -135,10 +206,49 @@ jobs:
         with:
           name: FullAutoQA-Phase3-Build-Evidence-${{ github.sha }}
           path: |
-            ${{ env.BUILD_OUT }}/PHASE3_CANDIDATE_IDENTITY.json
-            ${{ env.BUILD_OUT }}/PHASE3_CANDIDATE_BUILD_REPORT.json
-            ${{ env.BUILD_OUT }}/FRESH_EXTRACTION_INTEGRITY.json
-            ${{ env.BUILD_OUT }}/HOSTED_WINDOWS_FIXTURE_PROBE.txt
-            ${{ env.BUILD_OUT }}/WINDOWS_PHASE3_ACCEPTANCE.json
+            ${{ env.BUILD_OUT }}/*.json
+            ${{ env.BUILD_OUT }}/*.txt
+            ${{ env.BUILD_OUT }}/*.log
+            ${{ github.workspace }}/_phase3_fresh_acceptance/RESULTS/**
+          if-no-files-found: warn
+          retention-days: 30
+
+
+  fixture-probe:
+    needs: build-candidate
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
+          path: _download
+      - name: Fresh bundled-tool verification
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fresh = Join-Path $PWD '_fixture_fresh'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $PWD '_download/FullAutoQA_PHASE3_CANDIDATE.zip'),$fresh)
+          $python = Join-Path $fresh 'RUNTIME/python/python.exe'
+          & $python -B -E -s (Join-Path $fresh 'scripts/package_integrity.py') --root $fresh --full-payload --require-fresh-marker
+          if ($LASTEXITCODE -ne 0) { throw 'FIXTURE_PACKAGE_INTEGRITY_FAILED' }
+          "FRESH_ROOT=$fresh" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Hosted Windows START_QA fixture probe
+        shell: pwsh
+        run: |
+          Push-Location "$env:FRESH_ROOT"
+          try { & '.\START_QA.cmd' -SelfTest 2>&1 | Tee-Object -FilePath (Join-Path $env:GITHUB_WORKSPACE 'FIXTURE_START_QA.log'); $code=$LASTEXITCODE } finally { Pop-Location }
+          "exit_code=$code" | Set-Content (Join-Path $env:GITHUB_WORKSPACE 'FIXTURE_EXIT.txt')
+          if ($code -ne 0) { throw "HOSTED_FIXTURE_REQUIRED_NONPASS:$code" }
+      - name: Preserve fixture evidence separately from build acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FullAutoQA-Phase3-Fixture-Evidence-${{ github.run_id }}
+          path: |
+            FIXTURE_START_QA.log
+            FIXTURE_EXIT.txt
+            _fixture_fresh/RESULTS/**
           if-no-files-found: warn
           retention-days: 30
