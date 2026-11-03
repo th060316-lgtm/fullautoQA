@@ -1,5 +1,9 @@
 extends Node
 # Read-only QA instrumentation. No input synthesis or game-state writes.
+var load_error: bool = false
+func record_load_result(success: bool) -> void:
+	load_error = not success
+
 var elapsed: float = 0.0
 var origin: Vector2
 var origin_set: bool = false
@@ -23,7 +27,7 @@ func _process(delta: float) -> void:
 	var observation: Dictionary = {
 		"scene": str(scene.name), "position": pos,
 		"distance_from_start": position_now.distance_to(origin),
-		"hp": player.get("hp"), "mode": player.get("mode"),
+		"hp": player.get("hp"), "mode": player.get("mode"), "load_error": load_error,
 		"game": snapshot,
 		"provenance": "read_only_game_state_observer"
 	}

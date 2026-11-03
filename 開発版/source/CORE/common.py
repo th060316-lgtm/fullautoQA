@@ -24,8 +24,15 @@ def write_json(p,v):
 def read_json(p): return json.loads(Path(p).read_text(encoding='utf-8-sig'))
 def inside(root,rel):
     p=(Path(root)/rel).resolve(); root=Path(root).resolve()
-    if not p.is_relative_to(root): raise ValueError('PATH_ESCAPE: '+str(rel))
-    return p
+    if p.is_relative_to(root):return p
+    # Windows may expose one spelling as an 8.3 alias while another is long.
+    # Prove containment by filesystem identity, after resolving reparse points.
+    # Never accept a lexical prefix as a substitute for this identity check.
+    for ancestor in (p,*p.parents):
+        try:
+            if ancestor.samefile(root):return root.joinpath(*p.parts[len(ancestor.parts):])
+        except OSError:pass
+    raise ValueError('PATH_ESCAPE: '+str(rel))
 
 def extract_zip(src,dst):
     dst=Path(dst); dst.mkdir(parents=True,exist_ok=True)
@@ -60,6 +67,8 @@ class Evidence:
     def __init__(self,root,run_id):
         self.root=Path(root); self.root.mkdir(parents=True,exist_ok=True); self.run_id=run_id; self.seq=0
     def event(self,kind,case='run',**data):
+        if data.get('file') is not None:data['file']=str(data['file']).replace('\\','/')
+        if 'evidence' in data:data['evidence']=[str(ref).replace('\\','/') for ref in data['evidence']]
         self.seq+=1; event={'run_id':self.run_id,'event_id':f'E{self.seq:07d}','timestamp':stamp(),'monotonic':time.monotonic(),'test_case':case,'type':kind,**data}
         with (self.root/'events.jsonl').open('a',encoding='utf-8') as f:f.write(json.dumps(event,ensure_ascii=False)+'\n')
         if kind in ('action','state','process'):
@@ -70,7 +79,7 @@ class Evidence:
         gate=data.pop('gate',None) or ('OPTIONAL' if status=='NOT_RUN' else 'REQUIRED')
         if gate not in ('REQUIRED','OPTIONAL','UNSUPPORTED_FOR_PROFILE','INFORMATIONAL'):raise ValueError('INVALID_GATE')
         data['gate']=gate
-        files=list(evidence)
+        files=[str(ref).replace('\\','/') for ref in evidence]
         if status=='PASS' and (not files or any(not inside(self.root,p).is_file() for p in files)):
             status='HARNESS_ERROR'; reason='PASS_EVIDENCE_MISSING'
         e=self.event('verdict',case,status=status,reason_code=reason,severity=severity,evidence=files,**data)
@@ -180,3 +189,4 @@ def result_zip(root,require_manifest=False):
         os.replace(temporary,root/'RESULT_FOR_CHATGPT.zip')
         return root/'RESULT_FOR_CHATGPT.zip'
     finally:temporary.unlink(missing_ok=True)
+

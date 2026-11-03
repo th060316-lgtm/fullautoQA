@@ -1,7 +1,7 @@
 {
   "game_id": "codegeas_development",
   "game_version": "b5a0d2207a77854be5187a0b00fc2d234b0745b8",
-  "profile_version": "1.0-probe",
+  "profile_version": "1.1-probe",
   "schema_version": 1,
   "prototype_type": "playable",
   "qa_role": "target",
@@ -239,12 +239,18 @@
       "position.x",
       "position.y",
       "mode"
-    ]
+    ],
+    "invalid_expected": {
+      "field": "load_error",
+      "op": "eq",
+      "value": true
+    }
   },
   "storage": {
     "root": "isolated_user",
     "locations": [],
-    "required": true
+    "required": true,
+    "contract": "persisted_save"
   },
   "qa_plan": {
     "faults": [],
@@ -300,5 +306,6 @@
       ],
       "timeout": 120
     }
-  ]
+  ],
+  "adapter_version": "read-only-load-observer-1"
 }

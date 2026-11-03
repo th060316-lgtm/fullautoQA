@@ -212,7 +212,7 @@ class Session:
                 proof=case+'_storage_mutation_error.json';write_json(self.e.root/proof,{'error':repr(ex)})
                 self.verdict(case+'.storage','NOT_RUN','STORAGE_POST_MUTATION_UNAVAILABLE',[proof],gate=storage_gate);storage_inspector=None
         fields=cfg.get('state_fields',[])
-        state_mutated=bool(fields) and any(get(mutated,f)!=get(saved,f) for f in fields)
+        state_mutated=bool(fields) and all(get(saved,f) is not None and get(mutated,f) is not None for f in fields) and any(get(mutated,f)!=get(saved,f) for f in fields)
         if not state_mutated:
             self.verdict(case+'.restore','INCONCLUSIVE','SAVE_STATE_NOT_MUTATED',[copyfile.name])
             # Declared storage QA is independent of an internal bridge. If storage
@@ -223,7 +223,7 @@ class Session:
         if storage_inspector:
             try:
                 storage_loaded=storage_inspector.snapshot('post_load')
-                storage_result=storage_inspector.check_persistence(storage_pre,storage_saved,storage_mutated,storage_loaded)
+                storage_result=storage_inspector.check_persistence(storage_pre,storage_saved,storage_mutated,storage_loaded,contract=storage_cfg.get('contract','disk_restore'),state_mutated=state_mutated,state_restored=bool(fields) and all(get(saved,f) is not None and get(restored,f) is not None and get(restored,f)==get(saved,f) for f in fields))
                 storage_name=case+'_storage_qa.json';write_json(self.e.root/storage_name,{'config':storage_cfg,'pre_save':storage_pre.to_dict(),'post_save':storage_saved.to_dict(),'post_mutation':storage_mutated.to_dict(),'post_load':storage_loaded.to_dict(),'result':storage_result})
                 self.verdict(case+'.storage',storage_result['status'],storage_result['reason_code'],[storage_name],gate=storage_gate)
             except Exception as ex:
@@ -374,7 +374,7 @@ class Session:
             if base is None:raise ValueError('REQUIRED_BASELINE_MISSING')
             baseline=load_baseline(base,self.p,key,seed,identity=getattr(self,'target_identity',None),identity_root=self.root,settings=getattr(self,'binding_settings',None))
             for test,status,reason,proof in compare(baseline,self.p,state,actions,self.transitions,perf,base/'screen.bmp',self.e.root/shot):
-                name=case+'_'+test+'.json';write_json(self.e.root/name,{'baseline_game_version':baseline['game_version'],'current_game_version':self.p['game_version'],'baseline_scope':'USER_SPECIFIED_PREVIOUS_RUN' if self.imported_baselines else 'SAME_RUN_SELF_CHECK',**proof});self.verdict(case+'.'+test,status,reason,[name,shot,str((base/'screen.bmp').relative_to(self.e.root)),str((base/'checkpoint.json').relative_to(self.e.root)),str((base/'bundle.json').relative_to(self.e.root))])
+                name=case+'_'+test+'.json';write_json(self.e.root/name,{'baseline_game_version':baseline['game_version'],'current_game_version':self.p['game_version'],'baseline_scope':'USER_SPECIFIED_PREVIOUS_RUN' if self.imported_baselines else 'SAME_RUN_SELF_CHECK',**proof});self.verdict(case+'.'+test,status,reason,[name,shot,(base/'screen.bmp').relative_to(self.e.root).as_posix(),(base/'checkpoint.json').relative_to(self.e.root).as_posix(),(base/'bundle.json').relative_to(self.e.root).as_posix()])
     def behavioral_regression(self,case,agent,states,shot):
         baseline=self.root/'BASELINES'/self.p['game_id']/(case+'.json');name=case+'_regression.json'
         if not baseline.exists():self.verdict(case+'.regression','NOT_RUN','BASELINE_NOT_PROVIDED');return
