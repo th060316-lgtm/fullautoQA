@@ -1,39 +1,80 @@
 name: Phase 3 Windows Candidate Build
 
 on:
-  push:
-    branches:
-      - work/phase3-windows-candidate-build-20261103
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/phase3-windows-candidate-build.yml'
+      - '開発版/source/**'
+      - '開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip'
 
 permissions:
   contents: read
 
 concurrency:
-  group: phase3-windows-candidate-build
+  group: phase3-windows-candidate-build-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   build-candidate:
     runs-on: windows-latest
     timeout-minutes: 120
+    env:
+      BUILD_OUT: ${{ github.workspace }}/_phase3_build
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
             開発版/complete_v033
             開発版/source
+            開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
           sparse-checkout-cone-mode: false
+
+      - name: Prepare evidence directory and tested source
+        id: prepare
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Path "$env:BUILD_OUT" -Force | Out-Null
+          $checkedOut = (git rev-parse HEAD).Trim()
+          "SOURCE_SHA=$checkedOut" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $sourceRoot = & "./開発版/source/scripts/PREPARE_SOURCE.ps1" -RepositoryRoot $PWD -Destination (Join-Path $PWD "_phase3_source")
+          "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Compile and run complete Source regression before donor JOIN
+        id: source_tests
+        shell: pwsh
+        run: |
+          python -B -m compileall -q "$env:SOURCE_ROOT/CORE" "$env:SOURCE_ROOT/TESTS"
+          if ($LASTEXITCODE -ne 0) { throw "SOURCE_COMPILE_FAILED" }
+          python -B -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v 2>&1 | Tee-Object -FilePath "$env:BUILD_OUT/SOURCE_TESTS.log"
+          if ($LASTEXITCODE -ne 0) { throw "SOURCE_REGRESSION_FAILED:$LASTEXITCODE" }
+          Get-ChildItem -LiteralPath "$env:SOURCE_ROOT" -Directory -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force
+
+      - name: Parse Windows PowerShell scripts before expensive build
+        id: parse
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          Get-ChildItem -LiteralPath "$env:SOURCE_ROOT" -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens = $null; $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count) { throw ($_.FullName + ": " + ($parseErrors | Out-String)) }
+          }
 
       - name: Show disk capacity
         shell: pwsh
         run: Get-PSDrive -PSProvider FileSystem | Format-Table -AutoSize
 
       - name: JOIN preserved v0.3.3 donor
+        id: join
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           $complete = Resolve-Path "開発版/complete_v033"
-          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $complete "JOIN_COMPLETE.ps1")
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $complete "JOIN_COMPLETE.ps1") 2>&1 | Tee-Object -FilePath "$env:BUILD_OUT/DONOR_JOIN.log"
           if ($LASTEXITCODE -ne 0) { throw "DONOR_JOIN_FAILED:$LASTEXITCODE" }
           $manifest = Get-Content -LiteralPath (Join-Path $complete "manifest.json") -Raw -Encoding UTF8 | ConvertFrom-Json
           $donor = Join-Path $complete ([string]$manifest.file)
@@ -47,14 +88,15 @@ jobs:
           Write-Host "JOIN PASS size=$actualSize sha256=$actualHash"
 
       - name: Build Phase 3 complete Candidate
+        id: build
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $source = Resolve-Path "開発版/source"
-          $out = Join-Path $PWD "_phase3_build"
+          $source = "$env:SOURCE_ROOT"
+          $out = "$env:BUILD_OUT"
           New-Item -ItemType Directory -Path $out -Force | Out-Null
           $script = Join-Path $source "scripts/PHASE3_OVERLAY_REBUILD.ps1"
-          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -DonorArchive "$env:DONOR" -SourceRoot "$source" -OutputDir "$out" -SourceBaseline "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -DonorArchive "$env:DONOR" -SourceRoot "$source" -OutputDir "$out" -SourceBaseline "$env:SOURCE_SHA" 2>&1 | Tee-Object -FilePath "$env:BUILD_OUT/CANDIDATE_BUILD.log"
           if ($LASTEXITCODE -ne 0) { throw "PHASE3_CANDIDATE_BUILD_FAILED:$LASTEXITCODE" }
           $candidate = Join-Path $out "FullAutoQA_PHASE3_CANDIDATE.zip"
           $identity = Join-Path $out "PHASE3_CANDIDATE_IDENTITY.json"
@@ -72,6 +114,7 @@ jobs:
           Write-Host "PHASE3 BUILD PASS size=$actualSize sha256=$actualHash"
 
       - name: Fresh extraction package verification
+        id: fresh
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -102,14 +145,19 @@ jobs:
         if: always()
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Path "$env:BUILD_OUT" -Force | Out-Null
           $probe = "${{ steps.fixture_probe.outcome }}"
           $payload = [ordered]@{
-            source_main_sha = "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
-            donor_join = "$env:JOIN_STATUS"
+            source_checkout_sha = "$env:SOURCE_SHA"
+            source_regression = "${{ steps.source_tests.outcome }}"
+            powershell_parse = "${{ steps.parse.outcome }}"
+            workflow_run_id = "${{ github.run_id }}"
+            workflow_run_attempt = "${{ github.run_attempt }}"
+            donor_join = "${{ steps.join.outcome }}"
             candidate_size = "$env:CANDIDATE_SIZE"
             candidate_sha256 = "$env:CANDIDATE_SHA256"
-            candidate_build = $(if ($env:CANDIDATE_SHA256) { "PASS" } else { "NOT_RUN_OR_FAIL" })
-            fresh_extraction_integrity = $(if (Test-Path -LiteralPath (Join-Path "$env:BUILD_OUT" "FRESH_EXTRACTION_INTEGRITY.json")) { "PASS" } else { "NOT_RUN_OR_FAIL" })
+            candidate_build = "${{ steps.build.outcome }}"
+            fresh_extraction_integrity = "${{ steps.fresh.outcome }}"
             hosted_windows_fixture_probe = $probe
             hosted_probe_is_real_game_acceptance = $false
             real_game_e2e = "NOT_RUN"
@@ -120,7 +168,7 @@ jobs:
           $payload | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path "$env:BUILD_OUT" "WINDOWS_PHASE3_ACCEPTANCE.json") -Encoding UTF8
 
       - name: Upload Phase 3 Candidate
-        if: success() || steps.fixture_probe.outcome == 'failure'
+        if: always() && steps.build.outcome == 'success' && steps.fresh.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
@@ -135,10 +183,10 @@ jobs:
         with:
           name: FullAutoQA-Phase3-Build-Evidence-${{ github.sha }}
           path: |
-            ${{ env.BUILD_OUT }}/PHASE3_CANDIDATE_IDENTITY.json
-            ${{ env.BUILD_OUT }}/PHASE3_CANDIDATE_BUILD_REPORT.json
-            ${{ env.BUILD_OUT }}/FRESH_EXTRACTION_INTEGRITY.json
-            ${{ env.BUILD_OUT }}/HOSTED_WINDOWS_FIXTURE_PROBE.txt
-            ${{ env.BUILD_OUT }}/WINDOWS_PHASE3_ACCEPTANCE.json
+            ${{ env.BUILD_OUT }}/*.json
+            ${{ env.BUILD_OUT }}/*.txt
+            ${{ env.BUILD_OUT }}/*.log
+            ${{ github.workspace }}/_phase3_fresh_acceptance/RESULTS/**
           if-no-files-found: warn
           retention-days: 30
+
