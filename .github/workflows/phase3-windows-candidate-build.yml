@@ -11,10 +11,10 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 concurrency:
-  group: phase3-windows-candidate-build-${{ github.ref }}
+  group: phase3-windows-candidate-build-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -34,8 +34,22 @@ jobs:
             const before=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
             const after=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
             if(before.truncated || after.truncated) throw new Error('CANDIDATE_INPUT_TREE_TRUNCATED');
-            const select=t=>JSON.stringify(t.tree.filter(x=>x.path==='開発版/source' || x.path==='開発版/complete_v033' || x.path==='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip').map(x=>[x.path,x.sha]).sort());
-            core.setOutput('changed',String(select(before)!==select(after)));
+            const select=t=>JSON.stringify(t.tree.filter(x=>x.path==='.github/workflows/phase3-windows-candidate-build.yml' || x.path==='開発版/source' || x.path==='開発版/complete_v033' || x.path==='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip').map(x=>[x.path,x.sha]).sort());
+            const changed=select(before)!==select(after);
+            core.setOutput('changed',String(changed));
+            if(changed) {
+              // Only superseded runs on this work branch; preserve their always() evidence steps.
+              const branch=context.payload.pull_request.head.ref;
+              for(const workflow_id of ['phase3-windows-candidate-build.yml','phase3-real-game.yml']) {
+                const runs=(await github.rest.actions.listWorkflowRuns({owner,repo,workflow_id,branch,per_page:30})).data.workflow_runs;
+                for(const run of runs) {
+                  if(run.id!==context.runId && run.head_sha!==context.payload.pull_request.head.sha && run.status!=='completed') {
+                    try { await github.rest.actions.cancelWorkflowRun({owner,repo,run_id:run.id}); } catch(error) { if(![404,409].includes(error.status)) throw error; }
+                    core.info('Cancelled superseded '+workflow_id+' run '+run.id+'; replacement source '+context.payload.pull_request.head.sha);
+                  }
+                }
+              }
+            }
   build-candidate:
     needs: candidate-inputs
     if: needs.candidate-inputs.outputs.changed == 'true'

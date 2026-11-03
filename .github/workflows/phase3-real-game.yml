@@ -39,7 +39,7 @@ jobs:
                   changed.push(...more); if(more.length<100) break;
                 }
               }
-              if (changed.some(f=>f.filename.startsWith('開発版/source/'))) break;
+              if (changed.some(f=>f.filename.startsWith('開発版/source/') || f.filename==='.github/workflows/phase3-windows-candidate-build.yml')) break;
               if(!commit.parents.length) throw new Error('SOURCE_CHANGE_NOT_FOUND');
               sha=commit.parents[0].sha;
             }
