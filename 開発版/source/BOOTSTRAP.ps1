@@ -5,6 +5,13 @@ if ($SelfTest) {
 }
 $qaRoot = $PSScriptRoot
 $resultsDir = Join-Path $qaRoot 'RESULTS'
+# Hash before Python starts without relying on PowerShell module auto-discovery.
+function Get-QASHA256([string]$path) {
+  $stream = [IO.File]::OpenRead($path)
+  $sha = [Security.Cryptography.SHA256]::Create()
+  try { return ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
+  finally { $sha.Dispose(); $stream.Dispose() }
+}
 function Read-Json([string]$path) {
   Get-Content -Raw -Encoding UTF8 -LiteralPath $path | ConvertFrom-Json
 }
@@ -84,7 +91,7 @@ function Write-BootstrapFailure([string]$message) {
   try { 'BOOTSTRAP FAILED: HARNESS_ERROR' | Set-Content -Encoding UTF8 -LiteralPath (Join-Path $out 'SUMMARY.txt') } catch { Write-Host ('SUMMARY SAVE FAILED: '+$_.Exception.Message) }
   try {
     $diagnosticManifest = @(Get-ChildItem -LiteralPath $out -File | Where-Object { $_.Name -ne 'evidence_manifest.json' -and $_.Name -ne 'RESULT_FOR_CHATGPT.zip' } | ForEach-Object {
-      @{file=$_.Name;size=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant();run_id=$run}
+      @{file=$_.Name;size=$_.Length;sha256=(Get-QASHA256 $_.FullName);run_id=$run}
     })
     ConvertTo-Json -InputObject $diagnosticManifest -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath (Join-Path $out 'evidence_manifest.json')
   } catch { Write-Host ('EVIDENCE MANIFEST SAVE FAILED: '+$_.Exception.Message) }
@@ -108,7 +115,7 @@ try {
     if (-not $path.StartsWith($qaRoot+[IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'CORE path escape' }
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw ('CORE missing: '+$f.path) }
     if ((Get-Item -LiteralPath $path).Length -ne $f.size) { throw ('CORE size: '+$f.path) }
-    if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ne $f.sha256) { throw ('CORE hash: '+$f.path) }
+    if ((Get-QASHA256 $path) -ne $f.sha256) { throw ('CORE hash: '+$f.path) }
   }
   # Validate the bundled interpreter and its DLL/stdlib files BEFORE Python executes.
   $runtime = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $qaRoot 'python_manifest.json') | ConvertFrom-Json
@@ -117,7 +124,7 @@ try {
     if (-not $path.StartsWith($qaRoot+[IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Python path escape' }
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw ('Python missing: '+$f.path) }
     if ((Get-Item -LiteralPath $path).Length -ne $f.size) { throw ('Python size: '+$f.path) }
-    if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ne $f.sha256) { throw ('Python hash: '+$f.path) }
+    if ((Get-QASHA256 $path) -ne $f.sha256) { throw ('Python hash: '+$f.path) }
   }
   $python = Join-Path $qaRoot 'RUNTIME\python\python.exe'
   $env:PYTHONNOUSERSITE = '1'
@@ -172,3 +179,4 @@ try {
   Write-BootstrapFailure $_.Exception.Message
   exit 2
 }
+

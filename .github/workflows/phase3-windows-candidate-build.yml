@@ -132,7 +132,6 @@ jobs:
 
       - name: Hosted Windows START_QA fixture probe
         id: fixture_probe
-        continue-on-error: true
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"

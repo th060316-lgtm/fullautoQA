@@ -49,3 +49,28 @@ class StartEntrypointTests(unittest.TestCase):
         self.assertEqual(observed["start"], "1")
         self.assertFalse(observed["fresh"])
         self.assertFalse(observed["id"])
+
+    def test_real_bootstrap_corruption_produces_valid_diagnostic_zip(self):
+        import hashlib
+        import zipfile
+        (self.root / "BOOTSTRAP.ps1").write_bytes((ROOT / "BOOTSTRAP.ps1").read_bytes())
+        (self.root / "acceptance_manifest.json").write_text(json.dumps({"paths": {"results": "RESULTS"}}))
+        (self.root / "sentinel").write_bytes(b"actual")
+        (self.root / "core_manifest.json").write_text(json.dumps({"files": [
+            {"path": "sentinel", "size": 6, "sha256": "0" * 64}]}))
+        result = subprocess.run(["cmd.exe", "/d", "/c", "START_QA.cmd"], cwd=self.root,
+                                capture_output=True, text=True, timeout=30)
+        self.assertNotEqual(result.returncode, 0)
+        archives = list((self.root / "RESULTS").glob("bootstrap_*/RESULT_FOR_CHATGPT.zip"))
+        self.assertEqual(len(archives), 1, result.stdout + result.stderr)
+        with zipfile.ZipFile(archives[0]) as archive:
+            self.assertIsNone(archive.testzip())
+            report = json.loads(archive.read("result.json").decode("utf-8-sig"))
+            self.assertEqual(report["overall"], "HARNESS_ERROR")
+            self.assertFalse(report["completion_certified"])
+            self.assertIn("CORE hash: sentinel", report["results"][0]["detail"])
+            manifest = json.loads(archive.read("evidence_manifest.json").decode("utf-8-sig"))
+            for row in manifest:
+                content = archive.read(row["file"])
+                self.assertEqual(hashlib.sha256(content).hexdigest(), row["sha256"])
+                self.assertEqual(len(content), row["size"])
