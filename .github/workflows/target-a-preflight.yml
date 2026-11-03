@@ -11,7 +11,26 @@ permissions:
   contents: read
   actions: read
 jobs:
+  inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/github-script@v7
+        id: check
+        with:
+          script: |
+            if(context.eventName!=='pull_request'||context.payload.action!=='synchronize'||!context.payload.before) { core.setOutput('changed','true'); return; }
+            const {owner,repo}=context.repo;
+            const a=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
+            const b=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
+            if(a.truncated||b.truncated) throw new Error('PREFLIGHT_INPUT_TREE_TRUNCATED');
+            const paths=new Set(['.gitattributes','開発版/source/CORE','開発版/source/scripts','開発版/source/BOOTSTRAP.ps1','開発版/source/START_QA.cmd','開発版/acceptance_targets/politicstrasport','開発版/acceptance_targets/run_target.py']);
+            const select=t=>JSON.stringify(t.tree.filter(x=>paths.has(x.path)).map(x=>[x.path,x.sha]).sort());
+            core.setOutput('changed',String(select(a)!==select(b)));
   preflight:
+    needs: inputs
+    if: needs.inputs.outputs.changed == 'true' 
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
