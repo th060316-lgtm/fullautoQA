@@ -80,6 +80,15 @@ try {
   $src=$sourceCandidates | Where-Object { Test-Path -LiteralPath (Join-Path $_ 'CORE') -PathType Container } | Select-Object -First 1
   if (-not $src) { throw 'CURRENT_SOURCE_ROOT_NOT_FOUND' }
 
+  $preserved=Join-Path $OutputDir 'DONOR_RUNTIME_PAYLOAD_INVENTORY.json'
+  $donorPython=Join-Path $work 'RUNTIME\python\python.exe'
+  $currentIntegrity=Join-Path $src 'scripts\package_integrity.py'
+  & $donorPython '-B' '-E' '-s' $currentIntegrity --root $work --snapshot-preserved $preserved
+  if ($LASTEXITCODE -ne 0) { throw 'DONOR_INVENTORY_FAILED' }
+  # Donor evidence stays untouched; the new distribution starts without old runs.
+  $oldResults=Join-Path $work 'RESULTS'
+  if (Test-Path -LiteralPath $oldResults) { Remove-Item -LiteralPath $oldResults -Recurse -Force }
+
   # Overlay the complete current source tree while preserving only the donor's
   # Runtime/Payload (and transient output areas). This prevents stale donor
   # PROFILES/GAME/TESTS/scripts from surviving beside a new CORE.
@@ -107,12 +116,14 @@ try {
 
   $python=Join-Path $work 'RUNTIME\python\python.exe'
   $integrity=Join-Path $work 'scripts\package_integrity.py'
-  & $python '-B' '-E' '-s' $integrity --root $work --full-payload --require-fresh-marker
+  & $python '-B' '-E' '-s' $integrity --root $work --full-payload --require-fresh-marker --verify-preserved $preserved --seal --json-out (Join-Path $OutputDir 'STAGED_PACKAGE_INTEGRITY.json')
   if ($LASTEXITCODE -ne 0) { throw ('PACKAGE_INTEGRITY_FAILED:'+ $LASTEXITCODE) }
 
   [IO.Compression.ZipFile]::CreateFromDirectory($work,$tmpZip,[IO.Compression.CompressionLevel]::Optimal,$false)
   $size=(Get-Item -LiteralPath $tmpZip).Length
   $sha=Get-SHA256 $tmpZip
+  & $python '-B' '-E' '-s' $integrity --root $work --archive $tmpZip --json-out (Join-Path $OutputDir 'ARCHIVE_INTEGRITY.json')
+  if ($LASTEXITCODE -ne 0) { throw 'ARCHIVE_INTEGRITY_FAILED' }
 
   New-Item -ItemType Directory -Path $fresh -Force | Out-Null
   [IO.Compression.ZipFile]::ExtractToDirectory($tmpZip,$fresh)
@@ -128,6 +139,9 @@ try {
     phase=3; candidate_file=[IO.Path]::GetFileName($output); candidate_size=$size; candidate_sha256=$sha;
     source_baseline=$(if ($SourceBaseline) {$SourceBaseline} else {$null});
     donor_sha256=$donorSha; donor_mutated=$false; runtime_payload_preserved=$true;
+    runtime_payload_inventory_file=[IO.Path]::GetFileName($preserved);
+    runtime_payload_inventory_sha256=(Get-SHA256 $preserved);
+    package_manifest_sha256=(Get-SHA256 (Join-Path $freshRoot 'package_manifest.json'));
     fresh_extraction_marker_id=$markerId; created_utc=[DateTime]::UtcNow.ToString('o')
   }
   $id | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $identity -Encoding UTF8
@@ -150,3 +164,4 @@ try {
     if ($p -and (Test-Path -LiteralPath $p)) { Remove-Item -LiteralPath $p -Recurse -Force -ErrorAction SilentlyContinue }
   }
 }
+

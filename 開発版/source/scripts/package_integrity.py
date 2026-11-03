@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Offline integrity check for an extracted Phase-3 complete Candidate."""
 from __future__ import annotations
-import argparse, hashlib, json, sys
+import argparse, hashlib, json, sys, zipfile
 from pathlib import Path
 
 def sha256_file(path, chunk=1024*1024):
@@ -87,18 +87,109 @@ def check_structure(root, require_fresh_marker=False):
         errors.append("FRESH_EXTRACTION_MARKER_MISSING")
     return errors
 
+def inventory(root, preserved_only=False):
+    root = Path(root).resolve()
+    rows = []
+    for path in sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix()):
+        rel = path.relative_to(root).as_posix()
+        if path.is_symlink():
+            raise ValueError("PACKAGE_SYMLINK:" + rel)
+        if not path.is_file():
+            continue
+        if preserved_only:
+            if path.relative_to(root).parts[0] not in ("RUNTIME", "PAYLOAD"):
+                continue
+        elif (path.relative_to(root).parts[0] == "RESULTS" or
+              "__pycache__" in path.parts or
+              rel in ("package_manifest.json", "PHASE3_FRESH_EXTRACTION.marker")):
+            continue
+        rows.append({"path": rel, "size": path.stat().st_size, "sha256": sha256_file(path)})
+    return rows
+
+
+def seal_package(root):
+    data = {"schema_version": 1, "files": inventory(root)}
+    (Path(root) / "package_manifest.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def check_package_manifest(root):
+    path = Path(root) / "package_manifest.json"
+    if not path.is_file():
+        return ["PACKAGE_MANIFEST_MISSING"]
+    try:
+        data = load_json(path)
+        if not isinstance(data, dict) or data.get("schema_version") != 1:
+            return ["PACKAGE_MANIFEST_SCHEMA"]
+        rows = data.get("files")
+        if not isinstance(rows, list) or not rows:
+            return ["PACKAGE_MANIFEST_EMPTY"]
+        names = []
+        for row in rows:
+            if not isinstance(row, dict):
+                return ["PACKAGE_MANIFEST_ROW_INVALID"]
+            rel = row.get("path")
+            safe(root, rel)
+            if not isinstance(rel, str) or "\\" in rel or Path(rel).as_posix() != rel:
+                return ["PACKAGE_MANIFEST_PATH_INVALID"]
+            names.append(rel.casefold())
+        if len(names) != len(set(names)):
+            return ["PACKAGE_MANIFEST_DUPLICATE"]
+        actual = inventory(root)
+        if {row["path"] for row in actual} != {row["path"] for row in rows}:
+            return ["PACKAGE_FILE_SET_CHANGED"]
+        if sorted(rows, key=lambda row: row["path"]) != actual:
+            return ["PACKAGE_CONTENT_CHANGED"]
+        return []
+    except Exception as ex:
+        return ["PACKAGE_MANIFEST_INVALID:" + str(ex)]
+
+
+def check_archive(path):
+    try:
+        with zipfile.ZipFile(path) as archive:
+            names = []
+            for entry in archive.infolist():
+                name = entry.filename.replace("\\", "/")
+                if (name.startswith("/") or ":" in name or ".." in Path(name).parts or
+                    (entry.external_attr >> 16) & 0o170000 == 0o120000):
+                    return ["UNSAFE_ARCHIVE:" + name]
+                names.append(name.casefold())
+            if len(names) != len(set(names)):
+                return ["ARCHIVE_DUPLICATE"]
+            bad = archive.testzip()
+            return ["ARCHIVE_CRC:" + bad] if bad else []
+    except Exception as ex:
+        return ["ARCHIVE_INVALID:" + str(ex)]
+
+
 def main(argv=None):
     ap=argparse.ArgumentParser()
     ap.add_argument("--root",required=True)
     ap.add_argument("--full-payload",action="store_true")
     ap.add_argument("--require-fresh-marker",action="store_true")
     ap.add_argument("--json-out",default="")
+    ap.add_argument("--snapshot-preserved",default="")
+    ap.add_argument("--verify-preserved",default="")
+    ap.add_argument("--seal",action="store_true")
+    ap.add_argument("--archive",default="")
     ns=ap.parse_args(argv)
     root=Path(ns.root).resolve()
     if not root.is_dir(): return 2
+    if ns.snapshot_preserved:
+        Path(ns.snapshot_preserved).write_text(json.dumps(inventory(root, True), indent=2), encoding="utf-8")
+        return 0
+    preserved_errors = []
+    if ns.verify_preserved:
+        if inventory(root, True) != load_json(ns.verify_preserved):
+            preserved_errors.append("RUNTIME_PAYLOAD_CHANGED")
+    if ns.seal:
+        seal_package(root)
     report={
         "root":str(root),
         "structure":check_structure(root,ns.require_fresh_marker),
+        "package_manifest":check_package_manifest(root),
+        "preserved_runtime_payload":preserved_errors,
+        "archive":check_archive(ns.archive) if ns.archive else [],
         "core_manifest":check_core_manifest(root),
         "tool_manifest":check_tools(root,ns.full_payload),
         "python_manifest":check_file_manifest(root,"python_manifest.json",True),
@@ -111,3 +202,4 @@ def main(argv=None):
     return 0 if not errors else 1
 
 if __name__=="__main__": raise SystemExit(main())
+
