@@ -273,5 +273,32 @@
   "tools_required": [
     "godot"
   ],
-  "acceptance_scope": "Hosted Windows diagnostic first E2E; not local offline, human or final 3-cycle acceptance."
+  "acceptance_scope": "Hosted Windows diagnostic first E2E; not local offline, human or final 3-cycle acceptance.",
+  "technical_tests": [
+    {
+      "id": "core_tests",
+      "kind": "unit",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/core/core_regression_runner.gd"
+      ],
+      "timeout": 90
+    },
+    {
+      "id": "day1_scene",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "res://tests/ci/day1_acceptance.tscn"
+      ],
+      "timeout": 120
+    }
+  ]
 }

@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import shutil
+import sys
 from pathlib import Path
 
 ap = argparse.ArgumentParser()
@@ -47,6 +48,11 @@ target = {'schema_version': 1, 'baseline': None, 'targets': [{
     'required_agents': ['Smoke', 'Goal', 'Explorer', 'Random'],
     'required_capabilities': ['game_launch', 'autoplay', 'screenshots', 'video', 'save_load',
                               'regression', 'soak', 'state_log', 'action_log', 'target_binding']}]}
+sys.path.insert(0, str(root / 'CORE'))
+from targets import validate_target_profile
+missing = validate_target_profile(profile, target['targets'][0])
+if missing:
+    raise SystemExit('TARGET_CONTRACT_INCOMPLETE:' + ','.join(missing))
 (root / 'QA_TARGETS.json').write_text(json.dumps(target, indent=2), encoding='utf-8')
 proof = {'origin': meta, 'original_source_inventory': original_rows,
          'instrumentation': {'read_only_observer': 'qa_observer.gd', 'autoload_added': 'FullAutoQAObserver'},
