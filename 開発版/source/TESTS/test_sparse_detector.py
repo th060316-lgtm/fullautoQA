@@ -40,3 +40,16 @@ class SparseDetectorTests(unittest.TestCase):
             self.assertTrue((Path(td)/'case_crash.json').is_file())
             process.poll.return_value=None
             self.assertFalse(s.crash_observed(process,'running',[]))
+
+    def test_fixture_loop_contract_is_not_preempted_by_stall_detector(self):
+        import json
+        from agents import Agent
+        for path in (Path(__file__).resolve().parents[1]/'PROFILES').glob('fixture_*.json'):
+            profile=json.loads(path.read_text(encoding='utf-8'))
+            config=next(c for c in profile['qa_plan']['faults'] if c['id']=='loop')
+            scenario=config['scenario'];agent=Agent(profile,scenario,1);detector=StallDetector(scenario['stall_seconds'])
+            for i in range(10):
+                self.assertIsNone(detector.observe(i*2,agent.signature({}),None,agent.history[-1] if agent.history else None,reaction=0))
+                agent.choose({})
+                if agent.loops:break
+            self.assertGreater(agent.loops,0,path.name)

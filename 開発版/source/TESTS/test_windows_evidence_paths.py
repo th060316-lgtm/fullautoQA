@@ -43,10 +43,10 @@ class WindowsEvidencePathTests(unittest.TestCase):
         file=self.root/'bridge.json';file.write_text('{}')
         original=Path.resolve
         def noisy(path,*args,**kwargs):
-            if path==file:raise OSError('transient leaf handle path')
+            if path.name==file.name:raise OSError('transient leaf handle path')
             return original(path,*args,**kwargs)
         with patch.object(Path,'resolve',autospec=True,side_effect=noisy):
-            self.assertEqual(inside(self.root,'bridge.json'),file)
+            self.assertTrue(inside(self.root,'bridge.json').samefile(file))
 
     def test_file_symlink_to_outside_is_still_rejected(self):
         with tempfile.TemporaryDirectory() as outside:
