@@ -35,8 +35,10 @@ jobs:
               if(run?.status==='completed') {
                 if(run.conclusion!=='success') throw new Error('FINAL_CANDIDATE_OR_SELFTEST_NONPASS');
                 const files=(await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:run.id,per_page:100})).data.artifacts;
-                const candidate=files.find(x=>x.name.startsWith('FullAutoQA-Phase3-Candidate-')&&!x.expired);
-                const evidence=files.find(x=>x.name.startsWith('FullAutoQA-Phase3-Build-Evidence-')&&!x.expired);
+                const candidates=files.filter(x=>x.name.startsWith('FullAutoQA-Phase3-Candidate-')&&!x.expired).sort((a,b)=>Number(b.name.match(/-Attempt-(\d+)$/)?.[1]||0)-Number(a.name.match(/-Attempt-(\d+)$/)?.[1]||0));
+                const candidate=candidates[0];
+                const suffix=candidate?.name.slice('FullAutoQA-Phase3-Candidate-'.length);
+                const evidence=files.find(x=>x.name==='FullAutoQA-Phase3-Build-Evidence-'+suffix&&!x.expired);
                 // A completed Draft invocation has no Candidate. Wait for the
                 // ready-for-review build rather than accepting that old run.
                 if(candidate&&evidence) {
@@ -96,32 +98,32 @@ jobs:
           Copy-Item '_candidate_parts/FINAL_CANDIDATE_PARTS.json' '_local_acceptance_kit/'
       - uses: actions/upload-artifact@v4
         with:
-          name: Final-Candidate-Part001-${{ github.run_id }}
+          name: Final-Candidate-Part001-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
           path: _candidate_parts/candidate.part001
           compression-level: 0
           retention-days: 90
       - uses: actions/upload-artifact@v4
         with:
-          name: Final-Candidate-Part002-${{ github.run_id }}
+          name: Final-Candidate-Part002-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
           path: _candidate_parts/candidate.part002
           compression-level: 0
           retention-days: 90
       - uses: actions/upload-artifact@v4
         with:
-          name: Final-Candidate-Part003-${{ github.run_id }}
+          name: Final-Candidate-Part003-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
           path: _candidate_parts/candidate.part003
           compression-level: 0
           retention-days: 90
       - uses: actions/upload-artifact@v4
         with:
-          name: Final-Candidate-Part004-${{ github.run_id }}
+          name: Final-Candidate-Part004-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
           path: _candidate_parts/candidate.part004
           compression-level: 0
           retention-days: 90
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Final-Series-Evidence-${{ github.run_id }}
+          name: Final-Series-Evidence-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
           path: |
             _final_series/*.json
             _final_series/*.log

@@ -57,6 +57,8 @@ jobs:
             }
   build-candidate:
     needs: candidate-inputs
+    outputs:
+      candidate_artifact: ${{ steps.prepare.outputs.candidate_artifact }}
     if: needs.candidate-inputs.outputs.changed == 'true' && github.event_name != 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 120
@@ -81,6 +83,7 @@ jobs:
           New-Item -ItemType Directory -Path "$env:BUILD_OUT" -Force | Out-Null
           $checkedOut = (git rev-parse HEAD).Trim()
           "SOURCE_SHA=$checkedOut" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "candidate_artifact=FullAutoQA-Phase3-Candidate-${{ github.sha }}-Attempt-${{ github.run_attempt }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           $sourceRoot = & "./開発版/source/scripts/PREPARE_SOURCE.ps1" -RepositoryRoot $PWD -Destination (Join-Path $PWD "_phase3_source")
           Copy-Item -LiteralPath './開発版/acceptance_targets' -Destination (Join-Path $sourceRoot 'ACCEPTANCE') -Recurse -Force
           $bundleTree=(git rev-parse 'HEAD:開発版/acceptance_targets').Trim()
@@ -204,7 +207,7 @@ jobs:
         if: always() && steps.build.outcome == 'success' && steps.fresh.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
+          name: ${{ steps.prepare.outputs.candidate_artifact }}
           path: ${{ env.CANDIDATE }}
           if-no-files-found: error
           compression-level: 0
@@ -214,7 +217,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FullAutoQA-Phase3-Build-Evidence-${{ github.sha }}
+          name: FullAutoQA-Phase3-Build-Evidence-${{ github.sha }}-Attempt-${{ github.run_attempt }}
           path: |
             ${{ env.BUILD_OUT }}/*.json
             ${{ env.BUILD_OUT }}/*.txt
@@ -231,7 +234,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
+          name: ${{ needs.build-candidate.outputs.candidate_artifact }}
           path: _download
       - name: Fresh bundled-tool verification
         shell: pwsh
@@ -255,7 +258,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FullAutoQA-Phase3-Fixture-Evidence-${{ github.run_id }}
+          name: FullAutoQA-Phase3-Fixture-Evidence-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
           path: |
             FIXTURE_START_QA.log
             FIXTURE_EXIT.txt
