@@ -78,6 +78,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'CORE_MANIFEST_FAILED' }
           "FRESH_ROOT=$fresh" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           '{"scope":"SOURCE_OVERLAY_DIAGNOSTIC_NOT_FINAL_CANDIDATE","old_candidate_sha256":"6b2190c79a14f55ef17b4ba1be14e98567a2fa4ade67a1a5d7758c5f59b46b1d"}' | Set-Content DIAGNOSTIC_SCOPE.json
+      - name: Native fixture normal and fault isolation regression
+        shell: pwsh
+        run: |
+          & (Join-Path $env:FRESH_ROOT 'RUNTIME/python/python.exe') -B -E -s (Join-Path $env:FRESH_ROOT 'TESTS/probe_native_fixture_faults.py') --root $env:FRESH_ROOT --evidence (Join-Path $PWD '_native_fixture_regression')
+          if ($LASTEXITCODE -ne 0) { throw 'NATIVE_FIXTURE_FAULT_REGRESSION_FAILED' }
       - name: START_QA full selftest
         shell: pwsh
         run: |
@@ -85,12 +90,24 @@ jobs:
           try { & cmd.exe /d /c 'START_QA.cmd -SelfTest' 2>&1 | Tee-Object (Join-Path $env:GITHUB_WORKSPACE 'SELFTEST.log'); $code=$LASTEXITCODE } finally { Pop-Location }
           "$code" | Set-Content SELFTEST_EXIT.txt
           if ($code -ne 0) { throw "SELFTEST_REQUIRED_NONPASS:$code" }
+      - name: Complete Source suite with bundled Python and FFmpeg
+        if: always() && env.FRESH_ROOT != ''
+        shell: pwsh
+        run: |
+          $ffmpeg=@(Get-ChildItem (Join-Path $env:FRESH_ROOT 'RUNTIME') -Recurse -Filter ffmpeg.exe)
+          $dirs=@($ffmpeg | ForEach-Object { $_.DirectoryName } | Select-Object -Unique)
+          if ($dirs.Count -eq 0) { throw 'BUNDLED_ENCODER_NOT_PREPARED' }
+          $env:PATH=($dirs -join ';')+';'+$env:PATH
+          & (Join-Path $env:FRESH_ROOT 'RUNTIME/python/python.exe') -B -E -s -m unittest discover -s (Join-Path $env:FRESH_ROOT 'TESTS') -v 2>&1 | Tee-Object BUNDLED_SOURCE_TESTS.log
+          if ($LASTEXITCODE -ne 0) { throw 'BUNDLED_SOURCE_TESTS_FAILED' }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Source-Overlay-Selftest-${{ github.run_id }}
           path: |
+            _native_fixture_regression/**
             DIAGNOSTIC_SCOPE.json
+            BUNDLED_SOURCE_TESTS.log
             SELFTEST*.*
             _diagnostic/RESULTS/**
           retention-days: 14
