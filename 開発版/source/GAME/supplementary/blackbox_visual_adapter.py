@@ -38,11 +38,15 @@ class VisualAdapter:
             name=self.capture('ocr');result=subprocess.run([str(self.ocr_executable),str(self.e.root/name),'stdout'],capture_output=True,text=True,timeout=15)
             status='PASS' if result.returncode==0 else 'HARNESS_ERROR'
             ocr={'status':status,'text':result.stdout,'stderr':result.stderr,'source':name,'method':'explicit_tesseract_executable'}
-        return {'internal_state':{'external_visual_response_count':self.changes},'numeric_state':{},
+        evidence=[r[k] for r in self.records for k in ('before','after')]
+        return {'internal_state':{},'numeric_state':{},
             'scene':None,'window':self.d.state(),'ocr':ocr,
             'observation_status':{'internal_state':'NOT_CONFIGURED','ocr':status,
-                'condition_value_origin':'external screenshot crop measurements'},
-            'external_visual_measurements':self.records}
+                'external_observations':'CAPTURED' if evidence else 'NOT_RUN'},
+            'external_observations':{'values':{'visible_response_count':self.changes},
+                'provenance':{'method':'screenshot_crop_pixel_difference','evidence':evidence,
+                    'claim_scope':'visible_pixel_change_only; semantic_game_outcome=UNVERIFIED'},
+                'measurements':self.records}}
     def act(self,name):
         cfg=self.p['blackbox'];before=self.capture(name+'_before');self.d.focus()
         for item in self.p['actions'][name].get('inputs',[]):self.d.perform(item)
