@@ -80,6 +80,15 @@ class Contracts(unittest.TestCase):
         d,sent=self.display();d.work=Path.cwd();records=[];d.record=records.append;d.cdp=SimpleNamespace(call=lambda *a,**kw:sent.append((a,kw)))
         d.on_event({'method':'Fetch.requestPaused','sessionId':'s','params':{'requestId':'r','request':{'url':'https://example.com/tracker'}}});self.assertEqual(sent[-1][0][0],'Fetch.failRequest');self.assertEqual(records[0]['method'],'FullAutoQA.external_request_blocked')
         d.on_event({'method':'Fetch.requestPaused','params':{'requestId':'local','request':{'url':'http://127.0.0.1:9000/game'}}});self.assertEqual(sent[-1][0][0],'Fetch.continueRequest')
+    def test_stale_or_foreign_cdp_process_is_not_accepted(self):
+        class ForeignProtocol:
+            def __init__(self,*args):pass
+            def call(self,method,*args,**kwargs):return {'processInfo':[{'type':'browser','id':99999}]} if method=='SystemInfo.getProcessInfo' else {'product':'UNIT_FOREIGN'}
+            def close(self):pass
+        with tempfile.TemporaryDirectory() as td:
+            profile,process=self.config(td)
+            with patch('browser_backend._CDP',ForeignProtocol):
+                with self.assertRaisesRegex(OSError,'BROWSER_CDP_PROCESS_IDENTITY_MISMATCH'):select_browser_display(profile,td,process)
     def test_profile_lifecycle_protocol_double_not_browser_evidence(self):
         calls=[]
         class Protocol:
@@ -88,6 +97,7 @@ class Contracts(unittest.TestCase):
             def call(self,method,params=None,session=None,**kw):
                 calls.append(method)
                 if method=='Browser.getVersion':return {'product':'UNIT_DOUBLE'}
+                if method=='SystemInfo.getProcessInfo':return {'processInfo':[{'type':'browser','id':42}]}
                 if method=='Target.createTarget':return {'targetId':'t'}
                 if method=='Target.attachToTarget':return {'sessionId':'s'}
                 if method=='Runtime.evaluate':return {'result':{'value':'complete' if params['expression']=='document.readyState' else True}}

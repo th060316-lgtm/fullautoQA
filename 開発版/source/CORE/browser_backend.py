@@ -394,6 +394,11 @@ class CDPBrowserDisplay:
         self.cdp = _CDP('ws://127.0.0.1:'+rows[0]+rows[1],self.on_event)
         try:
             self.runtime['version'] = self.cdp.call('Browser.getVersion')
+            processes = self.cdp.call('SystemInfo.getProcessInfo').get('processInfo',[])
+            browser_pids = [int(row['id']) for row in processes if row.get('type')=='browser']
+            if process.poll() is not None or process.pid not in browser_pids:
+                raise OSError('BROWSER_CDP_PROCESS_IDENTITY_MISMATCH')
+            self.runtime['browser_process_identity'] = {'launched_pid':process.pid,'cdp_browser_pids':browser_pids}
             self.target_id = self.cdp.call('Target.createTarget',{'url':'about:blank'})['targetId']
             self.session = self.cdp.call('Target.attachToTarget',{'targetId':self.target_id,'flatten':True})['sessionId']
             for domain in ('Runtime','Page','Network'):
