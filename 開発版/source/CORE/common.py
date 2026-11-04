@@ -133,7 +133,7 @@ def report(root,data):
         return '<td>'+html.escape(str(r.get(k,'')))+'</td>'
     rows=''.join('<tr>'+''.join(cell(r,k) for k in ('test_case','status','reason_code','severity','evidence'))+'</tr>' for r in data['results'])
     page='<!doctype html><meta charset="utf-8"><title>QA Result</title><style>body{font:16px system-ui;margin:2em;background:#101827;color:#eee}td,th{padding:.5em;border:1px solid #667}table{border-collapse:collapse}a{color:#9cf}</style>'
-    page+='<h1>'+html.escape(data['overall'])+'</h1><p>Automated proxy evaluation; no human satisfaction claim.</p><p>Run '+html.escape(data['run_id'])+'</p><table><tr><th>Test</th><th>Status</th><th>Reason</th><th>Severity</th><th>Evidence</th></tr>'+rows+'</table><p><a href="result.json">JSON</a> · <a href="evidence_manifest.json">Evidence manifest</a></p>'
+    page+='<h1>QA processing finished</h1><p>Automated test result: '+html.escape(data['overall'])+'</p><p>Automated proxy evaluation; no human satisfaction claim.</p><p>Run '+html.escape(data['run_id'])+'</p>'
     acceptance=[]
     if 'headquarters' in data:
         hq=data['headquarters']
@@ -144,6 +144,9 @@ def report(root,data):
                        'Completion certified: '+str(bool(data.get('completion_certified'))),
                        'Product Acceptance: HOLD', 'Stable: HOLD']
         page+='<h2>Acceptance status</h2>'+''.join('<p>'+html.escape(line)+'</p>' for line in acceptance)
+    else:
+        page+='<h2>Acceptance status</h2><p>Headquarters evaluation: NOT_RUN</p><p>Product Acceptance: HOLD</p><p>Stable: HOLD</p>'
+    page+='<h2>Detailed test results</h2><table><tr><th>Test</th><th>Status</th><th>Reason</th><th>Severity</th><th>Evidence</th></tr>'+rows+'</table><p><a href="result.json">JSON</a> · <a href="evidence_manifest.json">Evidence manifest</a></p>'
     for kind,summary in data.get('prototype_results',{}).items():page+='<p>'+html.escape(kind)+': '+html.escape(summary['status'])+'</p>'
     if hq_report is not None:page+=hq_report.readback_html(data)
     if (root/'video.mp4').exists():page+='<h2>Recorded virtual display</h2><video controls width="720" src="video.mp4"></video>'
