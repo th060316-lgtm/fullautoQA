@@ -133,7 +133,7 @@ def report(root,data):
         return '<td>'+html.escape(str(r.get(k,'')))+'</td>'
     rows=''.join('<tr>'+''.join(cell(r,k) for k in ('test_case','status','reason_code','severity','evidence'))+'</tr>' for r in data['results'])
     page='<!doctype html><meta charset="utf-8"><title>QA Result</title><style>body{font:16px system-ui;margin:2em;background:#101827;color:#eee}td,th{padding:.5em;border:1px solid #667}table{border-collapse:collapse}a{color:#9cf}</style>'
-    page+='<h1>QA processing finished</h1><p>Automated test result: '+html.escape(data['overall'])+'</p><p>Automated proxy evaluation; no human satisfaction claim.</p><p>Run '+html.escape(data['run_id'])+'</p>'
+    page+='<h1>'+html.escape(data['overall'])+'</h1><p>QA processing finished.</p><p>Automated test result: '+html.escape(data['overall'])+'</p><p>Automated proxy evaluation; no human satisfaction claim.</p><p>Run '+html.escape(data['run_id'])+'</p>'
     acceptance=[]
     if 'headquarters' in data:
         hq=data['headquarters']
