@@ -37,3 +37,21 @@ class WindowsEvidencePathTests(unittest.TestCase):
         report(self.root,{'run_id':'run','overall':'PASS','results':[row]})
         ev.manifest();archive=result_zip(self.root,True)
         self.assertEqual(validate_result_zip(archive,True,'run')['overall'],'PASS')
+
+
+    def test_regular_replaced_leaf_is_not_resolved_by_handle(self):
+        file=self.root/'bridge.json';file.write_text('{}')
+        original=Path.resolve
+        def noisy(path,*args,**kwargs):
+            if path.name==file.name:raise OSError('transient leaf handle path')
+            return original(path,*args,**kwargs)
+        with patch.object(Path,'resolve',autospec=True,side_effect=noisy):
+            self.assertTrue(inside(self.root,'bridge.json').samefile(file))
+
+    def test_file_symlink_to_outside_is_still_rejected(self):
+        with tempfile.TemporaryDirectory() as outside:
+            target=Path(outside)/'secret';target.write_text('secret')
+            link=self.root/'bridge.json'
+            try:link.symlink_to(target)
+            except OSError:self.skipTest('Symlink creation not permitted by host')
+            with self.assertRaisesRegex(ValueError,'PATH_ESCAPE'):inside(self.root,'bridge.json')

@@ -1,0 +1,176 @@
+name: Frozen final A-B-A series
+on:
+  push:
+    branches: [main]
+    paths: ['開発版/source/**', '開発版/acceptance_targets/**', '.github/workflows/final-aba-series.yml']
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: final-series-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  candidate:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    outputs:
+      run_id: ${{ steps.find.outputs.run_id }}
+      archive_name: ${{ steps.find.outputs.archive_name }}
+      evidence_name: ${{ steps.find.outputs.evidence_name }}
+    steps:
+      - uses: actions/github-script@v7
+        id: find
+        with:
+          script: |
+            const {owner,repo}=context.repo;
+            const head=context.payload.pull_request?.head.sha||context.sha;
+            for(let i=0;i<840;i++) {
+              const runs=(await github.rest.actions.listWorkflowRuns({owner,repo,workflow_id:'phase3-windows-candidate-build.yml',head_sha:head,per_page:20})).data.workflow_runs;
+              const run=runs[0];
+              if(run?.status==='completed') {
+                if(run.conclusion!=='success') throw new Error('FINAL_CANDIDATE_OR_SELFTEST_NONPASS');
+                const files=(await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:run.id,per_page:100})).data.artifacts;
+                const candidates=files.filter(x=>x.name.startsWith('FullAutoQA-Phase3-Candidate-')&&!x.expired).sort((a,b)=>Number(b.name.match(/-Attempt-(\d+)$/)?.[1]||0)-Number(a.name.match(/-Attempt-(\d+)$/)?.[1]||0));
+                const candidate=candidates[0];
+                const suffix=candidate?.name.slice('FullAutoQA-Phase3-Candidate-'.length);
+                const evidence=files.find(x=>x.name==='FullAutoQA-Phase3-Build-Evidence-'+suffix&&!x.expired);
+                // A completed Draft invocation has no Candidate. Wait for the
+                // ready-for-review build rather than accepting that old run.
+                if(candidate&&evidence) {
+                  core.setOutput('run_id',String(run.id));core.setOutput('archive_name',candidate.name);core.setOutput('evidence_name',evidence.name);return;
+                }
+              }
+              await new Promise(r=>setTimeout(r,5000));
+            }
+            throw new Error('FINAL_CANDIDATE_WAIT_TIMEOUT');
+  final-series:
+    outputs:
+      evidence_artifact_id: ${{ steps.retain.outputs.artifact-id }}
+    needs: candidate
+    runs-on: windows-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.candidate.outputs.run_id }}
+          name: ${{ needs.candidate.outputs.archive_name }}
+          path: _candidate
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.candidate.outputs.run_id }}
+          name: ${{ needs.candidate.outputs.evidence_name }}
+          path: _build_evidence
+      - name: Freeze the complete Candidate before Final Run 1
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $ids=@(Get-ChildItem _build_evidence -Recurse -Filter PHASE3_CANDIDATE_IDENTITY.json)
+          if ($ids.Count -ne 1) { throw 'FINAL_IDENTITY_AMBIGUOUS' }
+          $id=Get-Content -LiteralPath $ids[0].FullName -Raw -Encoding utf8 | ConvertFrom-Json
+          $zip=(Resolve-Path (Join-Path '_candidate' $id.candidate_file)).Path
+          if ((Get-Item $zip).Length -ne $id.candidate_size -or (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $id.candidate_sha256) { throw 'FINAL_CANDIDATE_IDENTITY_MISMATCH' }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $controller=Join-Path $PWD '_controller'
+          [IO.Compression.ZipFile]::ExtractToDirectory($zip,$controller)
+          "CONTROLLER=$controller" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "CANDIDATE=$zip" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "CANDIDATE_SHA=$($id.candidate_sha256)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          New-Item -ItemType Directory '_local_acceptance_kit' | Out-Null
+          Copy-Item $ids[0].FullName '_local_acceptance_kit/FINAL_CANDIDATE_IDENTITY.json'
+          Copy-Item (Join-Path $controller 'ACCEPTANCE/RUN_FINAL_ACCEPTANCE.cmd') '_local_acceptance_kit/'
+          Copy-Item (Join-Path $controller 'ACCEPTANCE/launch_final_series.ps1') '_local_acceptance_kit/'
+          Copy-Item (Join-Path $controller 'ACCEPTANCE/README_FINAL_ACCEPTANCE.md') '_local_acceptance_kit/'
+      - name: PoliticsTrasport then codegeas then PoliticsTrasport through START_QA
+        shell: pwsh
+        run: |
+          & (Join-Path $env:CONTROLLER 'RUNTIME/python/python.exe') -B -E -s (Join-Path $env:CONTROLLER 'ACCEPTANCE/run_series.py') --candidate $env:CANDIDATE --expected-sha $env:CANDIDATE_SHA --output (Join-Path $PWD '_final_series')
+          if ($LASTEXITCODE -ne 0) { throw "FINAL_SERIES_NONPASS:$LASTEXITCODE" }
+      - name: Export the accepted Candidate bytes without rebuilding
+        shell: pwsh
+        run: |
+          & (Join-Path $env:CONTROLLER 'RUNTIME/python/python.exe') -B -E -s (Join-Path $env:CONTROLLER 'ACCEPTANCE/split_candidate.py') --archive $env:CANDIDATE --identity (Join-Path $PWD '_local_acceptance_kit/FINAL_CANDIDATE_IDENTITY.json') --output (Join-Path $PWD '_candidate_parts')
+          if ($LASTEXITCODE -ne 0) { throw 'FINAL_CANDIDATE_EXPORT_FAILED' }
+          Copy-Item '_candidate_parts/FINAL_CANDIDATE_PARTS.json' '_local_acceptance_kit/'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Final-Candidate-Part001-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: _candidate_parts/candidate.part001
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Final-Candidate-Part002-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: _candidate_parts/candidate.part002
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Final-Candidate-Part003-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: _candidate_parts/candidate.part003
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Final-Candidate-Part004-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: _candidate_parts/candidate.part004
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        id: retain
+        if: always()
+        with:
+          name: Final-Series-Evidence-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: |
+            _final_series/*.json
+            _final_series/*.log
+            _final_series/Run*/**
+            _final_series/fresh_*/RESULTS/**
+            _local_acceptance_kit/**
+          retention-days: 90
+
+
+  offline-delivery:
+    needs: [candidate, final-series]
+    if: always() && needs.candidate.result == 'success' && needs.final-series.outputs.evidence_artifact_id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.candidate.outputs.run_id }}
+          name: ${{ needs.candidate.outputs.archive_name }}
+          path: _candidate
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.final-series.outputs.evidence_artifact_id }}
+          path: _evidence
+      - name: Assemble one-download offline kit from the unchanged accepted bytes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib,json,pathlib,shutil
+          roots=list(pathlib.Path('_evidence').rglob('SERIES_COMPARISON.json')); assert len(roots)==1, 'SERIES_COMPARISON_AMBIGUOUS'
+          comparison=json.loads(roots[0].read_text(encoding='utf-8-sig')); assert comparison['technical_series_status']=='PASS' and comparison['final_runs_completed']==3, 'TECHNICAL_SERIES_NOT_PASSED'
+          identities=list(pathlib.Path('_evidence').rglob('FINAL_CANDIDATE_IDENTITY.json')); assert len(identities)==1, 'CANDIDATE_IDENTITY_AMBIGUOUS'
+          identity=json.loads(identities[0].read_text(encoding='utf-8-sig')); archive=pathlib.Path('_candidate')/identity['candidate_file']; assert archive.name==identity['candidate_file'], 'UNSAFE_NAME'
+          with archive.open('rb') as f: actual=hashlib.file_digest(f,'sha256').hexdigest()
+          assert actual==identity['candidate_sha256'] and archive.stat().st_size==identity['candidate_size'], 'FROZEN_CANDIDATE_CHANGED'
+          target=pathlib.Path('_offline_kit'); target.mkdir()
+          for name in ['RUN_FINAL_ACCEPTANCE.cmd','launch_final_series.ps1','README_FINAL_ACCEPTANCE.md','FINAL_CANDIDATE_IDENTITY.json']: shutil.copy2(identities[0].parent/name,target/name)
+          shutil.copy2(roots[0],target/'HOSTED_SERIES_COMPARISON.json'); shutil.copy2(archive,target/archive.name)
+          print('OFFLINE_KIT_IDENTITY='+json.dumps(identity,ensure_ascii=True),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FullAutoQA-Final-Offline-Kit-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: _offline_kit/
+          compression-level: 0
+          retention-days: 90

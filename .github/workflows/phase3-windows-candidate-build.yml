@@ -1,12 +1,17 @@
 name: Phase 3 Windows Candidate Build
 
 on:
+  push:
+    branches: [main]
+    paths: ['開発版/source/**', '開発版/acceptance_targets/**', '.github/workflows/phase3-windows-candidate-build.yml']
   workflow_dispatch:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
     paths:
       - '.github/workflows/phase3-windows-candidate-build.yml'
       - '開発版/source/**'
+      - '開発版/acceptance_targets/**'
       - '開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip'
 
 permissions:
@@ -34,7 +39,7 @@ jobs:
             const before=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
             const after=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
             if(before.truncated || after.truncated) throw new Error('CANDIDATE_INPUT_TREE_TRUNCATED');
-            const select=t=>JSON.stringify(t.tree.filter(x=>x.path==='.github/workflows/phase3-windows-candidate-build.yml' || x.path==='開発版/source' || x.path==='開発版/complete_v033' || x.path==='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip').map(x=>[x.path,x.sha]).sort());
+            const select=t=>JSON.stringify(t.tree.filter(x=>x.path==='.github/workflows/phase3-windows-candidate-build.yml' || x.path==='開発版/source' || x.path==='開発版/acceptance_targets' || x.path==='開発版/complete_v033' || x.path==='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip').map(x=>[x.path,x.sha]).sort());
             const changed=select(before)!==select(after);
             core.setOutput('changed',String(changed));
             if(changed) {
@@ -52,7 +57,9 @@ jobs:
             }
   build-candidate:
     needs: candidate-inputs
-    if: needs.candidate-inputs.outputs.changed == 'true'
+    outputs:
+      candidate_artifact: ${{ steps.prepare.outputs.candidate_artifact }}
+    if: needs.candidate-inputs.outputs.changed == 'true' && github.event_name != 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 120
     env:
@@ -64,6 +71,7 @@ jobs:
           sparse-checkout: |
             開発版/complete_v033
             開発版/source
+            開発版/acceptance_targets
             開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
           sparse-checkout-cone-mode: false
 
@@ -75,7 +83,11 @@ jobs:
           New-Item -ItemType Directory -Path "$env:BUILD_OUT" -Force | Out-Null
           $checkedOut = (git rev-parse HEAD).Trim()
           "SOURCE_SHA=$checkedOut" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "candidate_artifact=FullAutoQA-Phase3-Candidate-${{ github.sha }}-Attempt-${{ github.run_attempt }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           $sourceRoot = & "./開発版/source/scripts/PREPARE_SOURCE.ps1" -RepositoryRoot $PWD -Destination (Join-Path $PWD "_phase3_source")
+          Copy-Item -LiteralPath './開発版/acceptance_targets' -Destination (Join-Path $sourceRoot 'ACCEPTANCE') -Recurse -Force
+          $bundleTree=(git rev-parse 'HEAD:開発版/acceptance_targets').Trim()
+          "ACCEPTANCE_TREE=$bundleTree" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Compile and run complete Source regression before donor JOIN
@@ -172,6 +184,7 @@ jobs:
           New-Item -ItemType Directory -Path "$env:BUILD_OUT" -Force | Out-Null
           $payload = [ordered]@{
             source_checkout_sha = "$env:SOURCE_SHA"
+            acceptance_bundle_tree = "$env:ACCEPTANCE_TREE"
             source_regression = "${{ steps.source_tests.outcome }}"
             powershell_parse = "${{ steps.parse.outcome }}"
             workflow_run_id = "${{ github.run_id }}"
@@ -194,7 +207,7 @@ jobs:
         if: always() && steps.build.outcome == 'success' && steps.fresh.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
+          name: ${{ steps.prepare.outputs.candidate_artifact }}
           path: ${{ env.CANDIDATE }}
           if-no-files-found: error
           compression-level: 0
@@ -204,7 +217,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FullAutoQA-Phase3-Build-Evidence-${{ github.sha }}
+          name: FullAutoQA-Phase3-Build-Evidence-${{ github.sha }}-Attempt-${{ github.run_attempt }}
           path: |
             ${{ env.BUILD_OUT }}/*.json
             ${{ env.BUILD_OUT }}/*.txt
@@ -221,7 +234,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: FullAutoQA-Phase3-Candidate-${{ github.sha }}
+          name: ${{ needs.build-candidate.outputs.candidate_artifact }}
           path: _download
       - name: Fresh bundled-tool verification
         shell: pwsh
@@ -245,10 +258,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FullAutoQA-Phase3-Fixture-Evidence-${{ github.run_id }}
+          name: FullAutoQA-Phase3-Fixture-Evidence-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
           path: |
             FIXTURE_START_QA.log
             FIXTURE_EXIT.txt
             _fixture_fresh/RESULTS/**
           if-no-files-found: warn
           retention-days: 30
+

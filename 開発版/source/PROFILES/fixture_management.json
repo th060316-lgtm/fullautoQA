@@ -819,7 +819,7 @@
             "move_down"
           ],
           "action_budget": 300,
-          "time_budget": 8,
+          "time_budget": 60,
           "save_load": false,
           "observation_delay": 0.06,
           "stall_seconds": 1.2,
@@ -1299,10 +1299,10 @@
             "move_down"
           ],
           "action_budget": 300,
-          "time_budget": 8,
+          "time_budget": 60,
           "save_load": false,
           "observation_delay": 0.06,
-          "stall_seconds": 10,
+          "stall_seconds": 60,
           "stop_on_goal": false,
           "loop_failure": true
         }

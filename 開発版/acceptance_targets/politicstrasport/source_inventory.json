@@ -1,0 +1,327 @@
+[
+  {
+    "path": "HOLD_RELEASE_REPORT.md",
+    "size": 4340,
+    "git_blob_sha": "d547f5512fe3a238c0c87787ef1ac2cc6ac270b4"
+  },
+  {
+    "path": "INTEGRATION_NOTES.md",
+    "size": 12920,
+    "git_blob_sha": "8128a5f13e026004063b4ff180f438f5ac5e25e2"
+  },
+  {
+    "path": "README_PLAYTEST.md",
+    "size": 3902,
+    "git_blob_sha": "5836e5fadf005b8f9014f0202b6df5f08c39f5bf"
+  },
+  {
+    "path": "TEST_ACCEPTANCE.md",
+    "size": 1161,
+    "git_blob_sha": "c161de5397b1c9d4dda287cfaf829044345978b9"
+  },
+  {
+    "path": "WORK_ISSUES_8_15_INTEGRATION.md",
+    "size": 4749,
+    "git_blob_sha": "7492e63d963a5dd2054d84287c1813276a6e95fd"
+  },
+  {
+    "path": "icon.svg",
+    "size": 391,
+    "git_blob_sha": "f0c8b53502eb105e2948b2d62396d650c9e88c01"
+  },
+  {
+    "path": "project.godot",
+    "size": 3037,
+    "git_blob_sha": "72fdae197ce08cc3f05c4ea4e6702fa9ec6ff8eb"
+  },
+  {
+    "path": "qa/PoliticsTransportQaAdapter.gd",
+    "size": 11491,
+    "git_blob_sha": "7079eac2d965cab4d206f2f09267073640ddbcc7"
+  },
+  {
+    "path": "qa/QaBridge.gd",
+    "size": 2422,
+    "git_blob_sha": "6e1f04265fb68174d3dd003170e1232ba08999f9"
+  },
+  {
+    "path": "scenes/Main.tscn",
+    "size": 4004,
+    "git_blob_sha": "5c106b08a6b12149a2e4e415f30cdb390e8ea9c5"
+  },
+  {
+    "path": "scripts/AICompanyBrain.gd",
+    "size": 13246,
+    "git_blob_sha": "9d7f3914fc83f1a8f72db40333bd4e48b4630268"
+  },
+  {
+    "path": "scripts/AICompetitionSystem.gd",
+    "size": 2386,
+    "git_blob_sha": "dd77b7b81f3bd35f426eb4e3a5314da368dce9ee"
+  },
+  {
+    "path": "scripts/AirSystem.gd",
+    "size": 3562,
+    "git_blob_sha": "ef9f14faa03fe6adc3d4e5cac2e4375340f2581c"
+  },
+  {
+    "path": "scripts/CargoRegistry.gd",
+    "size": 6585,
+    "git_blob_sha": "8634fd37977b20e08d9e2d5b47cb7939b7a3c6f6"
+  },
+  {
+    "path": "scripts/CompanyLifecycleSystem.gd",
+    "size": 5527,
+    "git_blob_sha": "62b3658f482f4683eeb3e7bfa1806f4bf30c8ab4"
+  },
+  {
+    "path": "scripts/CompetitionResolver.gd",
+    "size": 5399,
+    "git_blob_sha": "0569500f8ee88cda43c124bfb1eaea33ddeb40e5"
+  },
+  {
+    "path": "scripts/CorporateSystem.gd",
+    "size": 7242,
+    "git_blob_sha": "1c28c76be60a051a6fa8c93ec7a8a4ecb4c3ed30"
+  },
+  {
+    "path": "scripts/EconomicCore.gd",
+    "size": 20173,
+    "git_blob_sha": "2fce691d64b94911585a198adf3cd47adc4c98ff"
+  },
+  {
+    "path": "scripts/EconomicDiagnostics.gd",
+    "size": 3625,
+    "git_blob_sha": "096f8c9b31a944876d58e9bbb76d6e99b6883a9b"
+  },
+  {
+    "path": "scripts/EconomyBridge.gd",
+    "size": 2408,
+    "git_blob_sha": "ef85242dcd943813df687774eb750818add277de"
+  },
+  {
+    "path": "scripts/EconomySystem.gd",
+    "size": 3354,
+    "git_blob_sha": "59e6038e18764610ce681421ed86565a5c6c5c41"
+  },
+  {
+    "path": "scripts/GameController.gd",
+    "size": 11295,
+    "git_blob_sha": "536fc55ef847dffc3b9a5a5e7e72d6abeb423340"
+  },
+  {
+    "path": "scripts/GroundNetwork.gd",
+    "size": 14299,
+    "git_blob_sha": "2c02df3925ff8ef70b377106ed739467bbacebba"
+  },
+  {
+    "path": "scripts/GroundTransportAdapter.gd",
+    "size": 5930,
+    "git_blob_sha": "59dd2f2121c762f5feed88366dc3c1440d883d08"
+  },
+  {
+    "path": "scripts/IndustryCompany.gd",
+    "size": 2023,
+    "git_blob_sha": "1fc2172881f1dfa470a49916857542a43df8d0cd"
+  },
+  {
+    "path": "scripts/IndustryFacility.gd",
+    "size": 5478,
+    "git_blob_sha": "f0c61d151dcc322aa9ac96b06431826e523ec11c"
+  },
+  {
+    "path": "scripts/MapView.gd",
+    "size": 8947,
+    "git_blob_sha": "f8776558863dbbe9740237a46d126fcdc89491b6"
+  },
+  {
+    "path": "scripts/MarketDemand.gd",
+    "size": 3201,
+    "git_blob_sha": "1d01a6cdcbd9c9ecf8988cf3aa74e5979ffc355b"
+  },
+  {
+    "path": "scripts/MiniMaxUI.gd",
+    "size": 7568,
+    "git_blob_sha": "de4993d9e043e6dc16368b4b5b89d24abd70183d"
+  },
+  {
+    "path": "scripts/Nation.gd",
+    "size": 4367,
+    "git_blob_sha": "92f11e667d559bb6fb0b0390df47fff255604be5"
+  },
+  {
+    "path": "scripts/NationLifecycleSystem.gd",
+    "size": 4057,
+    "git_blob_sha": "03426dacf88843cc82d9722be2ccf775188ee913"
+  },
+  {
+    "path": "scripts/PlayerInterventionSystem.gd",
+    "size": 5006,
+    "git_blob_sha": "8555054b00d980a65e4733bf97f5440066d47556"
+  },
+  {
+    "path": "scripts/PoliticalLogisticsSystem.gd",
+    "size": 3551,
+    "git_blob_sha": "82070712bdb2d08b45e443840c8b241cbc6b66d2"
+  },
+  {
+    "path": "scripts/PoliticalSystem.gd",
+    "size": 448,
+    "git_blob_sha": "da2c0265c4e8fa6e648d40f1f0884b3b782f7f34"
+  },
+  {
+    "path": "scripts/RegionalEconomy.gd",
+    "size": 5940,
+    "git_blob_sha": "02c43ceecb1bf7c7cee96c7b3b5c2f0dc0f18dda"
+  },
+  {
+    "path": "scripts/Route.gd",
+    "size": 2290,
+    "git_blob_sha": "8bd91aed0ee4acb37ac5287ddbe84d821e991c2a"
+  },
+  {
+    "path": "scripts/Settlement.gd",
+    "size": 3145,
+    "git_blob_sha": "e1305edfe9411c97a396164431834bce7cc0d9ec"
+  },
+  {
+    "path": "scripts/ShipSystem.gd",
+    "size": 4275,
+    "git_blob_sha": "f590727c22a82d596d7b8fb66cd938ffd13ca083"
+  },
+  {
+    "path": "scripts/SimulationDiagnostics.gd",
+    "size": 2162,
+    "git_blob_sha": "8cbef7007c345d05551740869f12bd7c58c4ba19"
+  },
+  {
+    "path": "scripts/TransportCompany.gd",
+    "size": 3159,
+    "git_blob_sha": "215ef70839dc0ba57668595c94591386b666b97a"
+  },
+  {
+    "path": "scripts/TransportModeConfig.gd",
+    "size": 3249,
+    "git_blob_sha": "cd43bde6339675c209d6efcfd2d0bfe9124f8d47"
+  },
+  {
+    "path": "scripts/TransportOverlay.gd",
+    "size": 3751,
+    "git_blob_sha": "eeb52608f953e6fd3a02914456eccaac70788cb9"
+  },
+  {
+    "path": "scripts/TransportSystem.gd",
+    "size": 9394,
+    "git_blob_sha": "0a1a1755057b5eb452d279cf325955edae5bce6b"
+  },
+  {
+    "path": "scripts/UIController.gd",
+    "size": 8199,
+    "git_blob_sha": "da782184cd8fb1f6f812ee36516343c5b4c2014f"
+  },
+  {
+    "path": "scripts/WarFrontSystem.gd",
+    "size": 4343,
+    "git_blob_sha": "6614d6334836efd39e5fcd80423cbcd2c9330142"
+  },
+  {
+    "path": "scripts/WarImpactSystem.gd",
+    "size": 4109,
+    "git_blob_sha": "71a389db3fd1075c8619252cb30a39069b7509c4"
+  },
+  {
+    "path": "scripts/WarSupplyPolicy.gd",
+    "size": 10954,
+    "git_blob_sha": "11e6754d65c7118fba4a43902e4050dfd13046f7"
+  },
+  {
+    "path": "scripts/WarSystem.gd",
+    "size": 5062,
+    "git_blob_sha": "fbfc51b0b5efb8fd3398d5ec2113a45ddef86bb0"
+  },
+  {
+    "path": "scripts/WaterMap.gd",
+    "size": 5357,
+    "git_blob_sha": "1810f8daeefd46e099b48e603b9132b7ba97ca72"
+  },
+  {
+    "path": "scripts/WorldDynamicsOverlay.gd",
+    "size": 1363,
+    "git_blob_sha": "781d28c378f4e19e00e5efcaea55d3733623e516"
+  },
+  {
+    "path": "scripts/WorldDynamicsSystem.gd",
+    "size": 2402,
+    "git_blob_sha": "ace87781f7e5a3f19d0c61f5330c0ff8036191c8"
+  },
+  {
+    "path": "scripts/WorldState.gd",
+    "size": 8273,
+    "git_blob_sha": "6d11d2c6553af3ff60011557fecfd9dea1b8f8ba"
+  },
+  {
+    "path": "tests/EconomicCoreIntegrationTest.gd",
+    "size": 3854,
+    "git_blob_sha": "8fcb821c2db803e3a0ab1a703baaebcc3224b4fc"
+  },
+  {
+    "path": "tests/FullIntegrationTest.gd",
+    "size": 10138,
+    "git_blob_sha": "f1c0379cdc8d2eb8c5466fb296057aa11519a20c"
+  },
+  {
+    "path": "tests/GameBootSmokeTest.gd",
+    "size": 5356,
+    "git_blob_sha": "f092023fb616364e9216b5045bd4058d92cd09ec"
+  },
+  {
+    "path": "tests/HoldReleaseAcceptanceTest.gd",
+    "size": 7336,
+    "git_blob_sha": "62e2c44c40ff7da6fa5b53bfb5e33acb9fc74bda"
+  },
+  {
+    "path": "tests/IntegratedAcceptanceTest.gd",
+    "size": 10138,
+    "git_blob_sha": "f1c0379cdc8d2eb8c5466fb296057aa11519a20c"
+  },
+  {
+    "path": "tests/LongRunProfile.gd",
+    "size": 7113,
+    "git_blob_sha": "26d8feafae332617778768d995fb1b05d125b07e"
+  },
+  {
+    "path": "tests/MiniMaxIntegrationTest.gd",
+    "size": 30445,
+    "git_blob_sha": "7a822a01ff001258ec4918c80d63ecd00f2ddb11"
+  },
+  {
+    "path": "tests/MockGroundProvider.gd",
+    "size": 886,
+    "git_blob_sha": "3f0bb956ebbebdf57d440fcb52030f01a6e67868"
+  },
+  {
+    "path": "tests/WorkCompletionAcceptanceTest.gd",
+    "size": 8026,
+    "git_blob_sha": "c427341d7695e6965c8fb8cf7b73120d24d234df"
+  },
+  {
+    "path": "tests/WorldDynamicsAcceptanceTest.gd",
+    "size": 7027,
+    "git_blob_sha": "bdd5b9ff07e286d5a6667a40dc71c50741d18e84"
+  },
+  {
+    "path": "tests/economic_core_selftest.py",
+    "size": 12406,
+    "git_blob_sha": "4dbd3069e3966217a5c146497d679a31ed752703"
+  },
+  {
+    "path": "tests/prestable_autoplay_suite.py",
+    "size": 2308,
+    "git_blob_sha": "39925f56862c39a8180b969e1b4c2483158ba34f"
+  },
+  {
+    "path": "tests/prestable_evidence_audit.py",
+    "size": 2564,
+    "git_blob_sha": "e1cabbd5b4befbc7d2e612bf3ccc8286748e75ed"
+  }
+]
