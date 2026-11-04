@@ -25,7 +25,9 @@ jobs:
           assert blob=='5f5ea465e400e5e85c602c7ee19540698d6170e3'
           print('RECOVERY_GIT_BLOB='+blob,'SIZE='+str(len(raw)),'SHA256='+hashlib.sha256(raw).hexdigest())
           PY
-      - uses: actions/upload-artifact@v4
+      - name: Optional duplicate recovery artifact
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
         with:
           name: Issue1-Recovery-Source-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
           path: 開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
