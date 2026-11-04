@@ -1,13 +1,13 @@
 {
   "game_id": "politicstrasport_development",
   "game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
-  "profile_version": "1.2-final-contract",
+  "profile_version": "1.3-final-contract",
   "schema_version": 1,
   "prototype_type": "logic",
   "qa_role": "target",
   "source": "GAME/targets/politicstrasport",
   "adapter": "GAME/targets/politicstrasport/qa_adapter.py",
-  "adapter_version": "observed-selectors-1",
+  "adapter_version": "observed-selectors-2-evidence",
   "bridge": "qa_observation.json",
   "launch": {
     "argv": [

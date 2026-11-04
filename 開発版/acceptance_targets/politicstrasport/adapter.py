@@ -28,8 +28,10 @@ class TargetAdapter(Adapter):
             x=g['origin_x']+(tx+.5)*g['tile_size'];y=g['origin_y']+(ty+.5)*g['tile_size']
         else:raise ValueError('UNKNOWN_GAME_SELECTOR')
         if not 0<=x<width or not 0<=y<height:raise ValueError('OBSERVED_SELECTOR_OFFSCREEN')
+        inputs=[dict(item) for item in action.get('inputs',[])]+[{'kind':'click','x':x/width,'y':y/height}]
         self.desktop.focus()
-        for item in action.get('inputs',[]):self.desktop.perform(item)
-        self.desktop.perform({'kind':'click','x':x/width,'y':y/height})
+        for item in inputs:
+            self.desktop.perform(item)
+            self.context['evidence'].event('physical_input',self.profile['game_id'],action=name,selector=selector,observed_viewport={'width':width,'height':height},observed_position={'x':x,'y':y},input=item)
 
 def create(profile,context):return TargetAdapter(profile,context)
