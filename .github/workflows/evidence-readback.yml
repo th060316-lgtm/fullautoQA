@@ -64,6 +64,18 @@ jobs:
               assert digest==identity['runtime_payload_inventory_sha256'], 'PRESERVED_INVENTORY_HASH'
               print('BUILD_PROOF_READBACK='+json.dumps({'reports':reports,'preserved_inventory_hash':'PASS'},ensure_ascii=True),flush=True)
               sys.exit(0)
+          if os.environ.get('READBACK_KIND')=='candidate_fixture_source':
+              archives=list(pathlib.Path('_evidence').rglob('FullAutoQA_PHASE3_CANDIDATE.zip'))
+              assert len(archives)==1, 'CANDIDATE_ARCHIVE_MISSING'
+              archive=archives[0]
+              with archive.open('rb') as stream:sha=hashlib.file_digest(stream,'sha256').hexdigest()
+              assert sha=='ea56efa813835427f6047898954476444b512cb2d1b48d4e600c7c9799363c2b', 'CANDIDATE_IDENTITY_MISMATCH'
+              files={}
+              with zipfile.ZipFile(archive) as z:
+                  for name in ['GAME/fixtures/fixture.gd','GAME/fixtures/project.godot','GAME/fixtures/main.tscn']:
+                      raw=z.read(name);files[name]={'sha256':hashlib.sha256(raw).hexdigest(),'content':raw.decode('utf-8-sig')}
+              print('CANDIDATE_SOURCE_READBACK='+json.dumps({'candidate_sha256':sha,'files':files},ensure_ascii=True),flush=True)
+              sys.exit(0)
           archives=list(pathlib.Path('_evidence').rglob('RESULT_FOR_CHATGPT.zip'))
           assert archives, 'RESULT_ARCHIVE_MISSING'
           for path in archives:

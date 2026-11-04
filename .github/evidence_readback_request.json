@@ -1,7 +1,7 @@
 {
-  "scope": "Frozen main Candidate failed SelfTest full evidence; not final real-game acceptance",
-  "kind": "result_zip",
+  "scope": "Read-only failing Candidate fixture implementation inspection",
+  "kind": "candidate_fixture_source",
   "run_id": 41772879950,
-  "artifact_id": 13296398606,
-  "artifact_name": "FullAutoQA-Phase3-Fixture-Evidence-41772879950-Attempt-1"
+  "artifact_id": 13295677913,
+  "artifact_name": "FullAutoQA-Phase3-Candidate-780ae10c2ec14878747de94e9426130f4685e128-Attempt-1"
 }
