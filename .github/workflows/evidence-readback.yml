@@ -87,8 +87,12 @@ jobs:
                       details={}
                       for ref in row.get('evidence',[]):
                           if ref.endswith('.json') and z.getinfo(ref).file_size<200000:details[ref]=json.loads(z.read(ref))
+                      for value in list(details.values()):
+                          for verdict in value.get('raw_verdicts',[]):
+                              for ref in verdict.get('evidence',[]):
+                                  if ref.endswith('.json') and z.getinfo(ref).file_size<200000:details[ref]=json.loads(z.read(ref))
                       case=row['test_case'];subject=case.rsplit('.',1)[-1]
-                      related=[e for e in events if subject in e.get('test_case','').split('.') and e['type'] in ('state','action','issue','failure','error','case_end','case_start')]
+                      related=[e for e in events if (subject in e.get('test_case','').split('.') or ('_fault_'+subject) in e.get('test_case','')) and e['type'] in ('state','action','issue','failure','error','case_end','case_start')]
                       print('FAILURE_READBACK='+json.dumps({'case':case,'result':row,'evidence':details,'events':related[-100:]},ensure_ascii=True),flush=True)
                   report={
                       'run_id':data['run_id'],
