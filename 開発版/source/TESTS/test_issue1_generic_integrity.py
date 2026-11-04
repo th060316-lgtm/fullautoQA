@@ -59,7 +59,13 @@ class GenericIntegrityTests(unittest.TestCase):
             self.assertIn('node',obj.required_failures());self.assertNotIn('node',obj.paths)
     def test_prepared_runtime_pointer_cannot_be_rebound(self):
         with tempfile.TemporaryDirectory() as td:
-            root=Path(td);obj=self.prepare(root);self.assertIn('node',obj.paths);foreign=root/'foreign.exe';foreign.write_bytes(b'foreign');obj.paths['node']=str(foreign)
+            root=Path(td)
+            # The fixture payload is a host-interpreter byte copy, not a real
+            # Node runtime. Stub only the functional probe so this test reaches
+            # pointer rebinding after successful preparation.
+            with patch('tools.subprocess.run', return_value=SimpleNamespace(returncode=0, stdout=b'', stderr=b'')):
+                obj=self.prepare(root)
+            self.assertIn('node',obj.paths);foreign=root/'foreign.exe';foreign.write_bytes(b'foreign');obj.paths['node']=str(foreign)
             with self.assertRaisesRegex(OSError,'RUNTIME_POINTER_CHANGED'):obj.get('node')
 
 if __name__=='__main__':unittest.main()
