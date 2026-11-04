@@ -182,7 +182,15 @@ def _signals(results, start_qa, fresh, environment_evidence, root):
 
     replay = _rows(results, ".seed_replay")
     if replay and all(r.get("status") in ("PASS", "FAIL") for r in replay):
-        out["reproducibility"] = all(r.get("status") == "PASS" for r in replay)
+        out["reproducibility"] = {
+            "status": all(r.get("status") == "PASS" for r in replay),
+            "scope": "same_run_seed_replay",
+            "source": "result_rows",
+            "test_cases": [str(r.get("test_case")) for r in replay],
+            "evidence": sorted({str(ref) for row in replay for ref in
+                                ([row["evidence"]] if isinstance(row.get("evidence"), str)
+                                 else (row.get("evidence") or []))}),
+        }
 
     if fresh:
         out["fresh_run"] = {"status": True, "evidence": [environment_evidence]}
