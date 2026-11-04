@@ -15,12 +15,17 @@ func _probe():
         key.keycode = KEY_RIGHT
         key.pressed = true
         Input.parse_input_event(key)
+        Input.flush_buffered_events()
         var held = Input.is_physical_key_pressed(KEY_RIGHT)
         var before = float(fixture.s.position.x)
         fixture._process(0.5)
         var after = float(fixture.s.position.x)
-        key.pressed = false
-        Input.parse_input_event(key)
+        var release = InputEventKey.new()
+        release.physical_keycode = KEY_RIGHT
+        release.keycode = KEY_RIGHT
+        release.pressed = false
+        Input.parse_input_event(release)
+        Input.flush_buffered_events()
         var expected_movement = fault_name == ""
         var passed = held and ((after > before) == expected_movement)
         if not passed: failed = true

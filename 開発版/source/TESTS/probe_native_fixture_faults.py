@@ -29,6 +29,7 @@ for name,text in [('legacy_negative_control',legacy),('current',current)]:
         lines=[l for l in result.stdout.splitlines() if l.startswith('NATIVE_FIXTURE_PROBE=')]
         assert len(lines)==1, 'NATIVE_FIXTURE_PROBE_OUTPUT:'+name
         report=json.loads(lines[0].split('=',1)[1]);report['exit_code']=result.returncode;reports[name]=report
+        print('NATIVE_FIXTURE_CONTROL='+json.dumps({'name':name,'report':report}),flush=True)
         if name=='legacy_negative_control':
             assert result.returncode==2 and [r['fault'] for r in report['rows'] if r['status']=='FAIL']==['loop'], 'LEGACY_LOOP_BUG_NOT_REPRODUCED'
         else:assert result.returncode==0 and all(r['status']=='PASS' for r in report['rows']), 'FIXTURE_FAULT_REGRESSION'

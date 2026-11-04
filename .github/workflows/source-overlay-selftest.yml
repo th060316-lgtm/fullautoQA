@@ -90,6 +90,16 @@ jobs:
           try { & cmd.exe /d /c 'START_QA.cmd -SelfTest' 2>&1 | Tee-Object (Join-Path $env:GITHUB_WORKSPACE 'SELFTEST.log'); $code=$LASTEXITCODE } finally { Pop-Location }
           "$code" | Set-Content SELFTEST_EXIT.txt
           if ($code -ne 0) { throw "SELFTEST_REQUIRED_NONPASS:$code" }
+      - name: Complete Source suite with bundled Python and FFmpeg
+        if: always() && env.FRESH_ROOT != ''
+        shell: pwsh
+        run: |
+          $ffmpeg=@(Get-ChildItem (Join-Path $env:FRESH_ROOT 'RUNTIME') -Recurse -Filter ffmpeg.exe)
+          $dirs=@($ffmpeg | ForEach-Object { $_.DirectoryName } | Select-Object -Unique)
+          if ($dirs.Count -eq 0) { throw 'BUNDLED_ENCODER_NOT_PREPARED' }
+          $env:PATH=($dirs -join ';')+';'+$env:PATH
+          & (Join-Path $env:FRESH_ROOT 'RUNTIME/python/python.exe') -B -E -s -m unittest discover -s (Join-Path $env:FRESH_ROOT 'TESTS') -v 2>&1 | Tee-Object BUNDLED_SOURCE_TESTS.log
+          if ($LASTEXITCODE -ne 0) { throw 'BUNDLED_SOURCE_TESTS_FAILED' }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -97,6 +107,7 @@ jobs:
           path: |
             _native_fixture_regression/**
             DIAGNOSTIC_SCOPE.json
+            BUNDLED_SOURCE_TESTS.log
             SELFTEST*.*
             _diagnostic/RESULTS/**
           retention-days: 14
