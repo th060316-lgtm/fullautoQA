@@ -16,6 +16,12 @@ def main():
     dest=root/'GAME/targets/politicstrasport'
     if dest.exists():raise ValueError('TARGET_DESTINATION_NOT_FRESH')
     shutil.copytree(here/'source',dest)
+    support=json.loads((here/'acceptance_support/inventory.json').read_text(encoding='utf-8'))
+    for item in support['files']:
+        src=here/'acceptance_support'/item['file']
+        if hashlib.sha256(src.read_bytes()).hexdigest()!=item['sha256']:raise ValueError('ACCEPTANCE_SUPPORT_CHANGED')
+        shutil.copy2(src,dest/'tests'/item['file'])
+    shutil.copytree(here/'diagnostics',dest/'qa_diagnostics')
     project=dest/'project.godot';text=project.read_text(encoding='utf-8')
     if text.count('[autoload]')!=1:raise ValueError('AUTOLOAD_AMBIGUOUS')
     project.write_text(text.replace('[autoload]','[autoload]\nFullAutoQAObserver="*res://qa_observer.gd"',1),encoding='utf-8')
@@ -35,7 +41,7 @@ def main():
     target={'schema_version':1,'baseline':None,'targets':[entry]}
     (root/'QA_TARGETS.json').write_text(json.dumps(target,indent=2),encoding='utf-8')
     components=identity_components(root,entry,profile)
-    proof={'origin':meta,'original_source_inventory':rows,'profile':profile,'target_manifest':target,
+    proof={'origin':meta,'original_source_inventory':rows,'acceptance_support':support,'profile':profile,'target_manifest':target,
            'instrumentation':{'read_only_observer':'qa_observer.gd','game_side_adapter':'qa_adapter.py','state_mutation_by_observer':False},
            'target_fingerprint':sha256_value(components),'unsupported_features':profile['unsupported_features'],'product_acceptance':'HOLD','human_test':'NOT_RUN'}
     (root/'TARGET_PREPARATION.json').write_text(json.dumps(proof,ensure_ascii=False,indent=2),encoding='utf-8')

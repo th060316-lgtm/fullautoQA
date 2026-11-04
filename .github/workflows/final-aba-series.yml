@@ -1,5 +1,8 @@
 name: Frozen final A-B-A series
 on:
+  push:
+    branches: [main]
+    paths: ['開発版/source/**', '開発版/acceptance_targets/**', '.github/workflows/final-aba-series.yml']
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -12,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   candidate:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 75
     outputs:

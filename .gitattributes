@@ -1,2 +1,5 @@
 # Frozen target snapshots must preserve the exact source Git blob bytes on Windows.
 開発版/acceptance_targets/*/source/** -text
+
+開発版/acceptance_targets/*/acceptance_support/** -text
+開発版/acceptance_targets/*/diagnostics/** -text

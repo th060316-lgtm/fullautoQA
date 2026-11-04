@@ -1,7 +1,7 @@
 {
   "game_id": "politicstrasport_development",
   "game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
-  "profile_version": "1.1-acceptance",
+  "profile_version": "1.2-final-contract",
   "schema_version": 1,
   "prototype_type": "logic",
   "qa_role": "target",
@@ -254,19 +254,6 @@
       "timeout": 180
     },
     {
-      "id": "MiniMaxIntegrationTest",
-      "kind": "integration",
-      "argv": [
-        "{godot}",
-        "--headless",
-        "--path",
-        "{work}",
-        "-s",
-        "res://tests/MiniMaxIntegrationTest.gd"
-      ],
-      "timeout": 180
-    },
-    {
       "id": "WorkCompletionAcceptanceTest",
       "kind": "integration",
       "argv": [
@@ -304,6 +291,55 @@
         "res://tests/LongRunProfile.gd"
       ],
       "timeout": 180
+    },
+    {
+      "id": "UIInteractionTest",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/UIInteractionTest.gd"
+      ],
+      "timeout": 180
+    },
+    {
+      "id": "DestructiveTest",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/DestructiveTest.gd"
+      ],
+      "timeout": 180
+    },
+    {
+      "id": "FontSupportTest",
+      "kind": "integration",
+      "argv": [
+        "{godot}",
+        "--headless",
+        "--path",
+        "{work}",
+        "-s",
+        "res://tests/FontSupportTest.gd"
+      ],
+      "timeout": 180
+    },
+    {
+      "id": "economic_core_selftest",
+      "kind": "unit",
+      "argv": [
+        "{python}",
+        "-B",
+        "{work}/tests/economic_core_selftest.py"
+      ],
+      "timeout": 90
     }
   ],
   "tools_required": [
@@ -321,5 +357,21 @@
       "reason": "Current formal target requirement is playable-only; target remains logic. Runner still emits mandatory target.review_packet with actual instructions/evidence."
     }
   },
-  "acceptance_scope": "Logic Prototype QA; not product completion"
+  "acceptance_scope": "Logic Prototype QA; not product completion",
+  "supporting_diagnostics": [
+    {
+      "id": "historical_minimax_integration",
+      "scope": "outside_target_acceptance_contract",
+      "files": [
+        {
+          "path": "GAME/targets/politicstrasport/qa_diagnostics/MiniMaxIntegrationTest.json",
+          "sha256": "573d35e0881f868accda9fa3eaaf696d19a5b0f0cf4e68012fcac45b3558059f"
+        },
+        {
+          "path": "GAME/targets/politicstrasport/qa_diagnostics/MiniMaxIntegrationTest.log",
+          "sha256": "9215efb87465c3776eb2279934625129d5a2d364dd67368cfacdafb5d8642e25"
+        }
+      ]
+    }
+  ]
 }

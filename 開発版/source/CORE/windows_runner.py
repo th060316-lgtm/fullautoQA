@@ -19,6 +19,7 @@ from coordinator import prepare_execution,preflight_execution,execution_finalize
 from targets import load_target_manifest,selected_profiles,entry_for_profile,validate_target_profile,required_agents,baseline_source,requirement_coverage,target_scope_satisfied
 from collections import deque
 from backends import DisplaySampler
+from supporting_diagnostics import attach_diagnostics
 
 def finalization_issue(e,results,case,reason,ex):
     try:row=e.result(case,'HARNESS_ERROR',reason,detail=repr(ex),gate='REQUIRED')
@@ -425,6 +426,7 @@ class Session:
         proof=self.p['game_id']+'_expected_cases.json'
         write_json(self.e.root/proof,{'game_id':self.p['game_id'],'options':options or {},'cases':self.expected_plan})
         try:
+            self.supporting_diagnostics=attach_diagnostics(self.root,self.e,self.p)
             validate_campaigns(self.p)
             work=self.copy_game('technical_'+self.p['game_id'])
             if not self.technical(work):
@@ -571,7 +573,7 @@ def main():
         for session in sessions:
             for row in session.results:
                 if id(row) not in known:results.append(row);known.add(id(row))
-        data={'run_id':run_id,'core_version':VERSION,'result_schema':SCHEMA,'start_time':start,'end_time':stamp(),'seed':args.seed,'results':results,'run_mode':run_mode,'target_qa_certified':False,'completion_certified':False,'human_test_performed':False,'qualification':'Automated QA evidence is not human satisfaction or product acceptance; review player/product gates separately.'}
+        data={'run_id':run_id,'core_version':VERSION,'result_schema':SCHEMA,'start_time':start,'end_time':stamp(),'seed':args.seed,'results':results,'run_mode':run_mode,'target_qa_certified':False,'completion_certified':False,'human_test_performed':False,'supporting_diagnostics':[row for sess in sessions for row in getattr(sess,'supporting_diagnostics',[])],'qualification':'Automated QA evidence is not human satisfaction or product acceptance; review player/product gates separately.'}
         data['executed_target_ids']=sorted(target_entries[sess.p['game_id']]['id'] for sess in sessions if sess.p['game_id'] in target_entries)
         try:
             if rec:

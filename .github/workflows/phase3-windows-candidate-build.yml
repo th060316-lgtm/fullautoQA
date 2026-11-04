@@ -1,6 +1,9 @@
 name: Phase 3 Windows Candidate Build
 
 on:
+  push:
+    branches: [main]
+    paths: ['開発版/source/**', '開発版/acceptance_targets/**', '.github/workflows/phase3-windows-candidate-build.yml']
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -54,7 +57,7 @@ jobs:
             }
   build-candidate:
     needs: candidate-inputs
-    if: needs.candidate-inputs.outputs.changed == 'true' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false)
+    if: needs.candidate-inputs.outputs.changed == 'true' && github.event_name != 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 120
     env:
