@@ -5,6 +5,7 @@ technical series result is separate from independent HQ and product acceptance.
 """
 import argparse,ctypes,hashlib,json,os,shutil,subprocess,sys,time,uuid,zipfile
 from pathlib import Path
+OPERATION_LOG=[]
 
 def read(path):return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 def write(path,value):
@@ -12,6 +13,18 @@ def write(path,value):
     path.write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf-8')
 def digest(path):
     with Path(path).open('rb') as stream:return hashlib.file_digest(stream,'sha256').hexdigest()
+def persistent_path_snapshot():
+    if os.name!='nt':return {'status':'NOT_MEASURED','reason':'WINDOWS_REQUIRED'}
+    import winreg
+    values={}
+    try:
+        for label,hive,key in [('user',winreg.HKEY_CURRENT_USER,'Environment'),('machine',winreg.HKEY_LOCAL_MACHINE,r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')]:
+            with winreg.OpenKey(hive,key,0,winreg.KEY_READ) as handle:
+                try:value,kind=winreg.QueryValueEx(handle,'Path')
+                except FileNotFoundError:value,kind=None,None
+            values[label]={'present':value is not None,'registry_type':kind,'sha256':hashlib.sha256(json.dumps(value,ensure_ascii=False).encode('utf-8')).hexdigest()}
+        return {'status':'MEASURED','values':values}
+    except OSError as ex:return {'status':'NOT_MEASURED','reason':repr(ex)}
 def child(root,relative):
     relative=str(relative).replace('\\','/')
     if not relative or relative.startswith('/') or ':' in relative or '..' in Path(relative).parts:raise ValueError('PATH_ESCAPE:'+relative)
@@ -72,6 +85,8 @@ def compare_records(records,plan,frozen,candidate_sha):
             'product_acceptance':'HOLD','stable':'HOLD','qa_complete':False}
 
 def run_logged(argv,cwd,log,timeout=1800):
+    started=time.monotonic();row={'argv':[str(x) for x in argv],'cwd':str(cwd),'log':str(log),'timeout_seconds':timeout}
+    OPERATION_LOG.append(row)
     with Path(log).open('wb') as stream:
         process=subprocess.Popen([str(x) for x in argv],cwd=cwd,stdout=stream,stderr=subprocess.STDOUT)
         job=None
@@ -79,10 +94,15 @@ def run_logged(argv,cwd,log,timeout=1800):
             if os.name=='nt':
                 from windows import Job
                 job=Job();job.add(process)
-            return process.wait(timeout=timeout)
+            row['exit_code']=process.wait(timeout=timeout)
+            return row['exit_code']
+        except Exception as ex:
+            row['error']=repr(ex)
+            raise
         finally:
             if job:job.close()
             if process.poll() is None:process.kill();process.wait(timeout=10)
+            row['elapsed_seconds']=time.monotonic()-started
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--candidate',required=True);ap.add_argument('--expected-sha',required=True)
@@ -90,7 +110,7 @@ def main():
     args=ap.parse_args();archive=Path(args.candidate).resolve();output=Path(args.output).resolve()
     if output.exists():raise ValueError('SERIES_OUTPUT_ALREADY_EXISTS')
     output.mkdir(parents=True);bundle=Path(__file__).resolve().parent;controller=bundle.parent
-    plan=read(args.plan);records=[];frozen={};sha=args.expected_sha.lower()
+    plan=read(args.plan);records=[];frozen={};sha=args.expected_sha.lower();persistent_before=persistent_path_snapshot()
     sys.path.insert(0,str(controller/'CORE'))
     from common import validate_result_zip
     from run_target import authoritative_result
@@ -164,6 +184,9 @@ def main():
         result=compare_records(records,plan,frozen,sha)
     except Exception as ex:
         result=compare_records(records,plan,frozen,sha);result['technical_series_status']='FAIL';result['fatal_error']=repr(ex)
+    persistent_after=persistent_path_snapshot()
+    write(output/'PERSISTENT_ENVIRONMENT_READBACK.json',{'scope':'Persistent user and machine PATH values only; not a complete Registry write audit','before':persistent_before,'after':persistent_after,'persistent_path_status':('UNCHANGED' if persistent_before==persistent_after else 'CHANGED_REQUIRES_REVIEW') if persistent_before['status']==persistent_after['status']=='MEASURED' else 'NOT_MEASURED','registry_write_audit':'NOT_RUN'})
+    write(output/'OPERATION_LOG.json',{'automated_operations':OPERATION_LOG,'automated_operation_count':len(OPERATION_LOG),'start_qa_invocations':sum('START_QA.cmd' in row['argv'] for row in OPERATION_LOG),'manual_intervention':'NOT_OBSERVED_BY_CONTROLLER','controller_retry_count':0})
     write(output/'SERIES_COMPARISON.json',result);print(json.dumps(result,ensure_ascii=False,indent=2))
     return 0 if result['technical_series_status']=='PASS' else 2
 
