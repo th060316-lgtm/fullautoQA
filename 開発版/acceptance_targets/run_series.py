@@ -176,7 +176,7 @@ def main():
                  'headquarters':data.get('headquarters'),'completion_certified':data.get('completion_certified'),
                  'human_test_performed':data.get('human_test_performed'),'baseline_provenance':sorted(baseline_scopes)}
             records.append(row)
-            print('FINAL_RUN_READBACK='+json.dumps({**{k:row[k] for k in ('index','target_key','target','candidate_sha256','run_id','fresh_extraction_id','result_sha256','start_qa_exit_code','archive_integrity','evidence_missing','required_counts','baseline_provenance')},'headquarters':[{'name':x['name'],'status':x['status'],'reason_code':x.get('reason_code')} for x in (row.get('headquarters') or {}).get('domains',[])]},ensure_ascii=False),flush=True)
+            print('FINAL_RUN_READBACK='+json.dumps({**{k:row[k] for k in ('index','target_key','target','candidate_sha256','run_id','fresh_extraction_id','result_sha256','start_qa_exit_code','archive_integrity','evidence_missing','required_counts','baseline_provenance')},'headquarters':[{'name':x['name'],'status':x['status'],'reason_code':x.get('reason_code')} for x in (row.get('headquarters') or {}).get('domains',[])]},ensure_ascii=True),flush=True)
             write(slot/'RUN_IDENTITY.json',row)
             write(output/'SERIES_RECORDS.json',records)
             if code or row['required_nonpass'] or foreign or row['diagnostic_archive']:raise ValueError('FINAL_RUN_NONPASS:'+str(index))

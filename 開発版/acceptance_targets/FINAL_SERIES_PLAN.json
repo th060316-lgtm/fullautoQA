@@ -27,11 +27,21 @@
     }
   },
   "final_candidate": null,
-  "status": "SOURCE_AND_PROFILE_PREFLIGHT_NOT_FINAL_SERIES",
+  "status": "FINAL_READY",
   "human_test": "NOT_RUN",
   "product_acceptance": "HOLD",
   "stable": "HOLD",
   "historical_run_ids": [
     "20261103T123711_d00902ba"
-  ]
+  ],
+  "preflight_evidence": {
+    "source_tree": "2711f302c3516816e35132670fb27ef247b5490e",
+    "source_suite": 41769703166,
+    "source_selftest": 41765580524,
+    "target_a": 41769703178,
+    "archive_readback": 41771998026,
+    "source_test_count": 363,
+    "selftest_required_pass": 170,
+    "target_a_required_pass": 49
+  }
 }
