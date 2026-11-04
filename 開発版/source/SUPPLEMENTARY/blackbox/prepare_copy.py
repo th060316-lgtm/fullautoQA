@@ -27,6 +27,9 @@ def prepare(source,destination,profile):
         raise ValueError('ISOLATED_NONOVERLAPPING_COPY_REQUIRED')
     if destination.exists():raise ValueError('DESTINATION_EXISTS')
     recipe=profile['copy_recipe'];before=inventory(source)
+    expected=recipe.get('source_inventory_sha256')
+    if expected and hashlib.sha256(json.dumps(before,sort_keys=True,separators=(',',':')).encode()).hexdigest()!=expected:
+        raise ValueError('FROZEN_SOURCE_INVENTORY_MISMATCH')
     # Validate all recipe paths before creating anything.
     for row in recipe.get('replace',[]):inside(destination,row['file'])
     for rel in recipe.get('remove',[]):inside(destination,rel)
