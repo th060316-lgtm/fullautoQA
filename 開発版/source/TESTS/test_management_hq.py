@@ -422,7 +422,17 @@ class ManagementSeparationTest(unittest.TestCase):
         self.assertEqual(recorded['source'], 'result_rows')
         self.assertEqual(recorded['test_cases'], ['game.seed_replay'])
         self.assertEqual(recorded['evidence'], ['seed.json'])
-        self.assertIn('same_run_seed_replay', next(row['detail'] for row in report.readback['gate_status'] if row['name'] == 'management.reproducibility'))
+        self.assertEqual(recorded['status'], 'INCONCLUSIVE')
+        self.assertIn('same-run seed replay', next(row['detail'] for row in report.readback['gate_status'] if row['name'] == 'management.reproducibility'))
+
+    def test_failed_seed_replay_stays_failure(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            write_bundle(tmp, complete_bundle(reproducibility={
+                'status': False, 'scope': 'same_run_seed_replay', 'evidence': ['seed.json']}))
+            report = evaluate_management(context(tmp))
+        self.assertEqual(report.readback['signals']['reproducibility']['status'], 'FAIL')
+        self.assertEqual(report.status, 'FAIL')
 
 
 if __name__ == '__main__':
