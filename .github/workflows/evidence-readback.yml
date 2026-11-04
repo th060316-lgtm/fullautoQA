@@ -92,7 +92,7 @@ jobs:
                       'action_event_count':sum(e['type']=='action' for e in events),
                       'pause_states':[{'paused':e['current_state'].get('paused'),'transitions':e['current_state'].get('observed_pause_transitions'),'mapping':e['current_state'].get('input_mapping')} for e in state],
                       'smoke_actions':[e.get('action') for e in events if e['type']=='action' and e['test_case'].endswith('.smoke')],
-                      'coverage':[{'case':r['test_case'],'status':r['status'],'gate':r.get('gate')} for r in data['results']],
+                      'coverage':[{'case':r['test_case'],'status':r['status'],'gate':r.get('gate'),'reason_code':r.get('reason_code'),'detail':r.get('detail'),'evidence':r.get('evidence')} for r in data['results']],
                       'hq_required_counts':{domain:dict(collections.Counter(row['status'] for row in (data.get(domain+'_readback',{}).get('gate_status') or []) if row.get('required'))) for domain in ('management','sales')},
                       'management_readback':{key:data.get('management_readback',{}).get(key) for key in ('measurements','signals','unresolved_gates','real_game_acceptance')},
                       'sales_readback':{key:data.get('sales_readback',{}).get(key) for key in ('reviewer','human_test_performed','phases','unresolved_gates')},
