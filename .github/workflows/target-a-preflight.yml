@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - '開発版/source/CORE/**'
       - '開発版/acceptance_targets/politicstrasport/**'
       - '.github/workflows/target-a-preflight.yml'
       - '.gitattributes'

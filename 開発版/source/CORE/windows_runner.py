@@ -55,7 +55,9 @@ class Session:
         for n in ['APPDATA','LOCALAPPDATA','TEMP','TMP','HOME','USERPROFILE']:
             p=base/n;p.mkdir(parents=True,exist_ok=True);env[n]=str(p)
         env['PYTHONNOUSERSITE']='1';env.pop('PYTHONPATH',None)
-        env['PATH']=os.pathsep.join(sorted({str(Path(p).parent) for p in self.tools.paths.values()}))+os.pathsep+str(Path(os.environ.get('SystemRoot','C:/Windows'))/'System32')
+        system_root=env.get('SystemRoot') or env.get('WINDIR')
+        if not system_root:raise OSError('SYSTEM_ROOT_UNAVAILABLE')
+        env['PATH']=os.pathsep.join(sorted({str(Path(p).parent) for p in self.tools.paths.values()}))+os.pathsep+str(Path(system_root)/'System32')
         return env
     def copy_game(self,tag):
         src=self.prepared_work or inside(self.root,self.p['source']);dst=self.e.root/'WORK'/tag
