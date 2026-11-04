@@ -38,7 +38,7 @@ class GenericIntegrityTests(unittest.TestCase):
             self.assertNotIn('Goal',session.coverage['agents']);self.assertNotEqual(next(r for r in session.results if r['test_case']=='g.lucky.goal_agent')['status'],'PASS');self.assertEqual(next(r for r in session.results if r['test_case']=='g.lucky.goal_agent')['gate'],'REQUIRED');self.assertEqual(exported['actions_by_mode'],{'Explorer':1})
     def prepare(self,root,marker=None,replaced=False,symlink=False):
         (root/'PAYLOAD').mkdir();runtime=root/'RUNTIME/node';runtime.mkdir(parents=True);payload=root/'PAYLOAD/node.zip'
-        with zipfile.ZipFile(payload,'w') as z:z.writestr('node.exe',b'correct')
+        with zipfile.ZipFile(payload,'w') as z:z.writestr('node.exe',Path(sys.executable).read_bytes())
         checksum=hashlib.sha256(payload.read_bytes()).hexdigest()
         if symlink:
             outside=root/'foreign.exe';outside.write_bytes(b'foreign');(runtime/'node.exe').symlink_to(outside)
