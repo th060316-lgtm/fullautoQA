@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "game_id": "supplementary_politics_blackbox",
+  "game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b-copy-without-qa",
+  "profile_version": "1-screen-only",
+  "prototype_type": "playable",
+  "qa_role": "target",
+  "source": "GAME/supplementary/politics_blackbox",
+  "adapter": "GAME/supplementary/blackbox_visual_adapter.py",
+  "adapter_version": "1-screen-only",
+  "launch": {
+    "argv": [
+      "{godot}",
+      "--path",
+      "{work}",
+      "--rendering-method",
+      "gl_compatibility"
+    ]
+  },
+  "build": {
+    "argv": [
+      "{godot}",
+      "--headless",
+      "--path",
+      "{work}",
+      "--editor",
+      "--import",
+      "--quit"
+    ],
+    "timeout": 180
+  },
+  "tools_required": [
+    "godot"
+  ],
+  "required_assets": [
+    "project.godot",
+    "scenes/Main.tscn"
+  ],
+  "generated_paths": [
+    "isolated_user/"
+  ],
+  "display": {
+    "kind": "windows"
+  },
+  "observations": [
+    "window",
+    "screenshot",
+    "input",
+    "process",
+    "log"
+  ],
+  "actions": {
+    "road_mode": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "R"
+        }
+      ]
+    },
+    "rail_mode": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "T"
+        }
+      ]
+    },
+    "cancel": {
+      "inputs": [
+        {
+          "kind": "key",
+          "key": "ESC"
+        }
+      ]
+    }
+  },
+  "goals": [
+    {
+      "id": "visible_mode_feedback",
+      "type": "trigger_event",
+      "field": "external_visual_response_count",
+      "op": "ge",
+      "value": 3
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "screen_only_modes",
+      "agent": "Goal",
+      "sequence": [
+        "road_mode",
+        "rail_mode",
+        "cancel"
+      ],
+      "goal": "visible_mode_feedback",
+      "action_budget": 3,
+      "time_budget": 30,
+      "stop_on_goal": false,
+      "observation_delay": 0.3
+    }
+  ],
+  "tests": [],
+  "blackbox": {
+    "response_region": [
+      0.76,
+      0.15,
+      0.98,
+      0.32
+    ],
+    "minimum_pixel_distance": 0.0005,
+    "response_wait_seconds": 0.4
+  },
+  "startup_timeout": 40,
+  "stall_seconds": 30,
+  "instructions": "Supplementary screen-only test: R road mode, T rail mode, Esc cancel. Inspect paired right-panel screenshots. Goal measures three visible crop changes only; semantic outcome and original prototype quality remain unverified. No game bridge/observer. OCR NOT_RUN unless an explicit packaged executable is configured.",
+  "source_origin": {
+    "repository": "th060316-lgtm/PoliticsTrasport",
+    "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+    "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
+    "original_prototype_type": "logic",
+    "original_files": 65
+  },
+  "copy_recipe": {
+    "replace": [
+      {
+        "file": "project.godot",
+        "old": "QaBridge=\"*res://qa/QaBridge.gd\"\n",
+        "new": "",
+        "expected_count": 1
+      },
+      {
+        "file": "scenes/Main.tscn",
+        "old": "[ext_resource type=\"Script\" path=\"res://qa/PoliticsTransportQaAdapter.gd\" id=\"4_qa\"]\n",
+        "new": "",
+        "expected_count": 1
+      },
+      {
+        "file": "scenes/Main.tscn",
+        "old": "[node name=\"QaAdapter\" type=\"Node\" parent=\".\"]\nscript = ExtResource(\"4_qa\")\n\n",
+        "new": "",
+        "expected_count": 1
+      },
+      {
+        "file": "scenes/Main.tscn",
+        "old": "load_steps=5",
+        "new": "load_steps=4",
+        "expected_count": 1
+      }
+    ],
+    "remove": [
+      "qa"
+    ],
+    "source_inventory_sha256": "670b8c33451f46df360e9d241ceb0866324c90234cd08976ddd07a6de88bca0d"
+  }
+}
