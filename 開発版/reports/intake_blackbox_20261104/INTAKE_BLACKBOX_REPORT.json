@@ -14,15 +14,15 @@
     },
     {
       "path": "開発版/source/SUPPLEMENTARY/blackbox/politics_profile.json",
-      "sha256": "4389f3998a712c2a3b251b6d58638c089b9684f1ecd030d0cecc51801e973c6c"
+      "sha256": "047f184dfb2b8068ca6152ec5760e4fecdc7fa949a5b13964f373c609e8aa78b"
     },
     {
       "path": "開発版/source/SUPPLEMENTARY/blackbox/README.md",
-      "sha256": "2e60ec7d10efe4339fdc153db67138957ff4352929e6d97c5076529578502a02"
+      "sha256": "5431743d860eb78dfaad6b447b4de9a6254d3480d3d71ff1bc80252e5a566a84"
     },
     {
       "path": "開発版/source/GAME/supplementary/blackbox_visual_adapter.py",
-      "sha256": "cc32827130df9b1d4432e666a47d93779d2783855bcced3370f3bdcaa474ff45"
+      "sha256": "b5ae43b27dea916587c74f22f36b1a56751a77d6319d5d080f8e3cdb8fe4016c"
     },
     {
       "path": "開発版/source/TESTS/test_target_intake_cli.py",
@@ -31,19 +31,38 @@
     {
       "path": "開発版/source/TESTS/test_supplementary_blackbox.py",
       "sha256": "25ce3fca940486c0762d1266ab0ae8087ec8aabb345bfeb526b4c77a352fb7af"
+    },
+    {
+      "path": "開発版/source/CORE/observations.py",
+      "sha256": "854de8bafea48c788f822a222ba072d920a8a57205fd93fe8400bf916c4f0ac4"
+    },
+    {
+      "path": "開発版/source/CORE/profile.py",
+      "sha256": "2ed864f05a03068cbd3b4f67adf8efc456bab2d9a9e6001b5fb8042fa513a3b4"
+    },
+    {
+      "path": "開発版/source/CORE/windows_runner.py",
+      "sha256": "0d5919e7a7ce53a3f5785b6a7b0eed1ba689eba5a76dcca1bbcc4179fe315651"
+    },
+    {
+      "path": "開発版/source/TESTS/test_observation_contract.py",
+      "sha256": "01a84ff2b73b1010a30df47519f1a5a10047ba2c21ee7dc02d3924dcdabf96b4"
     }
   ],
   "verification": {
     "intake_unit_tests": 5,
     "copy_profile_unit_tests": 4,
     "existing_phase3_tests": 14,
-    "total_pass": 23,
+    "total_pass": 77,
     "windows_desktop": "NOT_RUN",
     "core_bridge_less_desktop_run": "NOT_RUN",
     "original_source_git_blobs_verified": 65,
     "headless_import": "exit 0",
     "headless_real_game_process": "exit 0",
-    "shutdown_diagnostics_retained": true
+    "shutdown_diagnostics_retained": true,
+    "observation_contract_tests": 5,
+    "core_regression_tests": 43,
+    "bridge_regression_tests": 6
   },
   "intake_result": {
     "scenario": "Explicit selection of existing frozen real-game Profile",
@@ -281,5 +300,16 @@
     "Core manifest/package regeneration and full regression remain integration work",
     "Formal Final A/B, Candidate, original game source, main, Stable and releases unchanged"
   ],
-  "integration": "Apply only the listed 7 source files. Do not overlay QA_TARGETS.json, TARGET_PREPARATION.json, GAME/targets or generated supplementary game copies."
+  "integration": "Apply only the listed 7 source files. Do not overlay QA_TARGETS.json, TARGET_PREPARATION.json, GAME/targets or generated supplementary game copies.",
+  "observation_contract_correction": {
+    "internal_state": "Empty when no internal bridge; external pixel counts never stored here",
+    "external_observations": "values, provenance, claim_scope and evidence paths",
+    "profile_goals": [],
+    "external_test_result_reason": "EXTERNAL_OBSERVATION_CHECK",
+    "semantic_game_outcome": "UNVERIFIED",
+    "legacy_predicate_default": "internal_state",
+    "external_game_goal": "Rejected by Profile parser",
+    "runner_patch": "OBSERVATION_RUNNER.patch; apply only imports/state-log/test-predicate hunks to integrated runner",
+    "scope": "No changes to save/load, replay or internal-state regression semantics"
+  }
 }
