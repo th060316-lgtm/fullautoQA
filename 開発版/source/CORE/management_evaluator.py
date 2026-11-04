@@ -26,6 +26,7 @@ Rules that this module enforces
 from __future__ import annotations
 
 from pathlib import Path
+import math
 
 from common import stamp
 from hq_evidence import (ReadbackDomainReport, collect_evidence, compare_threshold, fingerprint,
@@ -313,6 +314,18 @@ def _evaluate_measurement(spec, bundle, threshold, threshold_source):
                  'method': None, 'evidence': []}, None)
     value = measurement['value']
     unit = measurement['unit']
+    try:
+        valid = not isinstance(value, bool) and math.isfinite(float(value))
+    except (ValueError, TypeError, OverflowError):
+        valid = False
+    if not valid:
+        return (_row(spec['gate'], 'NOT_RUN', MANAGEMENT_MEASUREMENT_UNAVAILABLE,
+                     evidence=measurement['evidence'], detail='recorded measurement is not finite numeric data'),
+                {'metric': metric, 'available': False, 'recorded': True, 'value': value,
+                 'unit': unit, 'status': 'NOT_RUN', 'reason_code': MANAGEMENT_MEASUREMENT_UNAVAILABLE,
+                 'threshold': jsonable(threshold), 'threshold_source': threshold_source,
+                 'source': measurement['source'], 'method': measurement['method'],
+                 'evidence': measurement['evidence']}, None)
     record = {'metric': metric, 'available': True, 'value': value, 'unit': unit,
               'statistic': measurement['statistic'], 'status': 'PASS',
               'reason_code': None, 'threshold': None, 'threshold_source': None,
@@ -375,6 +388,10 @@ def _evaluate_signal(spec, bundle):
     elif not isinstance(evidence, (list, tuple)):
         evidence = []
     record['evidence'] = [str(item) for item in evidence]
+    if isinstance(raw, dict):
+        for key in ('scope', 'source', 'test_cases'):
+            if key in raw:
+                record[key] = jsonable(raw[key])
     expect = spec['expect']
     if expect == 'present':
         risk = None
@@ -401,10 +418,19 @@ def _evaluate_signal(spec, bundle):
                      detail='the %s signal was recorded but carries no usable verdict' % metric),
                 record, None)
     expected = (expect == 'true')
+    if (metric == 'reproducibility' and value is True and
+            record.get('scope') == 'same_run_seed_replay'):
+        record['status'] = 'INCONCLUSIVE'
+        record['reason_code'] = 'MANAGEMENT_REPRODUCIBILITY_SCOPE_LIMITED'
+        return (_row(spec['gate'], 'INCONCLUSIVE', record['reason_code'],
+                     evidence=record['evidence'],
+                     detail='same-run seed replay is established; broader run reproducibility was not established'),
+                record, None)
     if value == expected:
         record['status'] = 'PASS'
         return (_row(spec['gate'], 'PASS', None, evidence=record['evidence'],
-                     detail='the %s signal is %s' % (metric, 'true' if value else 'false')),
+                     detail='the %s signal is %s%s' % (metric, 'true' if value else 'false',
+                         ' (scope: %s)' % record['scope'] if record.get('scope') else '')),
                 record, None)
     record['status'] = 'FAIL'
     record['reason_code'] = spec.get('fail_reason') or MANAGEMENT_SIGNAL_FALSE
@@ -641,6 +667,16 @@ def evaluate_management(context):
         'reason_code': reason_code,
         'accepted': status == 'PASS',
         'evidence_present': bool(bundle),
+        # Execution describes the evaluator call only; it does not certify evidence or quality.
+        'evaluator_execution': 'COMPLETED',
+        'measurement_availability': {
+            'status': ('PASS' if all(measurements[s['metric']]['available'] for s in MEASUREMENT_GATES if any(row['test_case'] == s['gate'] and row['gate'] == 'REQUIRED' for row in rows)) else 'NOT_RUN'),
+            'scope': 'required_numeric_measurements',
+        },
+        'measurement_quality': {
+            'status': _aggregate([row for row in rows if row['test_case'] in {s['gate'] for s in MEASUREMENT_GATES}]),
+            'scope': 'required_numeric_measurements_against_configured_thresholds',
+        },
         'evidence_sources': sources,
         'evidence_kind': kind_record['kind'],
         'evidence_kind_source': kind_source,

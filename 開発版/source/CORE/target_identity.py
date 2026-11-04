@@ -157,7 +157,7 @@ def load_bindings(root, settings=None):
     if not path.is_file():
         return {'schema_version': SCHEMA_VERSION, 'targets': {}}
     data = read_json(path)
-    if (not isinstance(data, dict) or data.get('schema_version') != SCHEMA_VERSION
+    if (not isinstance(data, dict) or type(data.get('schema_version')) is not int or data.get('schema_version') != SCHEMA_VERSION
             or not isinstance(data.get('targets'), dict)):
         raise ValueError('TARGET_BINDINGS_INVALID')
     for key, record in data['targets'].items():
@@ -170,7 +170,7 @@ def load_bindings(root, settings=None):
                 or record.get('kind') not in ('target','fixture','selftest')):
             raise ValueError('TARGET_BINDINGS_INVALID')
         for index, item in enumerate(history,1):
-            if (not isinstance(item,dict) or item.get('generation') != index
+            if (not isinstance(item,dict) or type(item.get('generation')) is not int or item.get('generation') != index
                     or not isinstance(item.get('fingerprint'),str) or len(item['fingerprint']) != 64):
                 raise ValueError('TARGET_BINDINGS_INVALID')
         if history[-1]['fingerprint'] != record.get('fingerprint'):
@@ -217,10 +217,20 @@ def check_result_binding(identity, recorded):
         violations.append('TARGET_ID_MISMATCH')
     if recorded.get('fingerprint') != identity.fingerprint:
         violations.append('TARGET_FINGERPRINT_MISMATCH')
-    if recorded.get('generation') != identity.generation:
+    generation = recorded.get('generation')
+    if not isinstance(generation, int) or isinstance(generation, bool) or generation < 1:
+        violations.append('TARGET_GENERATION_INVALID')
+    if generation != identity.generation:
         violations.append('STALE_TARGET_GENERATION')
     if recorded.get('kind') != identity.kind:
         violations.append('TARGET_KIND_MISMATCH')
+    if 'schema_version' in recorded and (type(recorded['schema_version']) is not int or recorded['schema_version'] != SCHEMA_VERSION):
+        violations.append('TARGET_SCHEMA_MISMATCH')
+    if 'components' in recorded and recorded['components'] != identity.components:
+        violations.append('TARGET_COMPONENTS_MISMATCH')
+    for field in ('certifies_real_target', 'ledger_persisted'):
+        if field in recorded and (type(recorded[field]) is not bool or recorded[field] != getattr(identity, field)):
+            violations.append('TARGET_' + field.upper() + '_MISMATCH')
     return violations
 
 
@@ -237,6 +247,8 @@ def check_baseline_reuse(identity, recorded, root=None, settings=None):
         violations.append('BASELINE_GENERATION_INVALID')
     if isinstance(generation, int) and generation > identity.generation:
         violations.append('BASELINE_GENERATION_AHEAD')
+    if root is None and generation != identity.generation:
+        violations.append('BASELINE_LINEAGE_UNVERIFIABLE')
     if root is not None:
         ledger = load_bindings(root, settings)
         history = (ledger['targets'].get(str(identity.target_id)) or {}).get('history') or []
@@ -262,9 +274,14 @@ def audit_results(root, identity, results_dir, settings=None):
     for path in sorted(base.rglob('result.json')):
         try:
             data = read_json(path)
-        except (OSError, ValueError):
+        except (OSError, ValueError) as ex:
+            findings.append({'file': relative_to_root(base, path), 'kind': 'result',
+                             'verdict': 'STALE', 'violations': ['RESULT_UNREADABLE'], 'error': repr(ex)})
             continue
-        violations = check_result_binding(identity, data.get('target_identity'))
+        recorded = data.get('target_identity') if isinstance(data, dict) else None
+        if isinstance(recorded, dict) and 'target_id' not in recorded:
+            recorded = recorded.get(str(identity.target_id))
+        violations = check_result_binding(identity, recorded)
         findings.append({'file': relative_to_root(base, path), 'kind': 'result',
                          'verdict': 'STALE' if violations else 'CURRENT',
                          'violations': violations})
@@ -282,3 +299,34 @@ def write_stale_audit(root, identity, findings, settings=None):
                'current': [f for f in findings if f.get('verdict') != 'STALE']}
     write_json(path, payload)
     return path
+
+
+def validate_bound_result_zip(path, expected_run_id, identities, require_manifest=True):
+    """Validate archive RunID and targets against the caller's current freeze."""
+    import zipfile
+    from common import validate_result_zip
+    audit = validate_result_zip(path, require_manifest=require_manifest, expected_run_id=expected_run_id)
+    with zipfile.ZipFile(path) as archive:
+        data = json.loads(archive.read('result.json').decode('utf-8-sig'))
+    recorded = data.get('target_identity')
+    if not isinstance(recorded, dict):raise ValueError('RESULT_TARGET_IDENTITY_MISSING')
+    if 'target_id' in recorded:recorded = {str(recorded['target_id']): recorded}
+    expected = {str(key): value if isinstance(value, TargetIdentity) else TargetIdentity.from_dict(value)
+                for key, value in identities.items()}
+    if set(recorded) != set(expected):raise ValueError('RESULT_TARGET_SET_MISMATCH')
+    for key, identity in sorted(expected.items()):
+        violations = check_result_binding(identity, recorded[key])
+        if violations:raise ValueError('RESULT_TARGET_BINDING_REJECTED:' + key + ':' + ','.join(violations))
+    return audit
+
+
+def validate_latest_pointer(results_root, path, expected_run_id, identities):
+    """A pointer is never its own authority for RunID or target identity."""
+    results_root = Path(results_root).resolve();pointer = read_json(inside(results_root, path))
+    if not isinstance(pointer, dict) or pointer.get('run_id') != expected_run_id:raise ValueError('LATEST_RUN_ID_MISMATCH')
+    result = pointer.get('result_zip')
+    if not isinstance(result, str) or not result:raise ValueError('LATEST_RESULT_PATH_MISSING')
+    archive = inside(results_root, result)
+    audit = validate_bound_result_zip(archive, expected_run_id, identities)
+    if 'overall' in pointer and pointer['overall'] != audit['overall']:raise ValueError('LATEST_RESULT_STATUS_MISMATCH')
+    return archive

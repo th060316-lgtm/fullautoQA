@@ -1,0 +1,452 @@
+{
+  "index": 3,
+  "run_id": "20261104T060748_db44ced6",
+  "target": {
+    "target_id": "politicstrasport-development",
+    "game_id": "politicstrasport_development",
+    "profile_version": "1.4-final-contract",
+    "profile_sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421",
+    "fingerprint": "d34074ff5b68b3ace61555cc3892c55156c1646ec26feeb27894ea779cb4c635",
+    "origin": {
+      "repository": "th060316-lgtm/PoliticsTrasport",
+      "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+      "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
+      "selected_path": "開発版/runtime"
+    }
+  },
+  "raw_zip": {
+    "path": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+    "sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f"
+  },
+  "archive_integrity": {
+    "status": "PASS",
+    "manifest_verified": 232,
+    "entries": 233,
+    "errors": [],
+    "result_refs_missing": [],
+    "scope": "all member CRC via ZipFile.read, manifest Size/SHA, names and result refs"
+  },
+  "measurements": {
+    "ram_mb": {
+      "value": 262.703125,
+      "unit": "mb",
+      "statistic": "peak",
+      "source": "process_metrics",
+      "method": "peak WorkingSetSize",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "management_evidence.json",
+          "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "politicstrasport_development_resources.json",
+          "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "handles": {
+      "value": 443,
+      "unit": "count",
+      "statistic": "peak",
+      "source": "process_metrics",
+      "method": "peak process handle count",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "management_evidence.json",
+          "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "politicstrasport_development_resources.json",
+          "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "cpu_percent": {
+      "value": 82.44474859235658,
+      "unit": "percent",
+      "statistic": "max_observed_average",
+      "source": "process_metrics",
+      "method": "delta(cpu_seconds)/delta(sample_time)/logical_cpu_count",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "management_evidence.json",
+          "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "politicstrasport_development_resources.json",
+          "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "runtime_seconds": {
+      "value": 409.6011057999999,
+      "unit": "seconds",
+      "statistic": "observed_interval",
+      "source": "process_metrics",
+      "method": "max(sample_time)-min(sample_time)",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "management_evidence.json",
+          "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "politicstrasport_development_resources.json",
+          "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "disk_bytes": {
+      "value": 302100768,
+      "unit": "bytes",
+      "source": "run_directory",
+      "method": "recursive file size before sealing",
+      "evidence": [],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "management_evidence.json",
+          "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "evidence_bytes": {
+      "value": 284232546,
+      "unit": "bytes",
+      "source": "run_directory",
+      "method": "archive-eligible file size before sealing",
+      "evidence": [],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "management_evidence.json",
+          "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    }
+  },
+  "metric_recalculation": {
+    "results": {
+      "ram_mb": {
+        "recomputed": 262.703125,
+        "recorded": 262.703125,
+        "match": true
+      },
+      "handles": {
+        "recomputed": 443,
+        "recorded": 443,
+        "match": true
+      },
+      "runtime_seconds": {
+        "recomputed": 409.6011057999999,
+        "recorded": 409.6011057999999,
+        "match": true
+      }
+    },
+    "provenance": [
+      {
+        "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+        "member": "politicstrasport_development_resources.json",
+        "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+      },
+      {
+        "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+        "member": "management_evidence.json",
+        "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+      }
+    ],
+    "cpu_note": "logical CPU count absent; recorded CPU measurement retained without audit-host normalization",
+    "disk_note": "pre-seal recorded sizes retained; current ZIP size is a different quantity"
+  },
+  "signals": {
+    "reproducibility": {
+      "status": true,
+      "scope": "same-run profile behavior signature/action trajectory only; not complete-state/all-seed/Profile-order determinism",
+      "evidence": [
+        "politicstrasport_development.__qa_regression_behavioral_regression.json",
+        "reproduction.json",
+        "politicstrasport_development_profile.json",
+        "result.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "politicstrasport_development.__qa_regression_behavioral_regression.json",
+          "sha256": "e72ba49f94949a230f315d4059ce22c417fd44df8629940f481cd8eaabeb7b5e"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "reproduction.json",
+          "sha256": "33a24066a252c8ce0fccc636aedd3a02ea472583565aa96668ab9c220563932c"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "politicstrasport_development_profile.json",
+          "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "result.json",
+          "sha256": "03b52b57985b1b8fe7abaa13b807c55ead8b469c1cbdfb6149c3af3421181f6e"
+        }
+      ]
+    },
+    "performance_regression": {
+      "status": "NOT_RUN",
+      "value": null,
+      "reason": "PERFORMANCE_LIMITS_NOT_DECLARED; JSON has version/scope only",
+      "rows": [
+        {
+          "run_id": "20261104T060748_db44ced6",
+          "event_id": "E0001470",
+          "timestamp": "2026-11-04T06:14:20Z",
+          "monotonic": 2825.9332494,
+          "test_case": "politicstrasport_development.__qa_regression.performance_regression",
+          "type": "verdict",
+          "status": "NOT_RUN",
+          "reason_code": "PERFORMANCE_LIMITS_NOT_DECLARED",
+          "severity": "INFO",
+          "evidence": [
+            "politicstrasport_development.__qa_regression_performance_regression.json",
+            "politicstrasport_development.__qa_regression_finish_0001466.bmp",
+            "baseline_exports/politicstrasport_development/goal/screen.bmp",
+            "baseline_exports/politicstrasport_development/goal/checkpoint.json",
+            "baseline_exports/politicstrasport_development/goal/bundle.json"
+          ],
+          "gate": "OPTIONAL"
+        }
+      ],
+      "raw": {
+        "baseline_game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+        "current_game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+        "baseline_scope": "SAME_RUN_SELF_CHECK"
+      },
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "politicstrasport_development.__qa_regression_performance_regression.json",
+          "sha256": "f3401cbbac1dbc1022e80503531ff51ab424a2ad72517d4ae6cbbe83db8200cc"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "result.json",
+          "sha256": "03b52b57985b1b8fe7abaa13b807c55ead8b469c1cbdfb6149c3af3421181f6e"
+        }
+      ]
+    },
+    "fresh": {
+      "status": "PASS",
+      "scope": "hosted fresh extraction marker cross-check only",
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "phase3_environment.json",
+          "sha256": "ebafa527c5778671fd081ed7dfb184e29265d495678a7cf376bbdec690ceb58a"
+        },
+        {
+          "path": "series/_final_series/SERIES_RECORDS.json",
+          "sha256": "2aadab833870a5323fd19d34e1782f811a6c06a57a8008bd1dc8d3ab0a252606"
+        }
+      ]
+    },
+    "start_qa": {
+      "status": "PASS",
+      "wall_seconds": 468.6147777000001,
+      "scope": "one successful hosted controller START_QA invocation; not all setup burden",
+      "provenance": [
+        {
+          "path": "series/_final_series/OPERATION_LOG.json",
+          "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "reproduction.json",
+          "sha256": "33a24066a252c8ce0fccc636aedd3a02ea472583565aa96668ab9c220563932c"
+        },
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "phase3_environment.json",
+          "sha256": "ebafa527c5778671fd081ed7dfb184e29265d495678a7cf376bbdec690ceb58a"
+        }
+      ]
+    },
+    "manual_intervention": {
+      "status": "NOT_RUN",
+      "value": null,
+      "observed": "NOT_OBSERVED_BY_CONTROLLER",
+      "scope": "controller did not observe intervention; global absence unproven",
+      "provenance": [
+        {
+          "path": "series/_final_series/OPERATION_LOG.json",
+          "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+        }
+      ]
+    },
+    "no_admin": {
+      "status": "NOT_RUN",
+      "value": null,
+      "observed_admin_status": "ELEVATED",
+      "reason": "ELEVATED run does not establish standard-user completion",
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+          "member": "phase3_environment.json",
+          "sha256": "ebafa527c5778671fd081ed7dfb184e29265d495678a7cf376bbdec690ceb58a"
+        },
+        {
+          "path": "series/_final_series/EXECUTION_ENVIRONMENT.json",
+          "sha256": "5475fee589d69c0d6dcd19a3dc719b5a040031a010510ae571e348e45a9e61e9"
+        }
+      ]
+    },
+    "offline": {
+      "status": "NOT_RUN",
+      "value": null,
+      "observed": "NOT_VERIFIED",
+      "reason": "hosted CI does not establish local fully offline completion",
+      "provenance": [
+        {
+          "path": "series/_final_series/EXECUTION_ENVIRONMENT.json",
+          "sha256": "5475fee589d69c0d6dcd19a3dc719b5a040031a010510ae571e348e45a9e61e9"
+        }
+      ]
+    }
+  },
+  "required_statuses": {
+    "preflight.core": "PASS",
+    "target.binding": "PASS",
+    "tool.godot": "PASS",
+    "tool.python": "PASS",
+    "tool.ffmpeg": "PASS",
+    "selftest.input": "PASS",
+    "selftest.screenshot": "PASS",
+    "selftest.process_monitor": "PASS",
+    "selftest.core_contract": "PASS",
+    "target.politicstrasport-development.contract": "PASS",
+    "politicstrasport_development.source": "PASS",
+    "politicstrasport_development.assets": "PASS",
+    "politicstrasport_development.build": "PASS",
+    "politicstrasport_development.game_boot": "PASS",
+    "politicstrasport_development.core_integration": "PASS",
+    "politicstrasport_development.EconomicCoreIntegrationTest": "PASS",
+    "politicstrasport_development.HoldReleaseAcceptanceTest": "PASS",
+    "politicstrasport_development.WorkCompletionAcceptanceTest": "PASS",
+    "politicstrasport_development.WorldDynamicsAcceptanceTest": "PASS",
+    "politicstrasport_development.LongRunProfile": "PASS",
+    "politicstrasport_development.UIInteractionTest": "PASS",
+    "politicstrasport_development.DestructiveTest": "PASS",
+    "politicstrasport_development.FontSupportTest": "PASS",
+    "politicstrasport_development.economic_core_selftest": "PASS",
+    "politicstrasport_development.smoke.launch": "PASS",
+    "politicstrasport_development.smoke.execution": "PASS",
+    "politicstrasport_development.goal.launch": "PASS",
+    "politicstrasport_development.goal.goal": "PASS",
+    "politicstrasport_development.pause_resume.launch": "PASS",
+    "politicstrasport_development.pause_resume.goal": "PASS",
+    "politicstrasport_development.explorer.launch": "PASS",
+    "politicstrasport_development.explorer.execution": "PASS",
+    "politicstrasport_development.random.launch": "PASS",
+    "politicstrasport_development.random.execution": "PASS",
+    "politicstrasport_development.five_minute_observation.launch": "PASS",
+    "politicstrasport_development.five_minute_observation.execution": "PASS",
+    "politicstrasport_development.five_minute_observation.5m": "PASS",
+    "politicstrasport_development.__qa_baseline.launch": "PASS",
+    "politicstrasport_development.__qa_baseline.goal": "PASS",
+    "politicstrasport_development.__qa_regression.launch": "PASS",
+    "politicstrasport_development.__qa_regression.goal": "PASS",
+    "politicstrasport_development.__qa_regression.behavioral_regression": "PASS",
+    "politicstrasport_development.__qa_regression.visual_regression": "PASS",
+    "politicstrasport_development.__qa_soak.launch": "PASS",
+    "politicstrasport_development.__qa_soak.execution": "PASS",
+    "politicstrasport_development.__qa_soak.soak": "PASS",
+    "video": "PASS",
+    "target.review_packet": "PASS",
+    "phase3.hq_evidence": "PASS"
+  },
+  "original_management_status": "NOT_RUN",
+  "evaluator_execution": {
+    "status": "EXECUTED",
+    "scope": "readback exists; independent from target quality and final Gate acceptance",
+    "provenance": [
+      {
+        "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+        "member": "result.json",
+        "sha256": "03b52b57985b1b8fe7abaa13b807c55ead8b469c1cbdfb6149c3af3421181f6e"
+      }
+    ]
+  },
+  "profile_rollback": {
+    "status": "PASS",
+    "scope": "isolated archived Final Profile byte recovery",
+    "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421",
+    "frozen_profile_sha_match": true,
+    "provenance": [
+      {
+        "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+        "member": "politicstrasport_development_profile.json",
+        "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421"
+      }
+    ]
+  },
+  "evidence_rollback": {
+    "status": "PASS",
+    "scope": "isolated raw result ZIP bytes recovered; not game re-execution or Stable executable rollback",
+    "sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f"
+  },
+  "raw_unchanged": true
+}

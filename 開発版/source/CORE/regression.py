@@ -30,7 +30,7 @@ def export_baseline(root,p,scenario,seed,state,actions,transitions,performance,s
 def load_baseline(root,p,scenario,seed,identity=None,identity_root=None,settings=None):
     root=Path(root);m=read_json(root/'bundle.json')
     if m.get('schema_version')!=1:raise ValueError('BASELINE_SCHEMA_INCOMPATIBLE')
-    if {f['path'] for f in m['files']}!={'checkpoint.json','screen.bmp'}:raise ValueError('BASELINE_FILE_SET')
+    if len(m['files'])!=2 or {f['path'] for f in m['files']}!={'checkpoint.json','screen.bmp'}:raise ValueError('BASELINE_FILE_SET')
     for f in m['files']:
         path=inside(root,f['path'])
         if not path.is_file() or path.stat().st_size!=f['size'] or digest(path)!=f['sha256']:raise ValueError('BASELINE_HASH_MISMATCH')

@@ -255,6 +255,37 @@ class Session:
                 name=case+'_migration.json';write_json(self.e.root/name,{'state':state,'baseline':baseline,'checks':checks});self.verdict(case+'.migration','PASS' if ok else 'FAIL' if checks else 'INCONCLUSIVE','MIGRATION_RESTORED' if ok else 'MIGRATION_UNVERIFIED',[name])
             finally:file.write_bytes(original)
         else:self.verdict(case+'.save_migration','NOT_RUN','BASELINE_SAVE_NOT_PROVIDED')
+    def storage_scenarios(self,work,case,seed,p,a):
+        from storage_qa import StorageInspector,STORAGE_FEATURES,run_storage_scenario
+        cfg=self.p.get('storage') or {};declared=cfg.get('scenarios') or []
+        if not isinstance(declared,list):raise ValueError('STORAGE_SCENARIOS_INVALID')
+        ids=[str(row.get('id',row.get('feature'))) for row in declared]
+        if len(ids)!=len(set(ids)):raise ValueError('STORAGE_SCENARIO_ID_COLLISION')
+        represented={row.get('feature') for row in declared}
+        for feature in STORAGE_FEATURES:
+            if feature not in represented:
+                proof=case+'_storage_'+feature+'.json';write_json(self.e.root/proof,{'feature':feature,'supported':False,'scope':'No declared executable contract'})
+                self.verdict(case+'.storage.'+feature,'NOT_RUN','STORAGE_SCENARIO_NOT_DECLARED',[proof],gate='OPTIONAL')
+        active={'process':p,'adapter':a}
+        def observe():
+            if active['process'].poll() is not None:raise RuntimeError('STORAGE_PROCESS_EXITED')
+            state=active['adapter'].observe()['internal_state'];self.e.event('state',case,internal_state=state,reason='declared_storage_scenario');return state
+        def act(action):
+            if action not in self.p['actions']:raise ValueError('STORAGE_ACTION_UNDECLARED:'+str(action))
+            before=observe();active['adapter'].act(action);time.sleep(cfg.get('observation_delay',.3));after=observe()
+            self.e.event('action',case,agent='StorageContract',action=action,input=self.p['actions'][action].get('inputs'),target=self.p['actions'][action].get('target'),reason='declared_storage_scenario',result={'before':before,'after':after},seed=seed)
+        def restart():
+            previous=active['process'];active['adapter'].close();self.stop()
+            process,adapter=self.start(work,case+'_storage_restart_'+str(time.monotonic_ns()),seed);active.update(process=process,adapter=adapter)
+            proof={'before_pid':previous.pid,'after_pid':process.pid,'before_exited':previous.poll() is not None};self.e.event('storage_restart',case,**proof);return proof
+        for row in declared:
+            proof=case+'_storage_'+str(row.get('id',row.get('feature')))+'.json';gate='REQUIRED' if row.get('required') else 'OPTIONAL'
+            try:
+                inspector=StorageInspector(inside(work,cfg.get('root','isolated_user')),cfg.get('locations'))
+                outcome=run_storage_scenario(inspector,row,act=act,observe=observe,restart=restart,fixture_root=self.root,condition=condition)
+            except Exception as ex:outcome={'status':'NOT_RUN','reason_code':'STORAGE_UNAVAILABLE','error':repr(ex)}
+            write_json(self.e.root/proof,{'contract':row,'result':outcome});self.verdict(case+'.storage.'+str(row.get('id',row.get('feature'))),outcome['status'],outcome['reason_code'],[proof],gate=gate)
+        return active['process'],active['adapter']
     def crash_observed(self,p,case,history):
         code=p.poll()
         if code is None:return False
@@ -264,7 +295,7 @@ class Session:
         return True
 
     def run_scenario(self,s,seed,replay=None):
-        case=self.p['game_id']+'.'+s['id'];work=self.copy_game(case);agent=Agent(self.p,s,seed);self.coverage['agents'].add(s['agent']);self.coverage['scenarios'].add(case)
+        case=self.p['game_id']+'.'+s['id'];work=self.copy_game(case);agent=Agent(self.p,s,seed);self.coverage['scenarios'].add(case)
         write_json(self.e.root/'journal.json',{'run_id':self.e.run_id,'current_profile':self.p['game_id'],'scenario':s['id'],'seed':seed,'state':'running','resume_policy':'restart_current_scenario_from_pristine_copy'})
         p=None;a=None;shots=[];observed=deque(maxlen=s.get('memory_limit',1024)) if s.get('soak') else [];self.transitions=[];features=None;start=time.monotonic();last_shot=0;last_monitor=0;recovery=0
         try:
@@ -304,7 +335,7 @@ class Session:
                         sh,_=self.shot(case,'failure');self.verdict(case+'.invariant','FAIL',error.get('reason','FORBIDDEN_STATE'),[sh] if sh else [],severity='MAJOR')
                 if goal and condition(state,goal):
                     if not goal_reached:
-                        sh,_=self.shot(case,'goal');name=case+'_goal.json';write_json(self.e.root/name,{'goal':goal,'state':state});self.verdict(case+'.goal','PASS','GOAL_REACHED',[name]+([sh] if sh else []));self.coverage['goals'].add(goal['id']);goal_reached=True
+                        sh,_=self.shot(case,'goal');name=case+'_goal.json';write_json(self.e.root/name,{'goal':goal,'state':state,'agent_assessment':agent.goal_assessment(True)});self.verdict(case+'.goal','PASS','GOAL_REACHED',[name]+([sh] if sh else []));self.coverage['goals'].add(goal['id']);goal_reached=True
                     if s.get('stop_on_goal',True) and replay is None:break
                 if now-last_monitor>=1:self.monitor(p,case);last_monitor=now
                 if now-last_shot>=s.get('screenshot_interval',self.p.get('screenshot_interval',3)):
@@ -325,6 +356,7 @@ class Session:
                 if replay is not None:
                     if replay_index>=len(replay):break
                     action=replay[replay_index];replay_index+=1;agent.history.append(action);agent.total_actions+=1
+                    agent.action_modes.append('Replay');agent.actions_by_mode['Replay']+=1
                 else:
                     prior_loops=agent.loops;action=agent.choose(state,screen=screen_before)
                     if agent.loops>prior_loops:
@@ -337,14 +369,18 @@ class Session:
                 agent.feedback(before,after,action,screen_before=screen_before,screen_after=screen_after);iterations+=1
                 if screen_after is not None:features=screen_after
                 if not s.get('soak'):self.transitions.append(after)
-                self.coverage['actions'].add(action);self.e.event('action',case,agent=agent.mode,action=action,input=self.p['actions'][action].get('inputs'),target=self.p['actions'][action].get('target'),reason='replay' if replay is not None else s['agent'],result={'changed':agent.signature(before)!=agent.signature(after),'response_delay_upper_bound_seconds':time.monotonic()-tick},seed=seed)
+                self.coverage['agents'].update(k for k,v in agent.actions_by_mode.items() if v and k!='Replay');self.coverage['actions'].add(action);self.e.event('action',case,agent=agent.action_modes[-1],action=action,input=self.p['actions'][action].get('inputs'),target=self.p['actions'][action].get('target'),reason='replay' if replay is not None else s['agent'],result={'changed':agent.signature(before)!=agent.signature(after),'response_delay_upper_bound_seconds':time.monotonic()-tick},seed=seed)
             if self.crash_observed(p,case,agent.history):return agent.export(),list(observed)
             if goal and not goal_reached:
                 # Observe once more: the final budgeted action may itself complete the goal.
                 final=a.observe()['internal_state']
                 if condition(final,goal):
-                    name=case+'_goal.json';write_json(self.e.root/name,{'goal':goal,'state':final});self.verdict(case+'.goal','PASS','GOAL_REACHED',[name]);self.coverage['goals'].add(goal['id'])
+                    goal_reached=True;name=case+'_goal.json';write_json(self.e.root/name,{'goal':goal,'state':final,'agent_assessment':agent.goal_assessment(True)});self.verdict(case+'.goal','PASS','GOAL_REACHED',[name]);self.coverage['goals'].add(goal['id'])
                 else:self.verdict(case+'.goal','INCONCLUSIVE','GOAL_NOT_REACHED',shots,agent_budget_exhausted=True)
+            if goal:
+                assessment=agent.goal_assessment(goal_reached)
+                proof=case+'_goal_agent.json';write_json(self.e.root/proof,assessment)
+                self.verdict(case+'.goal_agent',assessment['status'],assessment['reason_code'],[proof],gate='REQUIRED' if case+'.goal_agent' in getattr(self,'required_cases',[]) else 'INFORMATIONAL',claim=assessment['scope'])
             if not goal:
                 name=case+'_execution.json';write_json(self.e.root/name,{'actions':iterations,'final_state':a.observe(),'duration':time.monotonic()-start})
                 self.verdict(case+'.execution','PASS' if iterations else 'INCONCLUSIVE','ACTIONS_EXECUTED' if iterations else 'NO_ACTIONS_EXECUTED',[name])
@@ -370,6 +406,7 @@ class Session:
             final=a.observe()['internal_state'];observed.append(final)
             self.checkpoint(s,seed,case,final,agent.history,sh)
             if not self.p.get('qa_plan',{}).get('regression'):self.behavioral_regression(case,agent,observed,sh)
+            if s.get('save_load'):p,a=self.storage_scenarios(work,case,seed,p,a)
         except Exception as ex:
             name=case+'_harness_error.txt';(self.e.root/name).write_text(traceback.format_exc(),encoding='utf-8');self.verdict(case,'FAIL' if p and p.poll() is not None else 'HARNESS_ERROR','CRASH' if p and p.poll() is not None else 'HARNESS_FAILURE',[name],detail=str(ex))
         finally:
@@ -556,7 +593,7 @@ def main():
                     results.append(e.result(case,'HARNESS_ERROR' if missing else 'PASS','TARGET_CONTRACT_INCOMPLETE' if missing else 'TARGET_CONTRACT_VALID',[proof],missing=missing))
                     if missing:continue
                 write_json(out/(profile['game_id']+'_profile.json'),profile)
-                session=Session(root,e,tools,profile);session.rec=rec;session.imported_baselines=imported;session.target_identity=prepared['identities'][entry['id']] if run_mode=='target' else None;session.binding_settings=settings;sessions.append(session);results+=session.execute(args.seed,{'faults':args.faults,'soak_seconds':args.soak_seconds})
+                session=Session(root,e,tools,profile);session.rec=rec;session.imported_baselines=imported;session.target_identity=prepared['identities'][entry['id']] if run_mode=='target' else None;session.binding_settings=settings;sessions.append(session);results+=session.execute(args.seed,{'faults':args.faults,'soak_seconds':args.soak_seconds,'required_agents':sorted(required_agents(profile,entry)) if run_mode=='target' else []})
                 if run_mode=='target':
                     entry=target_entries[profile['game_id']]
                     if 'historical_regression' in entry.get('requirements',[]):

@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "real_game",
+  "run_id": "20261104T054954_472a6a42",
+  "measurements": {
+    "ram_mb": {
+      "value": 263.00390625,
+      "unit": "mb",
+      "statistic": "peak",
+      "source": "process_metrics",
+      "method": "peak WorkingSetSize",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "management_evidence.json",
+          "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+        },
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "politicstrasport_development_resources.json",
+          "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "handles": {
+      "value": 442,
+      "unit": "count",
+      "statistic": "peak",
+      "source": "process_metrics",
+      "method": "peak process handle count",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "management_evidence.json",
+          "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+        },
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "politicstrasport_development_resources.json",
+          "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "cpu_percent": {
+      "value": 81.61612116538743,
+      "unit": "percent",
+      "statistic": "max_observed_average",
+      "source": "process_metrics",
+      "method": "delta(cpu_seconds)/delta(sample_time)/logical_cpu_count",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "management_evidence.json",
+          "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+        },
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "politicstrasport_development_resources.json",
+          "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "runtime_seconds": {
+      "value": 420.38005239999984,
+      "unit": "seconds",
+      "statistic": "observed_interval",
+      "source": "process_metrics",
+      "method": "max(sample_time)-min(sample_time)",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "management_evidence.json",
+          "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+        },
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "politicstrasport_development_resources.json",
+          "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "disk_bytes": {
+      "value": 300705807,
+      "unit": "bytes",
+      "source": "run_directory",
+      "method": "recursive file size before sealing",
+      "evidence": [],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "management_evidence.json",
+          "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    },
+    "evidence_bytes": {
+      "value": 282838830,
+      "unit": "bytes",
+      "source": "run_directory",
+      "method": "archive-eligible file size before sealing",
+      "evidence": [],
+      "provenance": [
+        {
+          "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+          "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+          "member": "management_evidence.json",
+          "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+        }
+      ],
+      "quality_verdict": "INCONCLUSIVE",
+      "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+    }
+  },
+  "fresh_run": {
+    "status": true,
+    "evidence": [
+      "phase3_environment.json"
+    ]
+  },
+  "one_click": {
+    "status": true,
+    "evidence": [
+      "reproduction.json",
+      "phase3_environment.json"
+    ]
+  },
+  "integrity": {
+    "status": true,
+    "evidence": [
+      "phase3_preseal_integrity.json"
+    ]
+  },
+  "residual_risk": [],
+  "target_generation": 1,
+  "target_fingerprint": "d34074ff5b68b3ace61555cc3892c55156c1646ec26feeb27894ea779cb4c635",
+  "reproducibility": {
+    "status": true,
+    "scope": "same-run profile behavior signature/action trajectory only; not complete-state/all-seed/Profile-order determinism",
+    "evidence": [
+      "politicstrasport_development.__qa_regression_behavioral_regression.json",
+      "reproduction.json",
+      "politicstrasport_development_profile.json",
+      "result.json"
+    ],
+    "provenance": [
+      {
+        "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+        "member": "politicstrasport_development.__qa_regression_behavioral_regression.json",
+        "sha256": "e72ba49f94949a230f315d4059ce22c417fd44df8629940f481cd8eaabeb7b5e"
+      },
+      {
+        "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+        "member": "reproduction.json",
+        "sha256": "33a24066a252c8ce0fccc636aedd3a02ea472583565aa96668ab9c220563932c"
+      },
+      {
+        "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+        "member": "politicstrasport_development_profile.json",
+        "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421"
+      },
+      {
+        "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+        "member": "result.json",
+        "sha256": "ba5cc5f663070f63cf7de1e44a6958aa006d5da498182c02789a1bfc601fd561"
+      }
+    ]
+  },
+  "provenance": {
+    "derivation": "independent read-only existing-evidence reconstruction",
+    "run_id": "20261104T054954_472a6a42",
+    "sources": [
+      {
+        "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+        "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+        "member": "management_evidence.json",
+        "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+      }
+    ]
+  }
+}

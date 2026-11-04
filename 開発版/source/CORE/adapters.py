@@ -3,11 +3,15 @@ from pathlib import Path
 from common import inside,read_json
 
 class Adapter:
-    """Default black-box/optional file bridge adapter; all physical actions use SendInput."""
+    """Default black-box/optional file bridge adapter; physical actions use the selected real display/input backend."""
     version='1.1'
     def __init__(self,profile,context):self.profile=profile;self.context=context;self.desktop=context['desktop'];self.previous=None
     def capabilities(self):
-        return {'internal_state':bool(self.profile.get('bridge')),'ocr':False,'image_recognition':False,'window_automation':True,'save':bool(self.profile.get('save')),'replay':True,'audio':False,'gamepad':False,'adapter':True}
+        result={'internal_state':bool(self.profile.get('bridge')),'ocr':False,'image_recognition':False,'window_automation':True,'save':bool(self.profile.get('save')),'replay':True,'audio':False,'gamepad':False,'adapter':True}
+        capabilities=getattr(self.desktop,'capabilities',None)
+        if self.profile.get('display',{}).get('kind')=='browser' and callable(capabilities):
+            result['browser']=capabilities()
+        return result
     def observe(self):
         s={};status={'internal_state':'NOT_CONFIGURED'}
         if self.profile.get('bridge'):
@@ -93,4 +97,5 @@ class Navigation:
     @staticmethod
     def direction(position,target):
         v=[b-a for a,b in zip(position,target)];norm=math.sqrt(sum(x*x for x in v));return [x/norm for x in v] if norm else v
+
 

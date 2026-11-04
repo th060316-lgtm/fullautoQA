@@ -1,0 +1,748 @@
+{
+  "schema_version": 1,
+  "domain": "management",
+  "status": "NOT_RUN",
+  "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+  "accepted": false,
+  "evidence_present": true,
+  "evidence_sources": [
+    {
+      "kind": "inline",
+      "location": "extras.management_evidence",
+      "present": true,
+      "source": "context.extras"
+    },
+    {
+      "kind": "file",
+      "location": "file:management_evidence.json",
+      "present": true,
+      "source": "evidence_file",
+      "bytes": 8391,
+      "sha256": "f44857e4ecd3e2500d657203c45089079922979f815f5e57aeca1f4a62ce616d"
+    }
+  ],
+  "evidence_kind": "real_game",
+  "evidence_kind_source": "evidence_bundle",
+  "real_game_acceptance": true,
+  "measurements": {
+    "cpu_percent": {
+      "metric": "cpu_percent",
+      "available": true,
+      "value": 82.44474859235658,
+      "unit": "percent",
+      "statistic": "value",
+      "status": "INCONCLUSIVE",
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "threshold": null,
+      "threshold_source": null,
+      "source": "process_metrics",
+      "method": "delta(cpu_seconds)/delta(sample_time)/logical_cpu_count",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ]
+    },
+    "ram_mb": {
+      "metric": "ram_mb",
+      "available": true,
+      "value": 262.703125,
+      "unit": "mb",
+      "statistic": "value",
+      "status": "INCONCLUSIVE",
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "threshold": null,
+      "threshold_source": null,
+      "source": "process_metrics",
+      "method": "peak WorkingSetSize",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ]
+    },
+    "handles": {
+      "metric": "handles",
+      "available": true,
+      "value": 443,
+      "unit": "count",
+      "statistic": "value",
+      "status": "INCONCLUSIVE",
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "threshold": null,
+      "threshold_source": null,
+      "source": "process_metrics",
+      "method": "peak process handle count",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ]
+    },
+    "runtime_seconds": {
+      "metric": "runtime_seconds",
+      "available": true,
+      "value": 409.6011057999999,
+      "unit": "seconds",
+      "statistic": "value",
+      "status": "INCONCLUSIVE",
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "threshold": null,
+      "threshold_source": null,
+      "source": "process_metrics",
+      "method": "max(sample_time)-min(sample_time)",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ]
+    },
+    "disk_bytes": {
+      "metric": "disk_bytes",
+      "available": true,
+      "value": 302100768,
+      "unit": "bytes",
+      "statistic": "value",
+      "status": "INCONCLUSIVE",
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "threshold": null,
+      "threshold_source": null,
+      "source": "run_directory",
+      "method": "recursive file size before sealing",
+      "evidence": []
+    },
+    "evidence_bytes": {
+      "metric": "evidence_bytes",
+      "available": true,
+      "value": 284232546,
+      "unit": "bytes",
+      "statistic": "value",
+      "status": "INCONCLUSIVE",
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "threshold": null,
+      "threshold_source": null,
+      "source": "run_directory",
+      "method": "archive-eligible file size before sealing",
+      "evidence": []
+    },
+    "growth_bytes_per_hour": {
+      "metric": "growth_bytes_per_hour",
+      "available": false,
+      "value": null,
+      "unit": "bytes_per_hour",
+      "status": "NOT_RUN",
+      "reason_code": "MANAGEMENT_MEASUREMENT_UNAVAILABLE",
+      "threshold": null,
+      "threshold_source": null,
+      "source": null,
+      "method": null,
+      "evidence": []
+    }
+  },
+  "signals": {
+    "performance_regression": {
+      "metric": "performance_regression",
+      "available": false,
+      "value": null,
+      "status": "NOT_RUN",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "expect": "false",
+      "meaning": "PASS means no performance regression was detected"
+    },
+    "reproducibility": {
+      "metric": "reproducibility",
+      "available": true,
+      "value": {
+        "status": true,
+        "scope": "same-run profile behavior signature/action trajectory only; not complete-state/all-seed/Profile-order determinism",
+        "evidence": [
+          "politicstrasport_development.__qa_regression_behavioral_regression.json",
+          "reproduction.json",
+          "politicstrasport_development_profile.json",
+          "result.json"
+        ],
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+            "member": "politicstrasport_development.__qa_regression_behavioral_regression.json",
+            "sha256": "e72ba49f94949a230f315d4059ce22c417fd44df8629940f481cd8eaabeb7b5e"
+          },
+          {
+            "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+            "member": "reproduction.json",
+            "sha256": "33a24066a252c8ce0fccc636aedd3a02ea472583565aa96668ab9c220563932c"
+          },
+          {
+            "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+            "member": "politicstrasport_development_profile.json",
+            "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421"
+          },
+          {
+            "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+            "member": "result.json",
+            "sha256": "03b52b57985b1b8fe7abaa13b807c55ead8b469c1cbdfb6149c3af3421181f6e"
+          }
+        ]
+      },
+      "status": "PASS",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [
+        "politicstrasport_development.__qa_regression_behavioral_regression.json",
+        "reproduction.json",
+        "politicstrasport_development_profile.json",
+        "result.json"
+      ],
+      "expect": "true",
+      "meaning": "PASS means the run was reproduced identically"
+    },
+    "fresh_run": {
+      "metric": "fresh_run",
+      "available": true,
+      "value": {
+        "status": true,
+        "evidence": [
+          "phase3_environment.json"
+        ]
+      },
+      "status": "PASS",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [
+        "phase3_environment.json"
+      ],
+      "expect": "true",
+      "meaning": "PASS means a fresh run was evidenced"
+    },
+    "target_generation_integrity": {
+      "metric": "target_generation_integrity",
+      "available": true,
+      "value": "generation_matches",
+      "status": "PASS",
+      "reason_code": null,
+      "evidence": [],
+      "expect": "true",
+      "detail": "target generation 1 matches the frozen identity"
+    },
+    "one_click": {
+      "metric": "one_click",
+      "available": true,
+      "value": {
+        "status": true,
+        "evidence": [
+          "reproduction.json",
+          "phase3_environment.json"
+        ]
+      },
+      "status": "PASS",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [
+        "reproduction.json",
+        "phase3_environment.json"
+      ],
+      "expect": "true",
+      "meaning": "PASS means the run is operable with one click"
+    },
+    "manual_intervention": {
+      "metric": "manual_intervention",
+      "available": false,
+      "value": null,
+      "status": "NOT_RUN",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "expect": "false",
+      "meaning": "PASS means no manual intervention was required"
+    },
+    "no_admin": {
+      "metric": "no_admin",
+      "available": false,
+      "value": null,
+      "status": "NOT_RUN",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "expect": "true",
+      "meaning": "PASS means the run needs no administrator rights"
+    },
+    "offline": {
+      "metric": "offline",
+      "available": false,
+      "value": null,
+      "status": "NOT_RUN",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "expect": "true",
+      "meaning": "PASS means the run is fully offline"
+    },
+    "integrity": {
+      "metric": "integrity",
+      "available": true,
+      "value": {
+        "status": true,
+        "evidence": [
+          "phase3_preseal_integrity.json"
+        ]
+      },
+      "status": "PASS",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [
+        "phase3_preseal_integrity.json"
+      ],
+      "expect": "true",
+      "meaning": "PASS means the evidence integrity was verified"
+    },
+    "residual_risk": {
+      "metric": "residual_risk",
+      "available": true,
+      "value": [],
+      "status": "PASS",
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "expect": "present",
+      "meaning": "PASS means the residual risk was documented"
+    }
+  },
+  "thresholds": {
+    "cpu_percent": {
+      "configured": false,
+      "threshold": null,
+      "source": null
+    },
+    "disk_bytes": {
+      "configured": false,
+      "threshold": null,
+      "source": null
+    },
+    "evidence_bytes": {
+      "configured": false,
+      "threshold": null,
+      "source": null
+    },
+    "growth_bytes_per_hour": {
+      "configured": false,
+      "threshold": null,
+      "source": null
+    },
+    "handles": {
+      "configured": false,
+      "threshold": null,
+      "source": null
+    },
+    "ram_mb": {
+      "configured": false,
+      "threshold": null,
+      "source": null
+    },
+    "runtime_seconds": {
+      "configured": false,
+      "threshold": null,
+      "source": null
+    }
+  },
+  "unavailable": [
+    {
+      "item": "management.long_run_growth",
+      "status": "NOT_RUN",
+      "required": false,
+      "reason_code": "MANAGEMENT_MEASUREMENT_UNAVAILABLE",
+      "detail": "no growth_bytes_per_hour measurement was recorded"
+    },
+    {
+      "item": "management.performance_regression",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "detail": "the performance_regression signal was not recorded"
+    },
+    {
+      "item": "management.manual_intervention",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "detail": "the manual_intervention signal was not recorded"
+    },
+    {
+      "item": "management.no_admin",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "detail": "the no_admin signal was not recorded"
+    },
+    {
+      "item": "management.offline",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "detail": "the offline signal was not recorded"
+    }
+  ],
+  "unavailable_required": [
+    {
+      "item": "management.performance_regression",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "detail": "the performance_regression signal was not recorded"
+    },
+    {
+      "item": "management.manual_intervention",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "detail": "the manual_intervention signal was not recorded"
+    },
+    {
+      "item": "management.no_admin",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "detail": "the no_admin signal was not recorded"
+    },
+    {
+      "item": "management.offline",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "detail": "the offline signal was not recorded"
+    }
+  ],
+  "gates": [
+    {
+      "name": "management.cpu",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.ram",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.handles",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.runtime",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.disk",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.evidence_size",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.long_run_growth",
+      "status": "NOT_RUN",
+      "required": false,
+      "reason_code": "MANAGEMENT_MEASUREMENT_UNAVAILABLE",
+      "evidence": [],
+      "severity": "WARNING"
+    },
+    {
+      "name": "management.performance_regression",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.manual_intervention",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.no_admin",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "severity": "ERROR"
+    },
+    {
+      "name": "management.offline",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "severity": "ERROR"
+    }
+  ],
+  "gate_status": [
+    {
+      "name": "management.evidence_kind",
+      "status": "PASS",
+      "required": true,
+      "reason_code": null,
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "evidence kind is real game (source: evidence_bundle)"
+    },
+    {
+      "name": "management.cpu",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "severity": "ERROR",
+      "detail": "measured 82.44474859235658 (percent); no threshold is configured, so no PASS/FAIL verdict can be produced"
+    },
+    {
+      "name": "management.ram",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "severity": "ERROR",
+      "detail": "measured 262.703125 (mb); no threshold is configured, so no PASS/FAIL verdict can be produced"
+    },
+    {
+      "name": "management.handles",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "severity": "ERROR",
+      "detail": "measured 443 (count); no threshold is configured, so no PASS/FAIL verdict can be produced"
+    },
+    {
+      "name": "management.runtime",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [
+        "politicstrasport_development_resources.json"
+      ],
+      "severity": "ERROR",
+      "detail": "measured 409.6011057999999 (seconds); no threshold is configured, so no PASS/FAIL verdict can be produced"
+    },
+    {
+      "name": "management.disk",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "measured 302100768 (bytes); no threshold is configured, so no PASS/FAIL verdict can be produced"
+    },
+    {
+      "name": "management.evidence_size",
+      "status": "INCONCLUSIVE",
+      "required": true,
+      "reason_code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "measured 284232546 (bytes); no threshold is configured, so no PASS/FAIL verdict can be produced"
+    },
+    {
+      "name": "management.long_run_growth",
+      "status": "NOT_RUN",
+      "required": false,
+      "reason_code": "MANAGEMENT_MEASUREMENT_UNAVAILABLE",
+      "evidence": [],
+      "severity": "WARNING",
+      "detail": "no growth_bytes_per_hour measurement was recorded"
+    },
+    {
+      "name": "management.performance_regression",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "the performance_regression signal was not recorded"
+    },
+    {
+      "name": "management.reproducibility",
+      "status": "PASS",
+      "required": true,
+      "reason_code": null,
+      "evidence": [
+        "politicstrasport_development.__qa_regression_behavioral_regression.json",
+        "reproduction.json",
+        "politicstrasport_development_profile.json",
+        "result.json"
+      ],
+      "severity": "ERROR",
+      "detail": "the reproducibility signal is true"
+    },
+    {
+      "name": "management.fresh_run",
+      "status": "PASS",
+      "required": true,
+      "reason_code": null,
+      "evidence": [
+        "phase3_environment.json"
+      ],
+      "severity": "ERROR",
+      "detail": "the fresh_run signal is true"
+    },
+    {
+      "name": "management.target_generation_integrity",
+      "status": "PASS",
+      "required": true,
+      "reason_code": null,
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "target generation 1 matches the frozen identity"
+    },
+    {
+      "name": "management.one_click",
+      "status": "PASS",
+      "required": true,
+      "reason_code": null,
+      "evidence": [
+        "reproduction.json",
+        "phase3_environment.json"
+      ],
+      "severity": "ERROR",
+      "detail": "the one_click signal is true"
+    },
+    {
+      "name": "management.manual_intervention",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "the manual_intervention signal was not recorded"
+    },
+    {
+      "name": "management.no_admin",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "the no_admin signal was not recorded"
+    },
+    {
+      "name": "management.offline",
+      "status": "NOT_RUN",
+      "required": true,
+      "reason_code": "MANAGEMENT_SIGNAL_ABSENT",
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "the offline signal was not recorded"
+    },
+    {
+      "name": "management.integrity",
+      "status": "PASS",
+      "required": true,
+      "reason_code": null,
+      "evidence": [
+        "phase3_preseal_integrity.json"
+      ],
+      "severity": "ERROR",
+      "detail": "the integrity signal is true"
+    },
+    {
+      "name": "management.residual_risk",
+      "status": "PASS",
+      "required": true,
+      "reason_code": null,
+      "evidence": [],
+      "severity": "ERROR",
+      "detail": "the residual_risk subject was documented"
+    }
+  ],
+  "risks": [
+    {
+      "code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "severity": "WARNING",
+      "detail": "no threshold is configured for cpu_percent; the observed value 82.44474859235658 is preserved but no threshold verdict can be produced"
+    },
+    {
+      "code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "severity": "WARNING",
+      "detail": "no threshold is configured for ram_mb; the observed value 262.703125 is preserved but no threshold verdict can be produced"
+    },
+    {
+      "code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "severity": "WARNING",
+      "detail": "no threshold is configured for handles; the observed value 443 is preserved but no threshold verdict can be produced"
+    },
+    {
+      "code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "severity": "WARNING",
+      "detail": "no threshold is configured for runtime_seconds; the observed value 409.6011057999999 is preserved but no threshold verdict can be produced"
+    },
+    {
+      "code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "severity": "WARNING",
+      "detail": "no threshold is configured for disk_bytes; the observed value 302100768 is preserved but no threshold verdict can be produced"
+    },
+    {
+      "code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "severity": "WARNING",
+      "detail": "no threshold is configured for evidence_bytes; the observed value 284232546 is preserved but no threshold verdict can be produced"
+    },
+    {
+      "code": "MANAGEMENT_SIGNAL_ABSENT",
+      "severity": "WARNING",
+      "detail": "the performance_regression signal was not recorded"
+    },
+    {
+      "code": "MANAGEMENT_SIGNAL_ABSENT",
+      "severity": "WARNING",
+      "detail": "the manual_intervention signal was not recorded"
+    },
+    {
+      "code": "MANAGEMENT_SIGNAL_ABSENT",
+      "severity": "WARNING",
+      "detail": "the no_admin signal was not recorded"
+    },
+    {
+      "code": "MANAGEMENT_SIGNAL_ABSENT",
+      "severity": "WARNING",
+      "detail": "the offline signal was not recorded"
+    },
+    {
+      "code": "MANAGEMENT_THRESHOLD_NOT_CONFIGURED",
+      "severity": "WARNING",
+      "detail": "no management threshold is configured; no threshold based verdict can be produced for any measurement"
+    }
+  ],
+  "notes": [
+    "MANAGEMENT_EVIDENCE_SOURCES:extras.management_evidence,file:management_evidence.json",
+    "MANAGEMENT_THRESHOLDS_SOURCE:none"
+  ],
+  "generated_at": "2026-11-04T14:41:18Z",
+  "fingerprint": "ab4f8a1046b8780b5e62bd51ac5b3cebf8c4672d8ec4f7a6189036e29e1b1499"
+}

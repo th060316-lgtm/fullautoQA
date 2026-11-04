@@ -162,7 +162,8 @@ class StorageInspector:
             # No declared locations => unobservable
             raise StorageUnavailable("STORAGE_NO_DECLARED_LOCATIONS")
 
-        for base in self._validated_paths:
+        for declared_base in self._validated_paths:
+            base = safe_resolve(self.root, declared_base)
             if not base.exists():
                 # Declared but missing is observable as empty; do not raise here.
                 continue
@@ -283,3 +284,95 @@ def inspect_declared_storage(
 ) -> StorageInspector:
     """Factory that fails closed on path escape or missing root."""
     return StorageInspector(root, declared_locations)
+
+
+STORAGE_FEATURES = ('restart_restore', 'corrupt', 'old_version', 'migration', 'multi_slot', 'autosave')
+
+
+def run_storage_scenario(inspector, scenario, *, act, observe, restart, fixture_root, condition):
+    """Execute declared steps with real adapter/process callbacks.
+
+    No storage behavior is implemented on the game's behalf. Unsupported is
+    NOT_RUN; support without the necessary observations cannot produce PASS.
+    All snapshot states and bytes are retained separately from capability labels.
+    """
+    import copy
+    feature=scenario.get('feature')
+    result={'feature':feature,'id':scenario.get('id',feature),'status':'NOT_RUN',
+            'reason_code':'STORAGE_FEATURE_NOT_SUPPORTED','scope':'declared storage scenario on supplied adapter','steps':[]}
+    if feature not in STORAGE_FEATURES:raise StorageQAError('UNKNOWN_STORAGE_FEATURE:'+str(feature))
+    if scenario.get('supported') is not True:return result
+    steps=scenario.get('steps')
+    if not isinstance(steps,list) or not steps:
+        result['reason_code']='STORAGE_SCENARIO_NOT_DECLARED';return result
+    snapshots={};assertions=[];roles=set();slots=set();restarts=[];timeline={}
+    try:
+        snapshots['initial']=(inspector.snapshot('initial'),copy.deepcopy(observe()))
+        for step in steps:
+            if not isinstance(step,dict):raise StorageQAError('STORAGE_STEP_INVALID')
+            operations=set(step)&{'action','restart','fixture','snapshot','expect','compare'}
+            if len(operations)!=1:raise StorageQAError('STORAGE_STEP_REQUIRES_ONE_OPERATION')
+            op=next(iter(operations));proof={'operation':op};role=step.get('role')
+            if op=='action':
+                act(step['action']);proof.update(action=step['action'],state=copy.deepcopy(observe()))
+                if role in ('save','load','autosave_trigger','mutate'):roles.add(role)
+                if step.get('slot') is not None:slots.add(str(step['slot']))
+            elif op=='restart':
+                if step['restart'] is not True:raise StorageQAError('STORAGE_RESTART_INVALID')
+                record=restart();proof['process']=record
+                verified=(isinstance(record,dict) and record.get('before_exited') is True
+                          and type(record.get('before_pid')) is int and type(record.get('after_pid')) is int
+                          and record['before_pid']>0 and record['after_pid']>0
+                          and record['before_pid']!=record['after_pid'])
+                restarts.append(verified);proof['verified']=verified;timeline.setdefault('restart',len(result['steps']))
+            elif op=='fixture':
+                source=safe_resolve(Path(fixture_root),step['fixture'])
+                destination=safe_resolve(inspector.root,step.get('path',''))
+                if not any(destination==base or (base.is_dir() and destination.is_relative_to(base)) for base in inspector._validated_paths):
+                    raise PathEscapeError('STORAGE_FIXTURE_OUTSIDE_DECLARED_LOCATIONS')
+                raw=source.read_bytes();destination.parent.mkdir(parents=True,exist_ok=True);destination.write_bytes(raw)
+                proof.update(path=destination.relative_to(inspector.root).as_posix(),fixture=step['fixture'],sha256=hashlib.sha256(raw).hexdigest())
+                if role in ('corrupt','old_version'):roles.add(role)
+            elif op=='snapshot':
+                label=step['snapshot']
+                if not isinstance(label,str) or not label or label in snapshots:raise StorageQAError('STORAGE_SNAPSHOT_LABEL_INVALID')
+                snapshot=inspector.snapshot(label);state=copy.deepcopy(observe());snapshots[label]=(snapshot,state);timeline[label]=len(result['steps'])
+                proof.update(label=label,storage=snapshot.to_dict(),state=state)
+            elif op=='expect':
+                state=copy.deepcopy(observe());ok=bool(condition(state,step['expect']));assertions.append(ok);proof.update(expect=step['expect'],state=state,ok=ok)
+            elif op=='compare':
+                compare=step['compare'];left=snapshots[compare['left']];right=snapshots[compare['right']]
+                if compare.get('storage') is True:matches=left[0]==right[0]
+                else:
+                    from profile import get
+                    fields=compare.get('state_fields') or []
+                    if not fields or any(get(left[1],f) is None or get(right[1],f) is None for f in fields):raise StorageQAError('STORAGE_COMPARE_STATE_UNAVAILABLE')
+                    matches=all(get(left[1],f)==get(right[1],f) for f in fields)
+                if type(compare.get('equal')) is not bool:raise StorageQAError('STORAGE_COMPARE_EXPECTATION_REQUIRED')
+                ok=matches==compare['equal'];assertions.append(ok);proof.update(compare=compare,ok=ok)
+            result['steps'].append(proof)
+        missing=[]
+        if not assertions:missing.append('STORAGE_ASSERTION_NOT_DECLARED')
+        if feature=='restart_restore':
+            if not restarts or not all(restarts):missing.append('STORAGE_RESTART_UNVERIFIED')
+            if not {'saved','changed','restored'}<=set(snapshots):missing.append('STORAGE_RESTORE_SNAPSHOTS_MISSING')
+            else:
+                if not (timeline['saved']<timeline['changed']<timeline.get('restart',-1)<timeline['restored']):missing.append('STORAGE_RESTART_SEQUENCE_INVALID')
+                from profile import get
+                fields=scenario.get('state_fields') or []
+                saved,changed,restored=(snapshots[k] for k in ('saved','changed','restored'))
+                if not fields or any(get(state,f) is None for _,state in (saved,changed,restored) for f in fields):missing.append('STORAGE_RESTORE_STATE_UNAVAILABLE')
+                else:assertions.extend([any(get(saved[1],f)!=get(changed[1],f) for f in fields),all(get(saved[1],f)==get(restored[1],f) for f in fields),diff_snapshots(snapshots['initial'][0],saved[0]).changed])
+        elif feature in ('corrupt','old_version','migration'):
+            required_role='corrupt' if feature=='corrupt' else 'old_version'
+            if required_role not in roles or 'load' not in roles:missing.append('STORAGE_FAULT_OR_LOAD_NOT_EXECUTED')
+        elif feature=='multi_slot':
+            if len(slots)<2 or not {'save','load'}<=roles:missing.append('STORAGE_MULTIPLE_SLOTS_NOT_EXERCISED')
+        elif feature=='autosave':
+            if 'autosave_trigger' not in roles:missing.append('STORAGE_AUTOSAVE_NOT_TRIGGERED')
+            if 'saved' not in snapshots or not diff_snapshots(snapshots['initial'][0],snapshots['saved'][0]).changed:missing.append('STORAGE_AUTOSAVE_WRITE_UNVERIFIED')
+        result['status']='FAIL' if assertions and not all(assertions) else 'INCONCLUSIVE' if missing else 'PASS'
+        result['reason_code']='STORAGE_EXPECTATION_MISMATCH' if result['status']=='FAIL' else missing[0] if missing else 'STORAGE_SCENARIO_VERIFIED'
+        result.update(missing=missing,assertions=assertions,restart_verified=bool(restarts) and all(restarts))
+    except Exception as ex:result.update(status='HARNESS_ERROR',reason_code='STORAGE_SCENARIO_ERROR',error=repr(ex))
+    return result

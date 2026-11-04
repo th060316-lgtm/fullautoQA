@@ -360,6 +360,80 @@ class ManagementCompleteEvidenceTest(unittest.TestCase):
         self.assertEqual(report.readback['unavailable_required'], [])
         self.assertEqual(report.readback['status'], 'PASS')
 
+class NonFiniteThresholdTest(unittest.TestCase):
+    def test_nonfinite_measurements_and_bounds_never_pass(self):
+        from hq_evidence import compare_threshold
+        for value in (float('nan'), float('inf'), float('-inf'), 'nan', 'inf', '-inf'):
+            for bound in ('min', 'max', 'equals'):
+                with self.subTest(value=value, bound=bound):
+                    self.assertIsNone(compare_threshold(value, {bound: 1})[0])
+                    self.assertIsNone(compare_threshold(1, {bound: value})[0])
+
+    def test_finite_comparisons_keep_their_outcomes(self):
+        from hq_evidence import compare_threshold
+        self.assertIs(compare_threshold(1, {'max': 2})[0], True)
+        self.assertIs(compare_threshold(3, {'max': 2})[0], False)
+
+
+class ManagementSeparationTest(unittest.TestCase):
+    def test_evaluator_completed_without_conflating_unjudged_quality(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            write_bundle(tmp, complete_bundle())
+            report = evaluate_management(context(tmp))
+        self.assertEqual(report.readback['evaluator_execution'], 'COMPLETED')
+        self.assertEqual(report.readback['measurement_availability']['status'], 'PASS')
+        self.assertEqual(report.readback['measurement_quality']['status'], 'INCONCLUSIVE')
+        self.assertNotEqual(report.status, 'PASS')
+
+    def test_missing_and_nonfinite_measurement_not_available(self):
+        import tempfile
+        for value in (None, float('nan'), float('inf'), float('-inf')):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as tmp:
+                bundle = complete_bundle()
+                bundle['measurements']['cpu_percent']['value'] = value
+                write_bundle(tmp, bundle)
+                report = evaluate_management(context(tmp, {'management_thresholds': FULL_THRESHOLDS}))
+                self.assertEqual(report.readback['measurement_availability']['status'], 'NOT_RUN')
+                self.assertNotEqual(report.readback['measurement_quality']['status'], 'PASS')
+                self.assertNotEqual(report.status, 'PASS')
+
+    def test_configured_breach_is_failure_even_with_completed_execution(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            write_bundle(tmp, complete_bundle())
+            limits = dict(FULL_THRESHOLDS, cpu_percent={'max': 1, 'unit': 'percent'})
+            report = evaluate_management(context(tmp, {'management_thresholds': limits}))
+        self.assertEqual(report.readback['evaluator_execution'], 'COMPLETED')
+        self.assertEqual(report.readback['measurement_quality']['status'], 'FAIL')
+        self.assertEqual(report.status, 'FAIL')
+
+    def test_seed_replay_keeps_same_run_scope_and_sources(self):
+        import tempfile
+        from phase3_run_evidence import _signals
+        with tempfile.TemporaryDirectory() as tmp:
+            results = [{'test_case': 'game.seed_replay', 'status': 'PASS', 'evidence': ['seed.json']}]
+            signal = _signals(results, False, False, 'environment.json', tmp)['reproducibility']
+            bundle = complete_bundle(reproducibility=signal)
+            write_bundle(tmp, bundle)
+            report = evaluate_management(context(tmp))
+        recorded = report.readback['signals']['reproducibility']
+        self.assertEqual(recorded['scope'], 'same_run_seed_replay')
+        self.assertEqual(recorded['source'], 'result_rows')
+        self.assertEqual(recorded['test_cases'], ['game.seed_replay'])
+        self.assertEqual(recorded['evidence'], ['seed.json'])
+        self.assertEqual(recorded['status'], 'INCONCLUSIVE')
+        self.assertIn('same-run seed replay', next(row['detail'] for row in report.readback['gate_status'] if row['name'] == 'management.reproducibility'))
+
+    def test_failed_seed_replay_stays_failure(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            write_bundle(tmp, complete_bundle(reproducibility={
+                'status': False, 'scope': 'same_run_seed_replay', 'evidence': ['seed.json']}))
+            report = evaluate_management(context(tmp))
+        self.assertEqual(report.readback['signals']['reproducibility']['status'], 'FAIL')
+        self.assertEqual(report.status, 'FAIL')
+
 
 if __name__ == '__main__':
     unittest.main()

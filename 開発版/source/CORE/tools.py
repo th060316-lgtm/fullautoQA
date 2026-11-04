@@ -16,6 +16,8 @@ import os
 import subprocess
 import sys
 import shutil
+import hashlib
+import zipfile
 import time
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Set
@@ -34,6 +36,7 @@ class Tools:
         self.manifest = read_json(self.root / "tool_manifest.json")
         self._by_id = {t["id"]: t for t in self.manifest}
         self.paths = {}
+        self._validated_paths = {}
         self.results = []
         self._prepared: Set[str] = set()
         self._failed_required: Set[str] = set()
@@ -107,10 +110,18 @@ class Tools:
     def get(self, key: str) -> str:
         if key not in self.paths:
             raise OSError("TOOL_UNAVAILABLE:" + key)
+        if key in self._validated_paths:
+            current = Path(self.paths[key])
+            if current.is_symlink() or str(current.resolve()) != self._validated_paths[key] or not current.is_file():
+                raise OSError("RUNTIME_POINTER_CHANGED:" + key)
         return self.paths[key]
 
     def is_available(self, key: str) -> bool:
-        return key in self.paths
+        try:
+            self.get(key)
+            return True
+        except OSError:
+            return False
 
     def required_failures(self) -> Set[str]:
         return set(self._failed_required)
@@ -142,8 +153,13 @@ class Tools:
         try:
             if not src.is_file() or src.stat().st_size != t["size"] or digest(src) != t["sha256"]:
                 raise ValueError("PAYLOAD_HASH_MISMATCH")
+            runtime_root = (self.root / "RUNTIME").resolve()
+            if (self.root / "RUNTIME").is_symlink() or dst.is_symlink() or not dst.resolve().is_relative_to(runtime_root):
+                raise OSError("RUNTIME_POINTER_ESCAPE")
             dst.mkdir(parents=True, exist_ok=True)
             marker = dst / "extracted.json"
+            if marker.exists() and (marker.is_symlink() or read_json(marker).get("sha256") != t["sha256"]):
+                raise OSError("STALE_RUNTIME_CACHE")
 
             if key == "python":
                 exe = self.root / "RUNTIME" / "python" / "python.exe"
@@ -176,9 +192,18 @@ class Tools:
                     raise OSError("TOOL_EXECUTABLE_MISSING")
                 exe = matches[0]
 
+            if key != "oculix" and (exe.is_symlink() or not exe.resolve().is_relative_to(dst.resolve())):
+                raise OSError("RUNTIME_POINTER_ESCAPE")
             if not exe.exists():
                 raise OSError("TOOL_EXECUTABLE_MISSING")
+            if src.suffix.lower() == ".zip" and key != "python":
+                relative_exe = exe.relative_to(dst).as_posix()
+                with zipfile.ZipFile(src) as archive:
+                    try: expected_exe = hashlib.sha256(archive.read(relative_exe)).hexdigest()
+                    except KeyError: raise OSError("RUNTIME_EXECUTABLE_NOT_IN_PAYLOAD")
+                if digest(exe) != expected_exe: raise OSError("STALE_RUNTIME_EXECUTABLE")
             self.paths[key] = str(exe.resolve())
+            self._validated_paths[key] = self.paths[key]
             self._prepared.add(key)
             write_json(
                 self.e.root / evidence_path,
@@ -254,6 +279,9 @@ class Tools:
                 )
             )
             if status != "PASS":
+                self.paths.pop(key, None)
+                self._validated_paths.pop(key, None)
+                self._prepared.discard(key)
                 if is_required:
                     self._failed_required.add(key)
                 else:
@@ -305,8 +333,10 @@ class Tools:
                     gate=gate,
                 )
             )
+            self.paths.pop(key, None)
+            self._validated_paths.pop(key, None)
+            self._prepared.discard(key)
             if is_required:
                 self._failed_required.add(key)
             else:
                 self._failed_optional.add(key)
-                self.paths.pop(key, None)

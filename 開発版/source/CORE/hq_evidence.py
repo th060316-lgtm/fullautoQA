@@ -489,8 +489,8 @@ def compare_threshold(value, threshold):
     caller must then report the verdict as unavailable, never as PASS.
     """
     number = _as_number(value)
-    if number is None:
-        return None, 'measured value is not numeric'
+    if number is None or not math.isfinite(number):
+        return None, 'measured value is not a finite number'
     if not isinstance(threshold, dict):
         return None, 'threshold is not a bounds mapping'
     bounds = [key for key in ('min', 'max', 'equals') if key in threshold]
@@ -498,8 +498,8 @@ def compare_threshold(value, threshold):
         return None, 'threshold declares no comparable bound'
     for key in bounds:
         bound = _as_number(threshold[key])
-        if bound is None:
-            return None, 'threshold bound %r is not numeric' % (key,)
+        if bound is None or not math.isfinite(bound):
+            return None, 'threshold bound %r is not a finite number' % (key,)
         if key == 'min' and number < bound:
             return False, 'measured %r is below the configured minimum %r' % (value, threshold[key])
         if key == 'max' and number > bound:
