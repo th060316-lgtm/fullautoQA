@@ -1,0 +1,58 @@
+name: Evidence archive readback
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/evidence-readback.yml', '開発版/acceptance_targets/evidence_readback_requests.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/github-script@v7
+        id: check
+        with:
+          script: |
+            if(context.payload.action!=='synchronize'||!context.payload.before){core.setOutput('changed','true');return;}
+            const {owner,repo}=context.repo;
+            const a=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
+            const b=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
+            if(a.truncated||b.truncated)throw new Error('READBACK_TREE_TRUNCATED');
+            const paths=new Set(['.github/workflows/evidence-readback.yml','開発版/acceptance_targets/evidence_readback_requests.json']);
+            const select=t=>JSON.stringify(t.tree.filter(x=>paths.has(x.path)).map(x=>[x.path,x.sha]).sort());
+            core.setOutput('changed',String(select(a)!==select(b)));
+  audit:
+    needs: inputs
+    if: needs.inputs.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41769703178
+          name: Target-A-Preflight-41769703178
+          path: _evidence
+      - name: Verify complete archive and print bounded evidence readback
+        shell: bash
+        run: |
+          python - <<'PY'
+          import collections,hashlib,json,pathlib,zipfile
+          for path in pathlib.Path('_evidence').rglob('RESULT_FOR_CHATGPT.zip'):
+              with zipfile.ZipFile(path) as z:
+                  names=z.namelist(); assert len(names)==len(set(names)), 'DUPLICATE_ENTRY'
+                  assert z.testzip() is None, 'CRC_FAILURE'
+                  manifest=json.loads(z.read('evidence_manifest.json')); assert {r['file'] for r in manifest}==set(names)-{'evidence_manifest.json'}, 'MANIFEST_SET'
+                  for row in manifest:
+                      raw=z.read(row['file']); assert len(raw)==row['size'] and hashlib.sha256(raw).hexdigest()==row['sha256'], 'EVIDENCE_HASH'
+                  data=json.loads(z.read('result.json')); events=[json.loads(l) for l in z.read('events.jsonl').decode('utf-8-sig').splitlines() if l.strip()]
+                  refs=[ref for row in data['results']+events for ref in row.get('evidence',[])]+[row['file'] for row in events if row.get('file')]
+                  assert all(ref in names for ref in refs), 'MISSING_REFERENCE'
+                  state=[e for e in events if e['type']=='state' and e['test_case'].endswith('.pause_resume')]
+                  physical=[e for e in events if e['type']=='physical_input']
+                  report={'run_id':data['run_id'],'required_counts':dict(collections.Counter(r['status'] for r in data['results'] if r.get('gate')=='REQUIRED')),'crc':'PASS','manifest_entries':len(manifest),'evidence_missing':0,'result_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'diagnostics':data.get('supporting_diagnostics',[]),'physical_input_count':len(physical),'physical_input_samples':physical[:6],'pause_states':[{'paused':e['current_state'].get('paused'),'transitions':e['current_state'].get('observed_pause_transitions'),'mapping':e['current_state'].get('input_mapping')} for e in state],'smoke_actions':[e.get('action') for e in events if e['type']=='action' and e['test_case'].endswith('.smoke')],'headquarters':[{'name':d['name'],'status':d['status'],'reason_code':d.get('reason_code')} for d in data['headquarters']['domains']]}
+                  print('EVIDENCE_READBACK='+json.dumps(report,ensure_ascii=False),flush=True)
+          PY
