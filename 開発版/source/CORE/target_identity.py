@@ -170,7 +170,7 @@ def load_bindings(root, settings=None):
                 or record.get('kind') not in ('target','fixture','selftest')):
             raise ValueError('TARGET_BINDINGS_INVALID')
         for index, item in enumerate(history,1):
-            if (not isinstance(item,dict) or item.get('generation') != index
+            if (not isinstance(item,dict) or type(item.get('generation')) is not int or item.get('generation') != index
                     or not isinstance(item.get('fingerprint'),str) or len(item['fingerprint']) != 64):
                 raise ValueError('TARGET_BINDINGS_INVALID')
         if history[-1]['fingerprint'] != record.get('fingerprint'):
@@ -217,10 +217,20 @@ def check_result_binding(identity, recorded):
         violations.append('TARGET_ID_MISMATCH')
     if recorded.get('fingerprint') != identity.fingerprint:
         violations.append('TARGET_FINGERPRINT_MISMATCH')
-    if recorded.get('generation') != identity.generation:
+    generation = recorded.get('generation')
+    if not isinstance(generation, int) or isinstance(generation, bool) or generation < 1:
+        violations.append('TARGET_GENERATION_INVALID')
+    if generation != identity.generation:
         violations.append('STALE_TARGET_GENERATION')
     if recorded.get('kind') != identity.kind:
         violations.append('TARGET_KIND_MISMATCH')
+    if 'schema_version' in recorded and (type(recorded['schema_version']) is not int or recorded['schema_version'] != SCHEMA_VERSION):
+        violations.append('TARGET_SCHEMA_MISMATCH')
+    if 'components' in recorded and recorded['components'] != identity.components:
+        violations.append('TARGET_COMPONENTS_MISMATCH')
+    for field in ('certifies_real_target', 'ledger_persisted'):
+        if field in recorded and (type(recorded[field]) is not bool or recorded[field] != getattr(identity, field)):
+            violations.append('TARGET_' + field.upper() + '_MISMATCH')
     return violations
 
 
@@ -237,6 +247,8 @@ def check_baseline_reuse(identity, recorded, root=None, settings=None):
         violations.append('BASELINE_GENERATION_INVALID')
     if isinstance(generation, int) and generation > identity.generation:
         violations.append('BASELINE_GENERATION_AHEAD')
+    if root is None and generation != identity.generation:
+        violations.append('BASELINE_LINEAGE_UNVERIFIABLE')
     if root is not None:
         ledger = load_bindings(root, settings)
         history = (ledger['targets'].get(str(identity.target_id)) or {}).get('history') or []
@@ -262,9 +274,14 @@ def audit_results(root, identity, results_dir, settings=None):
     for path in sorted(base.rglob('result.json')):
         try:
             data = read_json(path)
-        except (OSError, ValueError):
+        except (OSError, ValueError) as ex:
+            findings.append({'file': relative_to_root(base, path), 'kind': 'result',
+                             'verdict': 'STALE', 'violations': ['RESULT_UNREADABLE'], 'error': repr(ex)})
             continue
-        violations = check_result_binding(identity, data.get('target_identity'))
+        recorded = data.get('target_identity') if isinstance(data, dict) else None
+        if isinstance(recorded, dict) and 'target_id' not in recorded:
+            recorded = recorded.get(str(identity.target_id))
+        violations = check_result_binding(identity, recorded)
         findings.append({'file': relative_to_root(base, path), 'kind': 'result',
                          'verdict': 'STALE' if violations else 'CURRENT',
                          'violations': violations})

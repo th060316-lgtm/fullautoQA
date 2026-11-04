@@ -54,6 +54,9 @@ class Agent:
         self.profile = profile
         self.scenario = scenario
         self.mode = scenario["agent"]
+        self.requested_mode = self.mode
+        self.action_modes: List[str] = []
+        self.actions_by_mode = Counter()
         self.seed = seed
         self.rng = random.Random(seed)
         self.total_actions = 0
@@ -125,6 +128,7 @@ class Agent:
 
         sequence = self.scenario.get("sequence", [])
         a = None
+        selected_mode = self.mode
 
         if self.mode == "Smoke" and len(self.history) < len(sequence):
             a = sequence[len(self.history)]
@@ -139,6 +143,7 @@ class Agent:
                 a = sequence[len(self.history)]
             if a is None or self.visited[sig] > 4:
                 self.mode = "Explorer"
+                selected_mode = "Explorer"
                 a = None
             if a is None:
                 a = min(
@@ -168,8 +173,11 @@ class Agent:
 
             a = min(allowed, key=obs_key)
         else:
+            selected_mode = "Random"
             a = self.rng.choice(random_allowed or allowed)
 
+        self.action_modes.append(selected_mode)
+        self.actions_by_mode[selected_mode] += 1
         self.total_actions += 1
         self.memory[(sig, a)] = self.memory.get((sig, a), 0) + 1
         self.history.append(a)
@@ -221,6 +229,7 @@ class Agent:
         if self.scenario.get("soak"):
             if len(self.history) > limit:
                 del self.history[:-limit]
+                del self.action_modes[:-limit]
             for cache in (self.memory, self.visited, self.failed, self.success):
                 while len(cache) > limit:
                     try:
@@ -235,12 +244,29 @@ class Agent:
             or time.monotonic() - self.started >= self.scenario.get("time_budget", 60)
         )
 
+    def goal_assessment(self, goal_reached):
+        """Goal attainment alone never certifies a Goal policy or fallback."""
+        direct = (self.requested_mode == "Goal" and bool(self.action_modes)
+                  and self.action_modes[-1] == "Goal"
+                  and self.actions_by_mode.get("Goal", 0) > 0)
+        status = "PASS" if goal_reached and direct else "INCONCLUSIVE"
+        reason = ("GOAL_POLICY_REACHED_GOAL" if status == "PASS" else
+                  "GOAL_NOT_REACHED" if not goal_reached else "GOAL_POLICY_NOT_DEMONSTRATED")
+        return {"status": status, "reason_code": reason, "goal_reached": bool(goal_reached),
+                "requested_agent": self.requested_mode,
+                "last_action_agent": self.action_modes[-1] if self.action_modes else None,
+                "actions_by_agent": dict(self.actions_by_mode),
+                "scope": "Goal policy demonstration; goal attainment is reported separately"}
+
     def export(self):
         return {
             "total_actions": self.total_actions,
             "history_truncated": self.total_actions > len(self.history),
             "seed": self.seed,
             "mode": self.mode,
+            "requested_mode": self.requested_mode,
+            "action_modes": list(self.action_modes),
+            "actions_by_mode": dict(self.actions_by_mode),
             "current_goal": self.current_goal,
             "action_history": self.history,
             "visited_state": dict(self.visited),
