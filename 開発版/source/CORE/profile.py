@@ -23,6 +23,8 @@ def load(root,path):
         if any(a not in p['actions'] for a in s.get('sequence',[])):raise ValueError('UNKNOWN_ACTION')
     for k in ('source','save_directory'):
         if p.get(k):inside(root,p[k])
+    from observations import validate_profile_observation_sources
+    validate_profile_observation_sources(p)
     return p
 
 def get(state,path):
