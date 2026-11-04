@@ -74,6 +74,8 @@ class Agent:
         self.obs_success: Counter = Counter()
         # (screen_sig, action) -> count of times the action produced no visible change
         self.obs_failed: Counter = Counter()
+        self.obs_visits: Counter = Counter()
+        self.obs_attempts: Counter = Counter()
         # bounded FIFO of recent (screen_sig, action, changed) for reproducibility tests
         self.obs_trace: deque = deque(maxlen=int(scenario.get("obs_trace_limit", 256)))
         self._last_screen_sig: Optional[str] = None
@@ -104,6 +106,7 @@ class Agent:
         screen_sig = self._obs_sig(screen) if screen is not None else None
         if screen_sig is not None:
             self._last_screen_sig = screen_sig
+            self.obs_visits[screen_sig] += 1
 
         allowed = [
             x
@@ -162,8 +165,13 @@ class Agent:
                     # Higher obs_success is better (we invert for min-key)
                     succ = self.obs_success[(screen_sig, x)]
                     fail = self.obs_failed[(screen_sig, x)]
-                    # Prefer success, then avoid failure, then classic
-                    return (-succ, fail, self.memory.get((sig, x), 0), self.failed[(sig, x)], self.history.count(x), x)
+                    # Preserve immediate learning preference, but repeated
+                    # observations must not let one successful cycle starve
+                    # every untried edge. Balance attempts after two visits;
+                    # screen change alone does not establish goal progress.
+                    attempts = self.obs_attempts[(screen_sig, x)]
+                    fairness = attempts if self.obs_visits[screen_sig] >= 3 else 0
+                    return (fairness, -succ, fail, self.memory.get((sig, x), 0), self.failed[(sig, x)], self.history.count(x), x)
                 return (
                     self.memory.get((sig, x), 0),
                     self.failed[(sig, x)],
@@ -176,6 +184,8 @@ class Agent:
             selected_mode = "Random"
             a = self.rng.choice(random_allowed or allowed)
 
+        if screen_sig is not None:
+            self.obs_attempts[(screen_sig, a)] += 1
         self.action_modes.append(selected_mode)
         self.actions_by_mode[selected_mode] += 1
         self.total_actions += 1
@@ -220,7 +230,7 @@ class Agent:
     def _trim_memory(self):
         """Bound observational caches without changing baseline action-budget semantics."""
         limit = max(1, self._mem_limit)
-        for cache in (self.obs_success, self.obs_failed):
+        for cache in (self.obs_success, self.obs_failed, self.obs_visits, self.obs_attempts):
             while len(cache) > limit:
                 try:
                     cache.pop(next(iter(cache)))
@@ -274,6 +284,8 @@ class Agent:
             "success_action": {str(k): v for k, v in self.success.items()},
             "obs_success": {str(k): v for k, v in self.obs_success.items()},
             "obs_failed": {str(k): v for k, v in self.obs_failed.items()},
+            "obs_visits": dict(self.obs_visits),
+            "obs_attempts": {str(k): v for k, v in self.obs_attempts.items()},
             "retry_count": self.retry_count,
             "loops": self.loops,
         }

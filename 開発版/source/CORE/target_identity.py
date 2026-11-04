@@ -157,7 +157,7 @@ def load_bindings(root, settings=None):
     if not path.is_file():
         return {'schema_version': SCHEMA_VERSION, 'targets': {}}
     data = read_json(path)
-    if (not isinstance(data, dict) or data.get('schema_version') != SCHEMA_VERSION
+    if (not isinstance(data, dict) or type(data.get('schema_version')) is not int or data.get('schema_version') != SCHEMA_VERSION
             or not isinstance(data.get('targets'), dict)):
         raise ValueError('TARGET_BINDINGS_INVALID')
     for key, record in data['targets'].items():
@@ -299,3 +299,34 @@ def write_stale_audit(root, identity, findings, settings=None):
                'current': [f for f in findings if f.get('verdict') != 'STALE']}
     write_json(path, payload)
     return path
+
+
+def validate_bound_result_zip(path, expected_run_id, identities, require_manifest=True):
+    """Validate archive RunID and targets against the caller's current freeze."""
+    import zipfile
+    from common import validate_result_zip
+    audit = validate_result_zip(path, require_manifest=require_manifest, expected_run_id=expected_run_id)
+    with zipfile.ZipFile(path) as archive:
+        data = json.loads(archive.read('result.json').decode('utf-8-sig'))
+    recorded = data.get('target_identity')
+    if not isinstance(recorded, dict):raise ValueError('RESULT_TARGET_IDENTITY_MISSING')
+    if 'target_id' in recorded:recorded = {str(recorded['target_id']): recorded}
+    expected = {str(key): value if isinstance(value, TargetIdentity) else TargetIdentity.from_dict(value)
+                for key, value in identities.items()}
+    if set(recorded) != set(expected):raise ValueError('RESULT_TARGET_SET_MISMATCH')
+    for key, identity in sorted(expected.items()):
+        violations = check_result_binding(identity, recorded[key])
+        if violations:raise ValueError('RESULT_TARGET_BINDING_REJECTED:' + key + ':' + ','.join(violations))
+    return audit
+
+
+def validate_latest_pointer(results_root, path, expected_run_id, identities):
+    """A pointer is never its own authority for RunID or target identity."""
+    results_root = Path(results_root).resolve();pointer = read_json(inside(results_root, path))
+    if not isinstance(pointer, dict) or pointer.get('run_id') != expected_run_id:raise ValueError('LATEST_RUN_ID_MISMATCH')
+    result = pointer.get('result_zip')
+    if not isinstance(result, str) or not result:raise ValueError('LATEST_RESULT_PATH_MISSING')
+    archive = inside(results_root, result)
+    audit = validate_bound_result_zip(archive, expected_run_id, identities)
+    if 'overall' in pointer and pointer['overall'] != audit['overall']:raise ValueError('LATEST_RESULT_STATUS_MISMATCH')
+    return archive

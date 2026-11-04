@@ -1,0 +1,36 @@
+test_identical_seed_and_observation_are_reproducible (test_issue1_explorer_cycles.ExplorerCycleTests.test_identical_seed_and_observation_are_reproducible) ... ok
+test_observation_visit_and_attempt_memory_remains_bounded (test_issue1_explorer_cycles.ExplorerCycleTests.test_observation_visit_and_attempt_memory_remains_bounded) ... ERROR
+test_successful_two_state_edges_cannot_starve_unknown_exit (test_issue1_explorer_cycles.ExplorerCycleTests.test_successful_two_state_edges_cannot_starve_unknown_exit) ... FAIL
+test_three_state_success_cycle_explores_unknown_exit (test_issue1_explorer_cycles.ExplorerCycleTests.test_three_state_success_cycle_explores_unknown_exit) ... FAIL
+
+======================================================================
+ERROR: test_observation_visit_and_attempt_memory_remains_bounded (test_issue1_explorer_cycles.ExplorerCycleTests.test_observation_visit_and_attempt_memory_remains_bounded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_explorer_cycles.py", line 29, in test_observation_visit_and_attempt_memory_remains_bounded
+    self.assertLessEqual(len(agent.obs_visits),3);self.assertLessEqual(len(agent.obs_attempts),3);self.assertEqual(agent.total_actions,100)
+                             ^^^^^^^^^^^^^^^^
+AttributeError: 'Agent' object has no attribute 'obs_visits'
+
+======================================================================
+FAIL: test_successful_two_state_edges_cannot_starve_unknown_exit (test_issue1_explorer_cycles.ExplorerCycleTests.test_successful_two_state_edges_cannot_starve_unknown_exit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_explorer_cycles.py", line 15, in test_successful_two_state_edges_cannot_starve_unknown_exit
+    position,trace,agent=self.trace(8);self.assertEqual(position,4,trace);self.assertEqual(agent.mode,'Explorer');self.assertLessEqual(len(trace),32)
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 4 : [(0, 'advance', 1), (1, 'back', 0), (0, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1), (1, 'back', 0), (0, 'advance', 1)]
+
+======================================================================
+FAIL: test_three_state_success_cycle_explores_unknown_exit (test_issue1_explorer_cycles.ExplorerCycleTests.test_three_state_success_cycle_explores_unknown_exit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_explorer_cycles.py", line 25, in test_three_state_success_cycle_explores_unknown_exit
+    self.assertEqual(position,3);self.assertEqual(agent.mode,'Explorer')
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 3
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.005s
+
+FAILED (failures=2, errors=1)

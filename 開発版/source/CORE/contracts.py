@@ -25,9 +25,22 @@ def profile_plan(p,options=None,imported=False):
     def add(case,gate='REQUIRED'):rows.append({'test_case':case,'gate':gate})
     def scenario(s):
         base=game+'.'+s['id'];add(base+'.launch');add(base+('.goal' if s.get('goal') else '.execution'))
+        if s.get('agent')=='Goal' and s.get('goal') and (s.get('require_goal_agent') is True or p.get('require_goal_agent') is True or 'Goal' in (options.get('required_agents') or [])):
+            add(base+'.goal_agent')
         if s.get('save_load'):
             add(base+'.save_load')
             if p['save'].get('invalid_expected'):add(base+'.invalid_save')
+            storage=p.get('storage') or {};declared=storage.get('scenarios') or []
+            if not isinstance(declared,list):raise ValueError('STORAGE_SCENARIOS_INVALID')
+            from storage_qa import STORAGE_FEATURES
+            represented=set()
+            for row in declared:
+                if not isinstance(row,dict) or row.get('feature') not in STORAGE_FEATURES:raise ValueError('STORAGE_SCENARIO_INVALID')
+                represented.add(row['feature']);identifier=str(row.get('id',row['feature']))
+                if not identifier or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for c in identifier):raise ValueError('STORAGE_SCENARIO_ID_INVALID')
+                add(base+'.storage.'+identifier,'REQUIRED' if row.get('required') else 'OPTIONAL')
+            for feature in STORAGE_FEATURES:
+                if feature not in represented:add(base+'.storage.'+feature,'OPTIONAL')
         if s.get('retry_test'):add(base+'.retry')
         if s.get('soak'):add(base+'.soak')
         for test in p.get('tests',[]):
