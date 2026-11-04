@@ -1,6 +1,7 @@
 {
-  "scope": "Completed preflight readback only, not a Final Run",
-  "run_id": 41769703178,
-  "artifact_id": 13295435438,
-  "artifact_name": "Target-A-Preflight-41769703178"
+  "scope": "Read only frozen main Candidate build evidence, never a Final Run",
+  "kind": "build_proof",
+  "run_id": 41772879950,
+  "artifact_id": 13295563112,
+  "artifact_name": "FullAutoQA-Phase3-Build-Evidence-780ae10c2ec14878747de94e9426130f4685e128-Attempt-1"
 }
