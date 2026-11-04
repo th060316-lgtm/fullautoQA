@@ -382,7 +382,9 @@ class CDPBrowserDisplay:
         argv = [str(arg) for arg in process.args]
         if argv[-1] != 'about:blank' or any(not arg.startswith('--') and arg != 'about:blank' for arg in argv[1:]):
             raise OSError('BROWSER_CDP_BLANK_LAUNCH_REQUIRED')
-        if '--remote-debugging-port=0' not in argv or '--user-data-dir='+str(endpoint.parent) not in argv:
+        user_dirs = [arg.split('=',1)[1] for arg in argv[1:] if arg.startswith('--user-data-dir=')]
+        if ('--remote-debugging-port=0' not in argv or len(user_dirs) != 1 or
+                not Path(user_dirs[0]).is_absolute() or Path(user_dirs[0]).resolve() != endpoint.parent):
             raise OSError('BROWSER_CDP_ISOLATED_LAUNCH_REQUIRED')
         rows = endpoint.read_text().splitlines()
         if len(rows) != 2 or not rows[0].isdigit() or not rows[1].startswith('/devtools/browser/'):

@@ -53,4 +53,5 @@ jobs:
           path: |
             _browser_logs/**
             _browser_acceptance/**
+            !_browser_acceptance/**/browser_user/**
           retention-days: 14

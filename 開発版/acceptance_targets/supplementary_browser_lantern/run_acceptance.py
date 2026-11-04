@@ -68,5 +68,7 @@ def main():
         results=[execute(exe,out/'file',None,args.runtime_arg),execute(exe,out/'loopback','http://127.0.0.1:'+str(server.server_port)+'/index.html',args.runtime_arg)];summary['targets']=[{'target':r['target'],'status':r['status'],'modes':{k:v['status'] for k,v in r['modes'].items()}} for r in results];summary['status']='PASS' if all(r['status']=='PASS' for r in results) else 'FAIL';write(out/'summary.json',summary);print(json.dumps(summary,indent=2));return 0 if summary['status']=='PASS' else 1
     except Exception as ex:
         summary.update(status='HARNESS_ERROR',reason=repr(ex));write(out/'summary.json',summary);raise
-    finally:server.shutdown();server.server_close()
+    finally:
+        server.shutdown();server.server_close()
+        write(out/'evidence_manifest.json',[{'path':path.relative_to(out).as_posix(),'size':path.stat().st_size,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()} for path in sorted(out.rglob('*')) if path.is_file() and 'browser_user' not in path.relative_to(out).parts and path.name!='evidence_manifest.json'])
 if __name__=='__main__':raise SystemExit(main())
