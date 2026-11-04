@@ -49,6 +49,8 @@ jobs:
             }
             throw new Error('FINAL_CANDIDATE_WAIT_TIMEOUT');
   final-series:
+    outputs:
+      evidence_artifact_id: ${{ steps.retain.outputs.artifact-id }}
     needs: candidate
     runs-on: windows-latest
     timeout-minutes: 100
@@ -121,6 +123,7 @@ jobs:
           compression-level: 0
           retention-days: 90
       - uses: actions/upload-artifact@v4
+        id: retain
         if: always()
         with:
           name: Final-Series-Evidence-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
@@ -132,3 +135,42 @@ jobs:
             _local_acceptance_kit/**
           retention-days: 90
 
+
+  offline-delivery:
+    needs: [candidate, final-series]
+    if: always() && needs.candidate.result == 'success' && needs.final-series.outputs.evidence_artifact_id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.candidate.outputs.run_id }}
+          name: ${{ needs.candidate.outputs.archive_name }}
+          path: _candidate
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.final-series.outputs.evidence_artifact_id }}
+          path: _evidence
+      - name: Assemble one-download offline kit from the unchanged accepted bytes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib,json,pathlib,shutil
+          roots=list(pathlib.Path('_evidence').rglob('SERIES_COMPARISON.json')); assert len(roots)==1, 'SERIES_COMPARISON_AMBIGUOUS'
+          comparison=json.loads(roots[0].read_text(encoding='utf-8-sig')); assert comparison['technical_series_status']=='PASS' and comparison['final_runs_completed']==3, 'TECHNICAL_SERIES_NOT_PASSED'
+          identities=list(pathlib.Path('_evidence').rglob('FINAL_CANDIDATE_IDENTITY.json')); assert len(identities)==1, 'CANDIDATE_IDENTITY_AMBIGUOUS'
+          identity=json.loads(identities[0].read_text(encoding='utf-8-sig')); archive=pathlib.Path('_candidate')/identity['candidate_file']; assert archive.name==identity['candidate_file'], 'UNSAFE_NAME'
+          with archive.open('rb') as f: actual=hashlib.file_digest(f,'sha256').hexdigest()
+          assert actual==identity['candidate_sha256'] and archive.stat().st_size==identity['candidate_size'], 'FROZEN_CANDIDATE_CHANGED'
+          target=pathlib.Path('_offline_kit'); target.mkdir()
+          for name in ['RUN_FINAL_ACCEPTANCE.cmd','launch_final_series.ps1','README_FINAL_ACCEPTANCE.md','FINAL_CANDIDATE_IDENTITY.json']: shutil.copy2(identities[0].parent/name,target/name)
+          shutil.copy2(roots[0],target/'HOSTED_SERIES_COMPARISON.json'); shutil.copy2(archive,target/archive.name)
+          print('OFFLINE_KIT_IDENTITY='+json.dumps(identity,ensure_ascii=True),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FullAutoQA-Final-Offline-Kit-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: _offline_kit/
+          compression-level: 0
+          retention-days: 90
