@@ -1,7 +1,7 @@
 import hashlib,json,sys,tempfile,unittest,zipfile,os
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 sys.path.insert(0,str(Path(os.environ.get('FULLAUTOQA_TEST_SOURCE',Path(__file__).resolve().parents[1]))/'CORE'))
 from agents import Agent
 from common import Evidence
