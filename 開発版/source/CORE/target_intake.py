@@ -133,3 +133,91 @@ def tool_ids_from_profile(profile, declared_ids=()):
 def optional_tool_ids_from_profile(profile, declared_ids=()):
     declared = {str(item) for item in declared_ids}
     return sorted({str(x) for x in (profile.get("tools_optional") or []) if str(x) in declared})
+
+
+def starter_profile(game_id, launch_argv, source=None):
+    """Generate an unvalidated, unbound draft. Gameplay still needs authoring."""
+    if not isinstance(game_id,str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*',game_id):
+        raise ValueError('INTAKE_GAME_ID_INVALID')
+    if not isinstance(launch_argv,list) or not launch_argv or any(not isinstance(x,str) or not x for x in launch_argv):
+        raise ValueError('INTAKE_LAUNCH_ARGV_INVALID')
+    return {'schema_version':1,'game_id':game_id,'game_version':'UNVERIFIED',
+        'profile_version':'draft-1','prototype_type':'playable','intake_status':'UNVALIDATED_STARTER',
+        'source':source or 'GAME/'+game_id,'launch':{'argv':launch_argv},
+        'actions':{'observe':{'inputs':[{'kind':'wait','duration':1}]}},'goals':[],
+        'scenarios':[{'id':'startup','agent':'Smoke','sequence':['observe'],'action_budget':1,'time_budget':10}],
+        'tests':[],'observations':['window','screenshot','process'],'display':{'kind':'windows'},
+        'instructions':'Unvalidated draft. Declare real controls, goals and observations before selection.'}
+
+
+def select_profile(root, profile_path, target_id=None, replace=False):
+    """Select one explicitly supplied target; selection never means acceptance.
+
+    Existing matching target requirements and baseline are preserved. A previous
+    selection is replaced only with explicit replace=True. Source and adapter
+    deployment remain explicit prerequisites, never inferred from discovery.
+    """
+    import copy
+    from common import inside, read_json, write_json
+    from targets import manifest_path, load_target_manifest, validate_target_profile
+    from profile import load
+    root=Path(root).resolve();origin=Path(profile_path).resolve()
+    data=load_and_validate_profile(origin)
+    if data.get('intake_status')=='UNVALIDATED_STARTER':raise ValueError('INTAKE_STARTER_NOT_VALIDATED')
+    ident=data.get('game_id')
+    if not isinstance(ident,str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*',ident):
+        raise ValueError('INTAKE_GAME_ID_INVALID')
+    settings_path=inside(root,'acceptance_manifest.json')
+    settings=read_json(settings_path) if settings_path.is_file() else {}
+    manifest=manifest_path(root,settings);existed=manifest.exists()
+    if existed and not replace:raise ValueError('INTAKE_SELECTION_EXISTS_USE_REPLACE')
+    previous=load_target_manifest(root,settings) if existed else None
+    load(root,origin)  # canonical runner schema, no adapter code is executed
+    if not data.get('source'):raise ValueError('INTAKE_SOURCE_REQUIRED')
+    for key in ('source','adapter','save_directory'):
+        if data.get(key) and not inside(root,data[key]).exists():raise ValueError('INTAKE_PATH_MISSING:'+key)
+    try:rel=origin.relative_to(root).as_posix();destination=origin
+    except ValueError:
+        rel='PROFILES/intake/'+ident+'.json';destination=inside(root,rel)
+        if destination.exists():raise ValueError('INTAKE_PROFILE_DESTINATION_EXISTS')
+    matches=[r for r in (previous or {}).get('targets',[]) if r['profile']==rel]
+    entry=copy.deepcopy(matches[0]) if matches else {'id':ident,'kind':'target','profile':rel,
+        'source':data['source'],'requirements':[],
+        'required_agents':sorted({s['agent'] for s in data['scenarios']})}
+    if target_id is not None:
+        if not isinstance(target_id,str) or not target_id.strip():raise ValueError('TARGET_ID_REQUIRED')
+        entry['id']=target_id
+    errors=validate_target_profile(data,entry)
+    if errors:raise ValueError('INTAKE_TARGET_INVALID:'+','.join(errors))
+    selection={'schema_version':1,'targets':[entry]}
+    if matches and previous.get('baseline') is not None:selection['baseline']=previous['baseline']
+    if destination!=origin:write_json(destination,data)
+    write_json(manifest,selection)
+    return {'status':'SELECTED_UNRUN','manifest':str(manifest),'profile':rel,'target_id':entry['id'],
+        'auto_bound':False,'acceptance':'NOT_RUN','manifest_readback_ok':load_target_manifest(root,settings)==selection,
+        'files_created':int(not existed)+int(destination!=origin),'files_written':1+int(destination!=origin),
+        'profile_copied':destination!=origin,'existing_contract_preserved':bool(matches)}
+
+
+def main(argv=None):
+    import argparse
+    from common import inside, write_json
+    ap=argparse.ArgumentParser(description='Explicit Target/Profile intake; selection is not QA acceptance.')
+    ap.add_argument('--root',default=str(Path(__file__).resolve().parents[1]))
+    sub=ap.add_subparsers(dest='command',required=True)
+    d=sub.add_parser('discover');d.add_argument('--search',action='append',required=True)
+    s=sub.add_parser('starter');s.add_argument('--game-id',required=True);s.add_argument('--launch-json',required=True)
+    s.add_argument('--source');s.add_argument('--output')
+    b=sub.add_parser('select');b.add_argument('--profile',required=True);b.add_argument('--target-id');b.add_argument('--replace',action='store_true')
+    args=ap.parse_args(argv)
+    if args.command=='discover':result=summarize_discovered(args.search)
+    elif args.command=='starter':
+        data=starter_profile(args.game_id,json.loads(args.launch_json),args.source)
+        dest=inside(args.root,args.output or 'PROFILES/intake/'+args.game_id+'.json')
+        if dest.exists():raise ValueError('INTAKE_PROFILE_DESTINATION_EXISTS')
+        write_json(dest,data);result={'status':'UNVALIDATED_STARTER','profile':str(dest),'bound':False,'acceptance':'NOT_RUN','files_created':1}
+    else:result=select_profile(args.root,args.profile,args.target_id,args.replace)
+    print(json.dumps(result,ensure_ascii=False,indent=2));return 0
+
+
+if __name__=='__main__':raise SystemExit(main())
