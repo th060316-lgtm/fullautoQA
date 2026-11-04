@@ -363,3 +363,17 @@ class ManagementCompleteEvidenceTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class NonFiniteThresholdTest(unittest.TestCase):
+    def test_nonfinite_measurements_and_bounds_never_pass(self):
+        from hq_evidence import compare_threshold
+        for value in (float('nan'), float('inf'), float('-inf'), 'nan', 'inf', '-inf'):
+            for bound in ('min', 'max', 'equals'):
+                with self.subTest(value=value, bound=bound):
+                    self.assertIsNone(compare_threshold(value, {bound: 1})[0])
+                    self.assertIsNone(compare_threshold(1, {bound: value})[0])
+
+    def test_finite_comparisons_keep_their_outcomes(self):
+        from hq_evidence import compare_threshold
+        self.assertIs(compare_threshold(1, {'max': 2})[0], True)
+        self.assertIs(compare_threshold(3, {'max': 2})[0], False)
