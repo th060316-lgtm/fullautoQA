@@ -1,0 +1,2112 @@
+{
+  "schema_version": 2,
+  "basis": {
+    "repository": "th060316-lgtm/fullautoQA",
+    "main": "23e0f3809ecb0da2ab68d62ffee443c68e68e408",
+    "workflow_run": 41778937797,
+    "artifact_id": 13300004174,
+    "artifact": {
+      "path": "series.zip",
+      "sha256": "4556995e91aaf970a29a4b1086f17fd2890a27c020687660ebcf590a5926c00e"
+    },
+    "candidate_freeze": {
+      "candidate_sha256": "1609669c150b738c5ef82c4ab8f5e163aaf26618cd12c66ed073f0015cd2c8d2",
+      "size": 1022018941,
+      "plan_sha256": "712d400fdc537d01363768e1198ab11a545eebb4c7ef81b48854c878b1e1bff8",
+      "status": "FROZEN_BEFORE_RUN_1",
+      "product_acceptance": "HOLD",
+      "stable": "HOLD"
+    },
+    "candidate_freeze_provenance": {
+      "path": "series/_final_series/CANDIDATE_FREEZE.json",
+      "sha256": "086edd29e9d4399f6cffc2963385db154a6db3960665fa0c79d39baf9d05e2ab"
+    }
+  },
+  "runs": [
+    {
+      "index": 1,
+      "run_id": "20261104T054954_472a6a42",
+      "target": {
+        "target_id": "politicstrasport-development",
+        "game_id": "politicstrasport_development",
+        "profile_version": "1.4-final-contract",
+        "profile_sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421",
+        "fingerprint": "d34074ff5b68b3ace61555cc3892c55156c1646ec26feeb27894ea779cb4c635",
+        "origin": {
+          "repository": "th060316-lgtm/PoliticsTrasport",
+          "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+          "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
+          "selected_path": "開発版/runtime"
+        }
+      },
+      "raw_zip": {
+        "path": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+        "sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f"
+      },
+      "archive_integrity": {
+        "status": "PASS",
+        "manifest_verified": 230,
+        "entries": 231,
+        "errors": [],
+        "result_refs_missing": [],
+        "scope": "all member CRC via ZipFile.read, manifest Size/SHA, names and result refs"
+      },
+      "measurements": {
+        "ram_mb": {
+          "value": 263.00390625,
+          "unit": "mb",
+          "statistic": "peak",
+          "source": "process_metrics",
+          "method": "peak WorkingSetSize",
+          "evidence": [
+            "politicstrasport_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "management_evidence.json",
+              "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "politicstrasport_development_resources.json",
+              "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "handles": {
+          "value": 442,
+          "unit": "count",
+          "statistic": "peak",
+          "source": "process_metrics",
+          "method": "peak process handle count",
+          "evidence": [
+            "politicstrasport_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "management_evidence.json",
+              "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "politicstrasport_development_resources.json",
+              "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "cpu_percent": {
+          "value": 81.61612116538743,
+          "unit": "percent",
+          "statistic": "max_observed_average",
+          "source": "process_metrics",
+          "method": "delta(cpu_seconds)/delta(sample_time)/logical_cpu_count",
+          "evidence": [
+            "politicstrasport_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "management_evidence.json",
+              "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "politicstrasport_development_resources.json",
+              "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "runtime_seconds": {
+          "value": 420.38005239999984,
+          "unit": "seconds",
+          "statistic": "observed_interval",
+          "source": "process_metrics",
+          "method": "max(sample_time)-min(sample_time)",
+          "evidence": [
+            "politicstrasport_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "management_evidence.json",
+              "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "politicstrasport_development_resources.json",
+              "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "disk_bytes": {
+          "value": 300705807,
+          "unit": "bytes",
+          "source": "run_directory",
+          "method": "recursive file size before sealing",
+          "evidence": [],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "management_evidence.json",
+              "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "evidence_bytes": {
+          "value": 282838830,
+          "unit": "bytes",
+          "source": "run_directory",
+          "method": "archive-eligible file size before sealing",
+          "evidence": [],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "management_evidence.json",
+              "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        }
+      },
+      "metric_recalculation": {
+        "results": {
+          "ram_mb": {
+            "recomputed": 263.00390625,
+            "recorded": 263.00390625,
+            "match": true
+          },
+          "handles": {
+            "recomputed": 442,
+            "recorded": 442,
+            "match": true
+          },
+          "runtime_seconds": {
+            "recomputed": 420.38005239999984,
+            "recorded": 420.38005239999984,
+            "match": true
+          }
+        },
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+            "member": "politicstrasport_development_resources.json",
+            "sha256": "277e2fde0fd8188128ba569d7f22d4c5d121699a7a1bfd99e757c1c200dd8d82"
+          },
+          {
+            "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+            "member": "management_evidence.json",
+            "sha256": "b7d7da79d59c99f236ab79c9d5ad209f049fe79b1498deab2b948842d3ab4c87"
+          }
+        ],
+        "cpu_note": "logical CPU count absent; recorded CPU measurement retained without audit-host normalization",
+        "disk_note": "pre-seal recorded sizes retained; current ZIP size is a different quantity"
+      },
+      "signals": {
+        "reproducibility": {
+          "status": true,
+          "scope": "same-run profile behavior signature/action trajectory only; not complete-state/all-seed/Profile-order determinism",
+          "evidence": [
+            "politicstrasport_development.__qa_regression_behavioral_regression.json",
+            "reproduction.json",
+            "politicstrasport_development_profile.json",
+            "result.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "politicstrasport_development.__qa_regression_behavioral_regression.json",
+              "sha256": "e72ba49f94949a230f315d4059ce22c417fd44df8629940f481cd8eaabeb7b5e"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "reproduction.json",
+              "sha256": "33a24066a252c8ce0fccc636aedd3a02ea472583565aa96668ab9c220563932c"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "politicstrasport_development_profile.json",
+              "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "result.json",
+              "sha256": "ba5cc5f663070f63cf7de1e44a6958aa006d5da498182c02789a1bfc601fd561"
+            }
+          ]
+        },
+        "performance_regression": {
+          "status": "NOT_RUN",
+          "value": null,
+          "reason": "PERFORMANCE_LIMITS_NOT_DECLARED; JSON has version/scope only",
+          "rows": [
+            {
+              "run_id": "20261104T054954_472a6a42",
+              "event_id": "E0001590",
+              "timestamp": "2026-11-04T05:56:27Z",
+              "monotonic": 1753.7107428,
+              "test_case": "politicstrasport_development.__qa_regression.performance_regression",
+              "type": "verdict",
+              "status": "NOT_RUN",
+              "reason_code": "PERFORMANCE_LIMITS_NOT_DECLARED",
+              "severity": "INFO",
+              "evidence": [
+                "politicstrasport_development.__qa_regression_performance_regression.json",
+                "politicstrasport_development.__qa_regression_finish_0001586.bmp",
+                "baseline_exports/politicstrasport_development/goal/screen.bmp",
+                "baseline_exports/politicstrasport_development/goal/checkpoint.json",
+                "baseline_exports/politicstrasport_development/goal/bundle.json"
+              ],
+              "gate": "OPTIONAL"
+            }
+          ],
+          "raw": {
+            "baseline_game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+            "current_game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+            "baseline_scope": "SAME_RUN_SELF_CHECK"
+          },
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "politicstrasport_development.__qa_regression_performance_regression.json",
+              "sha256": "f3401cbbac1dbc1022e80503531ff51ab424a2ad72517d4ae6cbbe83db8200cc"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "result.json",
+              "sha256": "ba5cc5f663070f63cf7de1e44a6958aa006d5da498182c02789a1bfc601fd561"
+            }
+          ]
+        },
+        "fresh": {
+          "status": "PASS",
+          "scope": "hosted fresh extraction marker cross-check only",
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "phase3_environment.json",
+              "sha256": "2e1268ccb683e11acd8b361195abba6d72368044b4bbc5cfe8bc75ac31b6a90b"
+            },
+            {
+              "path": "series/_final_series/SERIES_RECORDS.json",
+              "sha256": "2aadab833870a5323fd19d34e1782f811a6c06a57a8008bd1dc8d3ab0a252606"
+            }
+          ]
+        },
+        "start_qa": {
+          "status": "PASS",
+          "wall_seconds": 484.69388559999993,
+          "scope": "one successful hosted controller START_QA invocation; not all setup burden",
+          "provenance": [
+            {
+              "path": "series/_final_series/OPERATION_LOG.json",
+              "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "reproduction.json",
+              "sha256": "33a24066a252c8ce0fccc636aedd3a02ea472583565aa96668ab9c220563932c"
+            },
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "phase3_environment.json",
+              "sha256": "2e1268ccb683e11acd8b361195abba6d72368044b4bbc5cfe8bc75ac31b6a90b"
+            }
+          ]
+        },
+        "manual_intervention": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed": "NOT_OBSERVED_BY_CONTROLLER",
+          "scope": "controller did not observe intervention; global absence unproven",
+          "provenance": [
+            {
+              "path": "series/_final_series/OPERATION_LOG.json",
+              "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+            }
+          ]
+        },
+        "no_admin": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed_admin_status": "ELEVATED",
+          "reason": "ELEVATED run does not establish standard-user completion",
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+              "member": "phase3_environment.json",
+              "sha256": "2e1268ccb683e11acd8b361195abba6d72368044b4bbc5cfe8bc75ac31b6a90b"
+            },
+            {
+              "path": "series/_final_series/EXECUTION_ENVIRONMENT.json",
+              "sha256": "5475fee589d69c0d6dcd19a3dc719b5a040031a010510ae571e348e45a9e61e9"
+            }
+          ]
+        },
+        "offline": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed": "NOT_VERIFIED",
+          "reason": "hosted CI does not establish local fully offline completion",
+          "provenance": [
+            {
+              "path": "series/_final_series/EXECUTION_ENVIRONMENT.json",
+              "sha256": "5475fee589d69c0d6dcd19a3dc719b5a040031a010510ae571e348e45a9e61e9"
+            }
+          ]
+        }
+      },
+      "required_statuses": {
+        "preflight.core": "PASS",
+        "target.binding": "PASS",
+        "tool.godot": "PASS",
+        "tool.python": "PASS",
+        "tool.ffmpeg": "PASS",
+        "selftest.input": "PASS",
+        "selftest.screenshot": "PASS",
+        "selftest.process_monitor": "PASS",
+        "selftest.core_contract": "PASS",
+        "target.politicstrasport-development.contract": "PASS",
+        "politicstrasport_development.source": "PASS",
+        "politicstrasport_development.assets": "PASS",
+        "politicstrasport_development.build": "PASS",
+        "politicstrasport_development.game_boot": "PASS",
+        "politicstrasport_development.core_integration": "PASS",
+        "politicstrasport_development.EconomicCoreIntegrationTest": "PASS",
+        "politicstrasport_development.HoldReleaseAcceptanceTest": "PASS",
+        "politicstrasport_development.WorkCompletionAcceptanceTest": "PASS",
+        "politicstrasport_development.WorldDynamicsAcceptanceTest": "PASS",
+        "politicstrasport_development.LongRunProfile": "PASS",
+        "politicstrasport_development.UIInteractionTest": "PASS",
+        "politicstrasport_development.DestructiveTest": "PASS",
+        "politicstrasport_development.FontSupportTest": "PASS",
+        "politicstrasport_development.economic_core_selftest": "PASS",
+        "politicstrasport_development.smoke.launch": "PASS",
+        "politicstrasport_development.smoke.execution": "PASS",
+        "politicstrasport_development.goal.launch": "PASS",
+        "politicstrasport_development.goal.goal": "PASS",
+        "politicstrasport_development.pause_resume.launch": "PASS",
+        "politicstrasport_development.pause_resume.goal": "PASS",
+        "politicstrasport_development.explorer.launch": "PASS",
+        "politicstrasport_development.explorer.execution": "PASS",
+        "politicstrasport_development.random.launch": "PASS",
+        "politicstrasport_development.random.execution": "PASS",
+        "politicstrasport_development.five_minute_observation.launch": "PASS",
+        "politicstrasport_development.five_minute_observation.execution": "PASS",
+        "politicstrasport_development.five_minute_observation.5m": "PASS",
+        "politicstrasport_development.__qa_baseline.launch": "PASS",
+        "politicstrasport_development.__qa_baseline.goal": "PASS",
+        "politicstrasport_development.__qa_regression.launch": "PASS",
+        "politicstrasport_development.__qa_regression.goal": "PASS",
+        "politicstrasport_development.__qa_regression.behavioral_regression": "PASS",
+        "politicstrasport_development.__qa_regression.visual_regression": "PASS",
+        "politicstrasport_development.__qa_soak.launch": "PASS",
+        "politicstrasport_development.__qa_soak.execution": "PASS",
+        "politicstrasport_development.__qa_soak.soak": "PASS",
+        "video": "PASS",
+        "target.review_packet": "PASS",
+        "phase3.hq_evidence": "PASS"
+      },
+      "original_management_status": "NOT_RUN",
+      "evaluator_execution": {
+        "status": "EXECUTED",
+        "scope": "readback exists; independent from target quality and final Gate acceptance",
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+            "member": "result.json",
+            "sha256": "ba5cc5f663070f63cf7de1e44a6958aa006d5da498182c02789a1bfc601fd561"
+          }
+        ]
+      },
+      "profile_rollback": {
+        "status": "PASS",
+        "scope": "isolated archived Final Profile byte recovery",
+        "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421",
+        "frozen_profile_sha_match": true,
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run1/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+            "member": "politicstrasport_development_profile.json",
+            "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421"
+          }
+        ]
+      },
+      "evidence_rollback": {
+        "status": "PASS",
+        "scope": "isolated raw result ZIP bytes recovered; not game re-execution or Stable executable rollback",
+        "sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f"
+      },
+      "raw_unchanged": true
+    },
+    {
+      "index": 2,
+      "run_id": "20261104T055820_f1051db3",
+      "target": {
+        "target_id": "codegeas-development",
+        "game_id": "codegeas_development",
+        "profile_version": "1.2-probe",
+        "profile_sha256": "0a6325e8a11b5f995b9089145b98c30de5fe46c3c63d1c1e933f851698ec8c87",
+        "fingerprint": "52cf3c5f340a8d1bf0d8d0f4fee1390c215623c3d30d55fceddb57e8653dfb3b",
+        "origin": {
+          "repository": "th060316-lgtm/codegeas",
+          "commit": "b5a0d2207a77854be5187a0b00fc2d234b0745b8",
+          "source_tree": "a40b156db48444d4b72d96ff19a15f2d3e00b62a",
+          "selected_path": "game"
+        }
+      },
+      "raw_zip": {
+        "path": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+        "sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f"
+      },
+      "archive_integrity": {
+        "status": "PASS",
+        "manifest_verified": 228,
+        "entries": 229,
+        "errors": [],
+        "result_refs_missing": [],
+        "scope": "all member CRC via ZipFile.read, manifest Size/SHA, names and result refs"
+      },
+      "measurements": {
+        "ram_mb": {
+          "value": 263.65625,
+          "unit": "mb",
+          "statistic": "peak",
+          "source": "process_metrics",
+          "method": "peak WorkingSetSize",
+          "evidence": [
+            "codegeas_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "management_evidence.json",
+              "sha256": "03befbb38aabc2a30976769fbad1add9a140c6bae85229787ed67aacdd608ae0"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "codegeas_development_resources.json",
+              "sha256": "9e1c0deae72a973fde065c31b7a279cf31ae747c54718943dfba91cf0055c1bf"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "handles": {
+          "value": 441,
+          "unit": "count",
+          "statistic": "peak",
+          "source": "process_metrics",
+          "method": "peak process handle count",
+          "evidence": [
+            "codegeas_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "management_evidence.json",
+              "sha256": "03befbb38aabc2a30976769fbad1add9a140c6bae85229787ed67aacdd608ae0"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "codegeas_development_resources.json",
+              "sha256": "9e1c0deae72a973fde065c31b7a279cf31ae747c54718943dfba91cf0055c1bf"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "cpu_percent": {
+          "value": 80.27589736610615,
+          "unit": "percent",
+          "statistic": "max_observed_average",
+          "source": "process_metrics",
+          "method": "delta(cpu_seconds)/delta(sample_time)/logical_cpu_count",
+          "evidence": [
+            "codegeas_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "management_evidence.json",
+              "sha256": "03befbb38aabc2a30976769fbad1add9a140c6bae85229787ed67aacdd608ae0"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "codegeas_development_resources.json",
+              "sha256": "9e1c0deae72a973fde065c31b7a279cf31ae747c54718943dfba91cf0055c1bf"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "runtime_seconds": {
+          "value": 480.3288566000001,
+          "unit": "seconds",
+          "statistic": "observed_interval",
+          "source": "process_metrics",
+          "method": "max(sample_time)-min(sample_time)",
+          "evidence": [
+            "codegeas_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "management_evidence.json",
+              "sha256": "03befbb38aabc2a30976769fbad1add9a140c6bae85229787ed67aacdd608ae0"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "codegeas_development_resources.json",
+              "sha256": "9e1c0deae72a973fde065c31b7a279cf31ae747c54718943dfba91cf0055c1bf"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "disk_bytes": {
+          "value": 561362737,
+          "unit": "bytes",
+          "source": "run_directory",
+          "method": "recursive file size before sealing",
+          "evidence": [],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "management_evidence.json",
+              "sha256": "03befbb38aabc2a30976769fbad1add9a140c6bae85229787ed67aacdd608ae0"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "evidence_bytes": {
+          "value": 536769370,
+          "unit": "bytes",
+          "source": "run_directory",
+          "method": "archive-eligible file size before sealing",
+          "evidence": [],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "management_evidence.json",
+              "sha256": "03befbb38aabc2a30976769fbad1add9a140c6bae85229787ed67aacdd608ae0"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        }
+      },
+      "metric_recalculation": {
+        "results": {
+          "ram_mb": {
+            "recomputed": 263.65625,
+            "recorded": 263.65625,
+            "match": true
+          },
+          "handles": {
+            "recomputed": 441,
+            "recorded": 441,
+            "match": true
+          },
+          "runtime_seconds": {
+            "recomputed": 480.3288566000001,
+            "recorded": 480.3288566000001,
+            "match": true
+          }
+        },
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+            "member": "codegeas_development_resources.json",
+            "sha256": "9e1c0deae72a973fde065c31b7a279cf31ae747c54718943dfba91cf0055c1bf"
+          },
+          {
+            "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+            "member": "management_evidence.json",
+            "sha256": "03befbb38aabc2a30976769fbad1add9a140c6bae85229787ed67aacdd608ae0"
+          }
+        ],
+        "cpu_note": "logical CPU count absent; recorded CPU measurement retained without audit-host normalization",
+        "disk_note": "pre-seal recorded sizes retained; current ZIP size is a different quantity"
+      },
+      "signals": {
+        "reproducibility": {
+          "status": true,
+          "scope": "same-run profile behavior signature/action trajectory only; not complete-state/all-seed/Profile-order determinism",
+          "evidence": [
+            "codegeas_development.__qa_regression_behavioral_regression.json",
+            "reproduction.json",
+            "codegeas_development_profile.json",
+            "result.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "codegeas_development.__qa_regression_behavioral_regression.json",
+              "sha256": "fe9ea9d89e00eecaf0d2b63486955b84786a54a100f0edb96f635845242ee0a7"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "reproduction.json",
+              "sha256": "8b80d695672cd757b4ed12bbd6bf733010ba278e2ae4fa20841672cac563a1f2"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "codegeas_development_profile.json",
+              "sha256": "0a6325e8a11b5f995b9089145b98c30de5fe46c3c63d1c1e933f851698ec8c87"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "result.json",
+              "sha256": "a6685dd9366819662eb0a76232719b982bf2062278294c2d5af2ed58857e1df4"
+            }
+          ]
+        },
+        "performance_regression": {
+          "status": "NOT_RUN",
+          "value": null,
+          "reason": "PERFORMANCE_LIMITS_NOT_DECLARED; JSON has version/scope only",
+          "rows": [
+            {
+              "run_id": "20261104T055820_f1051db3",
+              "event_id": "E0001520",
+              "timestamp": "2026-11-04T06:05:53Z",
+              "monotonic": 2319.7406007,
+              "test_case": "codegeas_development.__qa_regression.performance_regression",
+              "type": "verdict",
+              "status": "NOT_RUN",
+              "reason_code": "PERFORMANCE_LIMITS_NOT_DECLARED",
+              "severity": "INFO",
+              "evidence": [
+                "codegeas_development.__qa_regression_performance_regression.json",
+                "codegeas_development.__qa_regression_finish_0001516.bmp",
+                "baseline_exports/codegeas_development/goal/screen.bmp",
+                "baseline_exports/codegeas_development/goal/checkpoint.json",
+                "baseline_exports/codegeas_development/goal/bundle.json"
+              ],
+              "gate": "OPTIONAL"
+            }
+          ],
+          "raw": {
+            "baseline_game_version": "b5a0d2207a77854be5187a0b00fc2d234b0745b8",
+            "current_game_version": "b5a0d2207a77854be5187a0b00fc2d234b0745b8",
+            "baseline_scope": "SAME_RUN_SELF_CHECK"
+          },
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "codegeas_development.__qa_regression_performance_regression.json",
+              "sha256": "d9739d11fd8ee4e9e33dd5af4cb2de6ce574639cb7450d223d611a5625e5ceee"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "result.json",
+              "sha256": "a6685dd9366819662eb0a76232719b982bf2062278294c2d5af2ed58857e1df4"
+            }
+          ]
+        },
+        "fresh": {
+          "status": "PASS",
+          "scope": "hosted fresh extraction marker cross-check only",
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "phase3_environment.json",
+              "sha256": "15bae1cd039088c5d9ab4dbaa4dcb83f669f4c5a59caecfb2acff4cb3d4da9cc"
+            },
+            {
+              "path": "series/_final_series/SERIES_RECORDS.json",
+              "sha256": "2aadab833870a5323fd19d34e1782f811a6c06a57a8008bd1dc8d3ab0a252606"
+            }
+          ]
+        },
+        "start_qa": {
+          "status": "PASS",
+          "wall_seconds": 545.1266519000001,
+          "scope": "one successful hosted controller START_QA invocation; not all setup burden",
+          "provenance": [
+            {
+              "path": "series/_final_series/OPERATION_LOG.json",
+              "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "reproduction.json",
+              "sha256": "8b80d695672cd757b4ed12bbd6bf733010ba278e2ae4fa20841672cac563a1f2"
+            },
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "phase3_environment.json",
+              "sha256": "15bae1cd039088c5d9ab4dbaa4dcb83f669f4c5a59caecfb2acff4cb3d4da9cc"
+            }
+          ]
+        },
+        "manual_intervention": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed": "NOT_OBSERVED_BY_CONTROLLER",
+          "scope": "controller did not observe intervention; global absence unproven",
+          "provenance": [
+            {
+              "path": "series/_final_series/OPERATION_LOG.json",
+              "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+            }
+          ]
+        },
+        "no_admin": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed_admin_status": "ELEVATED",
+          "reason": "ELEVATED run does not establish standard-user completion",
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+              "member": "phase3_environment.json",
+              "sha256": "15bae1cd039088c5d9ab4dbaa4dcb83f669f4c5a59caecfb2acff4cb3d4da9cc"
+            },
+            {
+              "path": "series/_final_series/EXECUTION_ENVIRONMENT.json",
+              "sha256": "5475fee589d69c0d6dcd19a3dc719b5a040031a010510ae571e348e45a9e61e9"
+            }
+          ]
+        },
+        "offline": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed": "NOT_VERIFIED",
+          "reason": "hosted CI does not establish local fully offline completion",
+          "provenance": [
+            {
+              "path": "series/_final_series/EXECUTION_ENVIRONMENT.json",
+              "sha256": "5475fee589d69c0d6dcd19a3dc719b5a040031a010510ae571e348e45a9e61e9"
+            }
+          ]
+        }
+      },
+      "required_statuses": {
+        "preflight.core": "PASS",
+        "target.binding": "PASS",
+        "tool.godot": "PASS",
+        "tool.python": "PASS",
+        "tool.ffmpeg": "PASS",
+        "selftest.input": "PASS",
+        "selftest.screenshot": "PASS",
+        "selftest.process_monitor": "PASS",
+        "selftest.core_contract": "PASS",
+        "target.codegeas-development.contract": "PASS",
+        "codegeas_development.source": "PASS",
+        "codegeas_development.assets": "PASS",
+        "codegeas_development.build": "PASS",
+        "codegeas_development.core_tests": "PASS",
+        "codegeas_development.day1_scene": "PASS",
+        "codegeas_development.smoke.launch": "PASS",
+        "codegeas_development.smoke.execution": "PASS",
+        "codegeas_development.smoke.storage": "PASS",
+        "codegeas_development.smoke.save_load": "PASS",
+        "codegeas_development.smoke.invalid_save": "PASS",
+        "codegeas_development.goal.launch": "PASS",
+        "codegeas_development.goal.goal": "PASS",
+        "codegeas_development.explorer.launch": "PASS",
+        "codegeas_development.explorer.execution": "PASS",
+        "codegeas_development.random.launch": "PASS",
+        "codegeas_development.random.execution": "PASS",
+        "codegeas_development.five_minute_observation.launch": "PASS",
+        "codegeas_development.five_minute_observation.execution": "PASS",
+        "codegeas_development.five_minute_observation.5m": "PASS",
+        "codegeas_development.__qa_baseline.launch": "PASS",
+        "codegeas_development.__qa_baseline.goal": "PASS",
+        "codegeas_development.__qa_regression.launch": "PASS",
+        "codegeas_development.__qa_regression.goal": "PASS",
+        "codegeas_development.__qa_regression.behavioral_regression": "PASS",
+        "codegeas_development.__qa_regression.visual_regression": "PASS",
+        "codegeas_development.__qa_soak.launch": "PASS",
+        "codegeas_development.__qa_soak.execution": "PASS",
+        "codegeas_development.__qa_soak.soak": "PASS",
+        "video": "PASS",
+        "target.review_packet": "PASS",
+        "phase3.hq_evidence": "PASS"
+      },
+      "original_management_status": "NOT_RUN",
+      "evaluator_execution": {
+        "status": "EXECUTED",
+        "scope": "readback exists; independent from target quality and final Gate acceptance",
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+            "member": "result.json",
+            "sha256": "a6685dd9366819662eb0a76232719b982bf2062278294c2d5af2ed58857e1df4"
+          }
+        ]
+      },
+      "profile_rollback": {
+        "status": "PASS",
+        "scope": "isolated archived Final Profile byte recovery",
+        "sha256": "0a6325e8a11b5f995b9089145b98c30de5fe46c3c63d1c1e933f851698ec8c87",
+        "frozen_profile_sha_match": true,
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run2/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+            "member": "codegeas_development_profile.json",
+            "sha256": "0a6325e8a11b5f995b9089145b98c30de5fe46c3c63d1c1e933f851698ec8c87"
+          }
+        ]
+      },
+      "evidence_rollback": {
+        "status": "PASS",
+        "scope": "isolated raw result ZIP bytes recovered; not game re-execution or Stable executable rollback",
+        "sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f"
+      },
+      "raw_unchanged": true
+    },
+    {
+      "index": 3,
+      "run_id": "20261104T060748_db44ced6",
+      "target": {
+        "target_id": "politicstrasport-development",
+        "game_id": "politicstrasport_development",
+        "profile_version": "1.4-final-contract",
+        "profile_sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421",
+        "fingerprint": "d34074ff5b68b3ace61555cc3892c55156c1646ec26feeb27894ea779cb4c635",
+        "origin": {
+          "repository": "th060316-lgtm/PoliticsTrasport",
+          "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+          "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
+          "selected_path": "開発版/runtime"
+        }
+      },
+      "raw_zip": {
+        "path": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+        "sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f"
+      },
+      "archive_integrity": {
+        "status": "PASS",
+        "manifest_verified": 232,
+        "entries": 233,
+        "errors": [],
+        "result_refs_missing": [],
+        "scope": "all member CRC via ZipFile.read, manifest Size/SHA, names and result refs"
+      },
+      "measurements": {
+        "ram_mb": {
+          "value": 262.703125,
+          "unit": "mb",
+          "statistic": "peak",
+          "source": "process_metrics",
+          "method": "peak WorkingSetSize",
+          "evidence": [
+            "politicstrasport_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "management_evidence.json",
+              "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "politicstrasport_development_resources.json",
+              "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "handles": {
+          "value": 443,
+          "unit": "count",
+          "statistic": "peak",
+          "source": "process_metrics",
+          "method": "peak process handle count",
+          "evidence": [
+            "politicstrasport_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "management_evidence.json",
+              "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "politicstrasport_development_resources.json",
+              "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "cpu_percent": {
+          "value": 82.44474859235658,
+          "unit": "percent",
+          "statistic": "max_observed_average",
+          "source": "process_metrics",
+          "method": "delta(cpu_seconds)/delta(sample_time)/logical_cpu_count",
+          "evidence": [
+            "politicstrasport_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "management_evidence.json",
+              "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "politicstrasport_development_resources.json",
+              "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "runtime_seconds": {
+          "value": 409.6011057999999,
+          "unit": "seconds",
+          "statistic": "observed_interval",
+          "source": "process_metrics",
+          "method": "max(sample_time)-min(sample_time)",
+          "evidence": [
+            "politicstrasport_development_resources.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "management_evidence.json",
+              "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "politicstrasport_development_resources.json",
+              "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "disk_bytes": {
+          "value": 302100768,
+          "unit": "bytes",
+          "source": "run_directory",
+          "method": "recursive file size before sealing",
+          "evidence": [],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "management_evidence.json",
+              "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        },
+        "evidence_bytes": {
+          "value": 284232546,
+          "unit": "bytes",
+          "source": "run_directory",
+          "method": "archive-eligible file size before sealing",
+          "evidence": [],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "management_evidence.json",
+              "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+            }
+          ],
+          "quality_verdict": "INCONCLUSIVE",
+          "quality_reason": "NO_AUTHORIZED_ABSOLUTE_THRESHOLD"
+        }
+      },
+      "metric_recalculation": {
+        "results": {
+          "ram_mb": {
+            "recomputed": 262.703125,
+            "recorded": 262.703125,
+            "match": true
+          },
+          "handles": {
+            "recomputed": 443,
+            "recorded": 443,
+            "match": true
+          },
+          "runtime_seconds": {
+            "recomputed": 409.6011057999999,
+            "recorded": 409.6011057999999,
+            "match": true
+          }
+        },
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+            "member": "politicstrasport_development_resources.json",
+            "sha256": "759a22caa15960573eb148b47fecd945129cd28b580845913751d585a40433c3"
+          },
+          {
+            "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+            "member": "management_evidence.json",
+            "sha256": "02af1d1142c7aefd07343edcd3066fb8e0fff08879da99127efbe3fc6d12f74d"
+          }
+        ],
+        "cpu_note": "logical CPU count absent; recorded CPU measurement retained without audit-host normalization",
+        "disk_note": "pre-seal recorded sizes retained; current ZIP size is a different quantity"
+      },
+      "signals": {
+        "reproducibility": {
+          "status": true,
+          "scope": "same-run profile behavior signature/action trajectory only; not complete-state/all-seed/Profile-order determinism",
+          "evidence": [
+            "politicstrasport_development.__qa_regression_behavioral_regression.json",
+            "reproduction.json",
+            "politicstrasport_development_profile.json",
+            "result.json"
+          ],
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "politicstrasport_development.__qa_regression_behavioral_regression.json",
+              "sha256": "e72ba49f94949a230f315d4059ce22c417fd44df8629940f481cd8eaabeb7b5e"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "reproduction.json",
+              "sha256": "33a24066a252c8ce0fccc636aedd3a02ea472583565aa96668ab9c220563932c"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "politicstrasport_development_profile.json",
+              "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "result.json",
+              "sha256": "03b52b57985b1b8fe7abaa13b807c55ead8b469c1cbdfb6149c3af3421181f6e"
+            }
+          ]
+        },
+        "performance_regression": {
+          "status": "NOT_RUN",
+          "value": null,
+          "reason": "PERFORMANCE_LIMITS_NOT_DECLARED; JSON has version/scope only",
+          "rows": [
+            {
+              "run_id": "20261104T060748_db44ced6",
+              "event_id": "E0001470",
+              "timestamp": "2026-11-04T06:14:20Z",
+              "monotonic": 2825.9332494,
+              "test_case": "politicstrasport_development.__qa_regression.performance_regression",
+              "type": "verdict",
+              "status": "NOT_RUN",
+              "reason_code": "PERFORMANCE_LIMITS_NOT_DECLARED",
+              "severity": "INFO",
+              "evidence": [
+                "politicstrasport_development.__qa_regression_performance_regression.json",
+                "politicstrasport_development.__qa_regression_finish_0001466.bmp",
+                "baseline_exports/politicstrasport_development/goal/screen.bmp",
+                "baseline_exports/politicstrasport_development/goal/checkpoint.json",
+                "baseline_exports/politicstrasport_development/goal/bundle.json"
+              ],
+              "gate": "OPTIONAL"
+            }
+          ],
+          "raw": {
+            "baseline_game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+            "current_game_version": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+            "baseline_scope": "SAME_RUN_SELF_CHECK"
+          },
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "politicstrasport_development.__qa_regression_performance_regression.json",
+              "sha256": "f3401cbbac1dbc1022e80503531ff51ab424a2ad72517d4ae6cbbe83db8200cc"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "result.json",
+              "sha256": "03b52b57985b1b8fe7abaa13b807c55ead8b469c1cbdfb6149c3af3421181f6e"
+            }
+          ]
+        },
+        "fresh": {
+          "status": "PASS",
+          "scope": "hosted fresh extraction marker cross-check only",
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "phase3_environment.json",
+              "sha256": "ebafa527c5778671fd081ed7dfb184e29265d495678a7cf376bbdec690ceb58a"
+            },
+            {
+              "path": "series/_final_series/SERIES_RECORDS.json",
+              "sha256": "2aadab833870a5323fd19d34e1782f811a6c06a57a8008bd1dc8d3ab0a252606"
+            }
+          ]
+        },
+        "start_qa": {
+          "status": "PASS",
+          "wall_seconds": 468.6147777000001,
+          "scope": "one successful hosted controller START_QA invocation; not all setup burden",
+          "provenance": [
+            {
+              "path": "series/_final_series/OPERATION_LOG.json",
+              "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "reproduction.json",
+              "sha256": "33a24066a252c8ce0fccc636aedd3a02ea472583565aa96668ab9c220563932c"
+            },
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "phase3_environment.json",
+              "sha256": "ebafa527c5778671fd081ed7dfb184e29265d495678a7cf376bbdec690ceb58a"
+            }
+          ]
+        },
+        "manual_intervention": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed": "NOT_OBSERVED_BY_CONTROLLER",
+          "scope": "controller did not observe intervention; global absence unproven",
+          "provenance": [
+            {
+              "path": "series/_final_series/OPERATION_LOG.json",
+              "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+            }
+          ]
+        },
+        "no_admin": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed_admin_status": "ELEVATED",
+          "reason": "ELEVATED run does not establish standard-user completion",
+          "provenance": [
+            {
+              "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+              "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+              "member": "phase3_environment.json",
+              "sha256": "ebafa527c5778671fd081ed7dfb184e29265d495678a7cf376bbdec690ceb58a"
+            },
+            {
+              "path": "series/_final_series/EXECUTION_ENVIRONMENT.json",
+              "sha256": "5475fee589d69c0d6dcd19a3dc719b5a040031a010510ae571e348e45a9e61e9"
+            }
+          ]
+        },
+        "offline": {
+          "status": "NOT_RUN",
+          "value": null,
+          "observed": "NOT_VERIFIED",
+          "reason": "hosted CI does not establish local fully offline completion",
+          "provenance": [
+            {
+              "path": "series/_final_series/EXECUTION_ENVIRONMENT.json",
+              "sha256": "5475fee589d69c0d6dcd19a3dc719b5a040031a010510ae571e348e45a9e61e9"
+            }
+          ]
+        }
+      },
+      "required_statuses": {
+        "preflight.core": "PASS",
+        "target.binding": "PASS",
+        "tool.godot": "PASS",
+        "tool.python": "PASS",
+        "tool.ffmpeg": "PASS",
+        "selftest.input": "PASS",
+        "selftest.screenshot": "PASS",
+        "selftest.process_monitor": "PASS",
+        "selftest.core_contract": "PASS",
+        "target.politicstrasport-development.contract": "PASS",
+        "politicstrasport_development.source": "PASS",
+        "politicstrasport_development.assets": "PASS",
+        "politicstrasport_development.build": "PASS",
+        "politicstrasport_development.game_boot": "PASS",
+        "politicstrasport_development.core_integration": "PASS",
+        "politicstrasport_development.EconomicCoreIntegrationTest": "PASS",
+        "politicstrasport_development.HoldReleaseAcceptanceTest": "PASS",
+        "politicstrasport_development.WorkCompletionAcceptanceTest": "PASS",
+        "politicstrasport_development.WorldDynamicsAcceptanceTest": "PASS",
+        "politicstrasport_development.LongRunProfile": "PASS",
+        "politicstrasport_development.UIInteractionTest": "PASS",
+        "politicstrasport_development.DestructiveTest": "PASS",
+        "politicstrasport_development.FontSupportTest": "PASS",
+        "politicstrasport_development.economic_core_selftest": "PASS",
+        "politicstrasport_development.smoke.launch": "PASS",
+        "politicstrasport_development.smoke.execution": "PASS",
+        "politicstrasport_development.goal.launch": "PASS",
+        "politicstrasport_development.goal.goal": "PASS",
+        "politicstrasport_development.pause_resume.launch": "PASS",
+        "politicstrasport_development.pause_resume.goal": "PASS",
+        "politicstrasport_development.explorer.launch": "PASS",
+        "politicstrasport_development.explorer.execution": "PASS",
+        "politicstrasport_development.random.launch": "PASS",
+        "politicstrasport_development.random.execution": "PASS",
+        "politicstrasport_development.five_minute_observation.launch": "PASS",
+        "politicstrasport_development.five_minute_observation.execution": "PASS",
+        "politicstrasport_development.five_minute_observation.5m": "PASS",
+        "politicstrasport_development.__qa_baseline.launch": "PASS",
+        "politicstrasport_development.__qa_baseline.goal": "PASS",
+        "politicstrasport_development.__qa_regression.launch": "PASS",
+        "politicstrasport_development.__qa_regression.goal": "PASS",
+        "politicstrasport_development.__qa_regression.behavioral_regression": "PASS",
+        "politicstrasport_development.__qa_regression.visual_regression": "PASS",
+        "politicstrasport_development.__qa_soak.launch": "PASS",
+        "politicstrasport_development.__qa_soak.execution": "PASS",
+        "politicstrasport_development.__qa_soak.soak": "PASS",
+        "video": "PASS",
+        "target.review_packet": "PASS",
+        "phase3.hq_evidence": "PASS"
+      },
+      "original_management_status": "NOT_RUN",
+      "evaluator_execution": {
+        "status": "EXECUTED",
+        "scope": "readback exists; independent from target quality and final Gate acceptance",
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+            "member": "result.json",
+            "sha256": "03b52b57985b1b8fe7abaa13b807c55ead8b469c1cbdfb6149c3af3421181f6e"
+          }
+        ]
+      },
+      "profile_rollback": {
+        "status": "PASS",
+        "scope": "isolated archived Final Profile byte recovery",
+        "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421",
+        "frozen_profile_sha_match": true,
+        "provenance": [
+          {
+            "archive": "series/_final_series/Run3/RESULT_FOR_CHATGPT.zip",
+            "archive_sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f",
+            "member": "politicstrasport_development_profile.json",
+            "sha256": "82d121768da840c0eaed6ae5dab7e51d6145a60fcf9bd91e1270f03b6bd71421"
+          }
+        ]
+      },
+      "evidence_rollback": {
+        "status": "PASS",
+        "scope": "isolated raw result ZIP bytes recovered; not game re-execution or Stable executable rollback",
+        "sha256": "a941fc930ca45eae78d84e2df6527efb2654dcc0ab5a7f2ec0d8bb38f2bb428f"
+      },
+      "raw_unchanged": true
+    }
+  ],
+  "changes": {
+    "raw_zip_modified": false,
+    "target_modified": false,
+    "main_modified": false,
+    "technical_rerun": false,
+    "stable_promotion": false
+  },
+  "A1_A3": {
+    "same_target_fingerprint": true,
+    "same_profile_sha256": true,
+    "required_case_statuses_equal": true,
+    "independent_run_ids": true,
+    "deltas": {
+      "ram_mb": {
+        "A1": 263.00390625,
+        "A3": 262.703125,
+        "delta": -0.30078125,
+        "quality_verdict": "INCONCLUSIVE",
+        "reason": "no authorized tolerance"
+      },
+      "handles": {
+        "A1": 442,
+        "A3": 443,
+        "delta": 1,
+        "quality_verdict": "INCONCLUSIVE",
+        "reason": "no authorized tolerance"
+      },
+      "cpu_percent": {
+        "A1": 81.61612116538743,
+        "A3": 82.44474859235658,
+        "delta": 0.8286274269691489,
+        "quality_verdict": "INCONCLUSIVE",
+        "reason": "no authorized tolerance"
+      },
+      "runtime_seconds": {
+        "A1": 420.38005239999984,
+        "A3": 409.6011057999999,
+        "delta": -10.778946599999927,
+        "quality_verdict": "INCONCLUSIVE",
+        "reason": "no authorized tolerance"
+      },
+      "disk_bytes": {
+        "A1": 300705807,
+        "A3": 302100768,
+        "delta": 1394961,
+        "quality_verdict": "INCONCLUSIVE",
+        "reason": "no authorized tolerance"
+      },
+      "evidence_bytes": {
+        "A1": 282838830,
+        "A3": 284232546,
+        "delta": 1393716,
+        "quality_verdict": "INCONCLUSIVE",
+        "reason": "no authorized tolerance"
+      }
+    },
+    "scope": "A-B-A Required mapping equivalence only; not all trajectories or seed space",
+    "provenance": [
+      {
+        "path": "series/_final_series/SERIES_RECORDS.json",
+        "sha256": "2aadab833870a5323fd19d34e1782f811a6c06a57a8008bd1dc8d3ab0a252606"
+      }
+    ]
+  },
+  "environment": {
+    "persistent_path": {
+      "status": "PASS",
+      "scope": "Persistent user and machine PATH values only; not a complete Registry write audit",
+      "provenance": [
+        {
+          "path": "series/_final_series/PERSISTENT_ENVIRONMENT_READBACK.json",
+          "sha256": "94e071ce0e80e0ac13c7fed8a38965a9e14c6909ddd4c43cdb7c46ad145181c1"
+        }
+      ]
+    },
+    "registry_global": {
+      "status": "NOT_RUN",
+      "observed": "NOT_RUN",
+      "provenance": [
+        {
+          "path": "series/_final_series/PERSISTENT_ENVIRONMENT_READBACK.json",
+          "sha256": "94e071ce0e80e0ac13c7fed8a38965a9e14c6909ddd4c43cdb7c46ad145181c1"
+        }
+      ]
+    },
+    "manual_operations": {
+      "automated_operation_count": 11,
+      "start_qa_invocations": 3,
+      "controller_retry_count": 0,
+      "scope": "hosted controller only",
+      "provenance": [
+        {
+          "path": "series/_final_series/OPERATION_LOG.json",
+          "sha256": "345fb87a84c2c5e9e5c1c8b7ae9a1831df4306cf1c423538c33c44461dda1adb"
+        }
+      ]
+    }
+  },
+  "nonfinite_probe": {
+    "method": "exact GitHub-main functions extracted by AST, isolated; no production mutation",
+    "cases": [
+      {
+        "case": "NaN <= max1",
+        "observed_comparison_ok": true,
+        "detail": "within the configured bounds"
+      },
+      {
+        "case": "1 <= maxNaN",
+        "observed_comparison_ok": true,
+        "detail": "within the configured bounds"
+      },
+      {
+        "case": "+Infinity >= min0",
+        "observed_comparison_ok": true,
+        "detail": "within the configured bounds"
+      }
+    ],
+    "source": {
+      "size": 20785,
+      "sha": "5d2a17ba5760bca3ad10c119be2bd5dc1970c7c9"
+    }
+  },
+  "rollback": {
+    "source": {
+      "status": "PASS",
+      "scope": "four audited fixed-main Source files byte recovery, not full runtime function",
+      "sha256": {
+        "hq_evidence.py": "9c05fbeb7ed8759e6c3ce8c52193968abd41a85983927b9f951672ea2760dd7a",
+        "coordinator.py": "3116f8c5d95b1ab50d720faf555ee5f0820d622aac81f75d927bee37d8c085af",
+        "management_evaluator.py": "df0a0353b0bdc7eb0f02f14baa32a6a1999399937181112c36e67c7970c1243c",
+        "phase3_run_evidence.py": "d1af0dad0ef367aaa45353651342ee15674014989d2cd001ef471c5aeb65e843"
+      }
+    },
+    "candidate": {
+      "status": "NOT_RUN",
+      "scope": "package bytes not independently available in this resumed audit; CANDIDATE_FREEZE is metadata only"
+    },
+    "stable_executable": {
+      "status": "NOT_RUN",
+      "reason": "fixed-main stable tree0c57de0cfcd945f87bbdd1b793d7edb4436c9813 has README.md only; no executable",
+      "verified_via": "GitHub recursive tree of fixed main"
+    },
+    "source_full_substrate": {
+      "status": "PASS",
+      "scope": "source substrate plus 95 fixed-main overlay; byte recovery in isolated copy, excludes pycache, not runtime function",
+      "files": 500,
+      "sha256_manifest": {
+        "core_manifest.json": "167de8a9cb9bd72922cf81f0e91065c3d9c57ff9ed42a61e09b669dfa4af0c24",
+        "START_QA.cmd": "2088714c48fe1639594b04cd724b8912b8a8e980c2db8bbb0caf8f33af546736",
+        "APPLY_REWORK.ps1": "0b49005eee8dba5a1c6856e868d9b9b7c72504766ac1d134aea7d0752fa4c890",
+        "capability_contract.json": "156e0702186e9619a25422b7b18a527f921aee1c333936e26f0a381e715af17a",
+        "QA_TARGETS.example.json": "379c99edde868067fc27b53afbd1703e9060cd33738cbc27e034577f7dea5a75",
+        "START_PLAYABLE.cmd": "3eaaa5b28029524a7c05692143a763276edd2aeb07b0985476af118b060f9591",
+        "package_files_v020.json": "2c972bb3b01fb6e80588775c4c356ae548e90439d41d8dfce80dd76d0fd37ef1",
+        "START_SELFTEST.cmd": "64ff1e73dd34337ceba76a5f4e7ac8fb0eb5fdebb4efed36a27c329eaed0c744",
+        "python_packages.json": "76023c8c956552d6471646773308b8da6aae5b1d18929cd6d5da8bc8cf0ae597",
+        "BASE_Transport_Manifest.json": "78d889d6c286f7b3b745d57b5f69798b4a0ffe192488827c19a434a30171594e",
+        "tool_manifest.json": "b9dc2381d0c0c5ea24d1fc91c400016e498d1a93d97e75e355935d69a2d9528c",
+        "START_FUNCTIONAL.cmd": "dfd00f09481da6c08c51436addcb475d47ab9f446e526cc47ab1486ee3567c1b",
+        "START_LONG_SOAK.cmd": "b71d87260c47e45bf22858ceefb191a5089d010e982f50ce4973b8ef1c2d4e20",
+        "git_runtime_manifest.json": "2064944ee54a6cebe369e6002e8680c94f5ce959a00b1c48e0f63f4bbc653475",
+        "package_files_v032.json": "965ea80d3dd8fe84cc4ba7d68f00b1c623638b4a302a22e03d68a0754c980b88",
+        "START_LOGIC.cmd": "2c3268d0eab621cec0ff5f82466c508eb10d28165a1b24e786c55a5734335578",
+        "package_files_v031.json": "90c4c52daa791d4f5d708ab0fe27ec8759851015012d8a136c44908c80026483",
+        "START_VALIDATION.sh": "ec2ec8ff8d92f8764a1be2c2df45e1b17528a6108129f1fdf8ac07d827348d66",
+        "package_files_v033.json": "9d2403dbc6be5d92cf69907c12b01c5664c71adf938e857b4de9848c207871f8",
+        "acceptance_manifest.json": "cdf1d3392fadb8ed7d7a92a66c8b1c0a985ca38384beece4a7d77ffb8ee1df13",
+        "LICENSE_ATTRIBUTION.md": "44ef51b97846f50f98142dbe06925df0f1254e4ecdda459142914daf43468e8c",
+        "README.txt": "200d76fc849bace03c61554120e827fa5e0e665c22aac4caba97a555f0cc9589",
+        "APPLY_REWORK.cmd": "d20831fc380470b97f273a3b889502e8dcf2e9062bc9e725cd55502b1dca2cb5",
+        "package_files_v030.json": "d2bfa8337186b38211e5e40b50efe37f54e4c51f403230a6ac31780dd87b0f39",
+        "START_SOAK_24H.cmd": "8b151edc5070dd7bd6b1a4fa328285a1a792703ee1a82bd5a9e8d8ef3ea3c4d1",
+        "BOOTSTRAP.ps1": "dffabd62ba484a8ce7684c72b0d53a599b53f180231e7b17998dcfde79ac1254",
+        "python_manifest.json": "ce8a0cc1c88ab1c7a819bb0a20fcbb32e16774accb93f2d9de65e328abb07a29",
+        "README.md": "dac98aa0c7e3fb8064a4f5fe629a6bd2664c710660b87fa56f2a888a74323f40",
+        "scripts/PHASE3_OVERLAY_REBUILD.ps1": "85e3168cfcc0a0b5562073ccf59f4b06477077b2c6cd9245499455345f63ea0f",
+        "scripts/PREPARE_SOURCE.ps1": "de346db376dfab5250b9ff8cb87b5dfcf683d2afb34acc2c25b30ca768008e26",
+        "scripts/package_integrity.py": "24d3a1fb61e107112189865ccb2a632fc3da25a3887bf99b9b3f39258b54cf4e",
+        "scripts/PHASE3_REGEN_MANIFEST.ps1": "e81225751f2dfd84cbeacee1d47836f86e3b709c9763ff63742a8d040f767b1a",
+        "CORE/harness_probe.py": "ec09b26531a6dc7319397bd5ed5d92a91a0b8914ecbad287f9862ba5ae8e7aba",
+        "CORE/storage_qa.py": "a2f15086673a2e88126eb7b01522b72e137c8f50b76b71b05df6f2b08c03f203",
+        "CORE/headquarters.py": "7b7d5575650a8155a23c71caab750f0e97a3f0c16d0ea6b2b3c0c8dcf9a88601",
+        "CORE/replay.py": "cbab4f40cc10189b51290b551b9f6a8c6dee39088eb535f11101cf36b2a2356e",
+        "CORE/windows_runner.py": "88e8e76ed2514e2720d0d92b89974ffe0f1015d776a2d66ee59dd7ddadd6f0ab",
+        "CORE/hq_evidence.py": "9c05fbeb7ed8759e6c3ce8c52193968abd41a85983927b9f951672ea2760dd7a",
+        "CORE/profile.py": "98472c38f0733f6a400710be8cb1a343b76ec6fc6258ce68404befd2eac2df48",
+        "CORE/target_identity.py": "2b9658c9a4caac9fca9b5e0eaddc1c2e79819800257646b3a53cb415c1ceb319",
+        "CORE/coordinator.py": "3116f8c5d95b1ab50d720faf555ee5f0820d622aac81f75d927bee37d8c085af",
+        "CORE/contracts.py": "607bcc239a9b8d285920c85d7214dca13f7bc971fc9e1cb8310dfda84a9ecd06",
+        "CORE/browser_backend.py": "41b79b0ad699ea2526bbbe229548c1e88dbd6667a5f195f803449d23fc59a399",
+        "CORE/tools.py": "835add1ec0485ab2334e2575d92cd0576edf4210f5df66f657d5c4a06fa47320",
+        "CORE/backends.py": "c64b910410b664165b5a75e46d8b948f2dcb3dd514e14dad134ef604edd35356",
+        "CORE/supporting_diagnostics.py": "e95f130b22d818e485818e91f15a9079100cfb687bba790b6875f094c1eb82c9",
+        "CORE/assets.py": "f4e6a64aaf3ade007a5eb83b021d73ba3f5a9f4c2e6581b09ef347b2d14f2609",
+        "CORE/recording.py": "529975c220aff228342810e96b83547df2cbfcf7637ba4ba6d306093271bdefc",
+        "CORE/targets.py": "69fb0ea49a3edcf8e17284dc384f32f1ce7522aafaaa5e60b3659dcf815870d5",
+        "CORE/finalize.py": "9d46be3abbb835e3d2d8768a4820ae637ad4a062dd1994635bd117dd2ef636ef",
+        "CORE/management_evaluator.py": "df0a0353b0bdc7eb0f02f14baa32a6a1999399937181112c36e67c7970c1243c",
+        "CORE/session_validation.py": "36851c944d7a9685a5654be16f5000ff9ca98098938ddd5b461b31d9db11f1b8",
+        "CORE/host_runner.py": "8396477da6a29350815b9c05dcc033e82f1d156a909611240c48693c2ef99dce",
+        "CORE/capability_contract.py": "3835ee5a7f0ba0d6e85813b573898b1601c075786dcd2b982e86f009f541996b",
+        "CORE/campaigns.py": "c89c4e4e71359fa9ab81fd8acb33a7fc771ab5adfaa781354e3e3daf36d8006f",
+        "CORE/release_manifest.py": "3870e1e70d3d38d828c02f27869e5c159e163bd9203f333d4e8b1912a9066fd0",
+        "CORE/phase3_run_evidence.py": "d1af0dad0ef367aaa45353651342ee15674014989d2cd001ef471c5aeb65e843",
+        "CORE/stream_video.py": "37c2be48e740cd0a17184158b964f7e2210bb04215fe95a3061d01190b40ec3b",
+        "CORE/runner.py": "2201bcf2c81cf657b0de33d8cec8f35ff17260077bf2277119fbdf87185723c6",
+        "CORE/regression.py": "a4caf81f7ea193274dfb5f389a2535c9b28b18071bac0fe75537b8ece48b4bce",
+        "CORE/target_intake.py": "f2ee6f76f617e9c8c78f34a69c6ccbb9fc55dcb704b9b59a97fd81e19871c475",
+        "CORE/hq_report.py": "744d1b26cf0e083dd4fe9f8a0857836705caced9e7fe63785da5ec7d73c5f300",
+        "CORE/windows.py": "ef3851e236977d4672a6c2d4b7244dc0179408dc3a6fe645918537d76620b617",
+        "CORE/sales_evaluator.py": "cd2ed7f7a2c73060dd8df19d595b2baf1a6a6182cf2801c9e59bbbf156c7d8e3",
+        "CORE/plans.py": "47f3595413a7552e74dc47508db6b317eb34531ba4ab166ac845165f19e237aa",
+        "CORE/selftest.py": "d930187990da355399cb05b07bf7c2db876a7c8a907327ae8a0eeb1207ace4b9",
+        "CORE/adapters.py": "255739761ecea0e9f3d715e5ea50cfd9ee6b90e1b287497eb4627ff2599a6a63",
+        "CORE/agents.py": "f18c67fab49040a619d8366deea860dba488768f83bda7ea411a0503ce3dd636",
+        "CORE/common.py": "8fc77826add32ee9a1e5480b2fb67dea07de5c91ee37325ca9af5a8b03e72ac0",
+        "DEVELOPER/REWORK_ARCHITECTURE.md": "8d8dcaee909f6f3e0336d2597ddd4e382adebbfea2c4dd98bf1dd705f5960b6a",
+        "DEVELOPER/v032_core_tests.log": "b3d7dcffa7fa134ca1bc5ffa2d4426d52f6869a8a280b1a75f8aa68bf9fde48c",
+        "DEVELOPER/REWORK_V030.md": "e4fbf8674a4e83dbe88a1d7b3c00070d38926fb40836e586e49e143e83990507",
+        "DEVELOPER/ACCEPTANCE.md": "3b70a9866cfa3949b5769bc6d1604018ece613abb2121dd59a49aec2f3aad0d6",
+        "DEVELOPER/GAME_INTEGRATION.md": "ecea31368dab2ec1e9fb1723990cc4075aff05e5eeea07eecc91b22bd1b90819",
+        "DEVELOPER/v031_core_tests.log": "8ee62d060bb60c2d5859ff4729408a9ccf881dbb8f9d6e2e1f587c0d2d0a1751",
+        "DEVELOPER/REWORK_ACCEPTANCE.md": "d05ee9e6d3f029224feafd58a02e9433d7ecaae11f7cc72ea0b232074bff4523",
+        "DEVELOPER/core_tests.log": "5fdcd62e714e1dc959f69956387fe8a2dcf449311a6a28c62c4b7945a48b46a9",
+        "DEVELOPER/build_versioned_zip.py": "e174856971f01add4e9b07ab8c357b03377df4650204b3234540c4e2809b5dd3",
+        "DEVELOPER/AUDIT_v033.md": "07d1b7cb1d78a76fe9f15bf0a0fa5b280a7d9fc906596403da1fc7f799c34691",
+        "DEVELOPER/PHASE1_INTEGRATION.md": "4769843557a994b795c0169cf9cf70128ec5eb49fefa10f48012c501858443cd",
+        "DEVELOPER/ARCHITECTURE.md": "e9e159635afbe3919c715351b214aeb972e271552932efd2d3023a29c67d1de2",
+        "DEVELOPER/v033_core_tests.log": "158f90d4a1c9e63f281beed20af4886e77b71611e65f037e79dce19a4df728b9",
+        "DEVELOPER/AUDIT_v032.md": "f5b70050de69e605ddde321ac653acf11b3c1ab112cdf8949a3994acc3e24fb8",
+        "DEVELOPER/NATIVE_CAMPAIGNS_v031.md": "45e88a96d76e0e314013fe89a96efc5b124208d30caf8c75b11912917ffd329c",
+        "TESTS/test_core.py": "30ea38196f4f759e09b0142fc71fa80af14bbdf5026ed205a846d758e90ae42c",
+        "TESTS/probe_native_fixture_faults.py": "e418becbb08a63554b1be7729f4e8855116a15e79a81ee11f5e9527f3c2210c5",
+        "TESTS/test_coordinator_phase1.py": "63fc9d1f574f0538f1fdf6843bf90aa46d277843384ef3ab269d54509fbd7ba8",
+        "TESTS/test_management_hq.py": "ebe79df37eda6be6312dcf6141fabbe04fd7e706399fb79ef96bd8051d5298a8",
+        "TESTS/test_target_identity_phase1.py": "fd670151eb3f9fc3ec2e01afb340d2a8937cd292c31ebdf013459588e2e50c03",
+        "TESTS/test_finalization_certification_recovery.py": "c89353fb68e238f09c98b7fb8558c4f28495e455cf86b0389cee8f66dfba717e",
+        "TESTS/test_sales_hq.py": "cd200a14f7fe7cb14ed05de31a8530fc301f5f5ad8930d91ca00e185fd11a96e",
+        "TESTS/windows_acceptance.py": "b62ea68f402316d07b7f9aefaa1c5592a382de99b00843a9b7d8a5abb1d16f06",
+        "TESTS/test_headquarters_gates_phase1.py": "50e40d7e7cb794c5556cc6784eb21f3900d7f4a9d61fc6c96433f8398d8dd8fa",
+        "TESTS/test_target_binding_v033.py": "138673930fba3f6781eb07725a17d4b91a3dc1efa480330d8651f202a28a9e61",
+        "TESTS/test_persisted_save_storage.py": "754dadea997cb00b35398f87cb81955f3ce055f2604f25027be5503a483030eb",
+        "TESTS/test_capability_contract_phase1.py": "e5581e46554dc41dbc7b5df357e9ee932716040b74c5de6cc5de5dcdf17c0fd9",
+        "TESTS/test_supporting_diagnostics.py": "03e385d286d450710e286f149623152674bfc2ad88fe497cf19dc92cd0719e96",
+        "TESTS/test_start_entrypoint.py": "b03290628157a3417df99ac0303648d00e6247d609add04955a7efc4fe760e9e",
+        "TESTS/test_input_key_contract.py": "29c2d7ec48bd9d2c126c213b69b6e7b97e8930662062456e6bc8117a2026552b",
+        "TESTS/test_hq_coordinator_integration.py": "ed8ee038c8166cb71818208a9305451b6849186d85f12d67e2dc3d105764b0cb",
+        "TESTS/test_phase2_two_candidate_acceptance.py": "6332f836f0a6188aa56fcea6a7d70a928cad52221a44e272956f8ee20571d162",
+        "TESTS/probe_native_fixture_faults.gd": "c76e1a712a139f0debc803c81f7ece6bb553fa80c6cd24189d7a40f50b1584f0",
+        "TESTS/test_pipeline_phase1.py": "5aa3dd3524e1ba7e2692590b14c544abbb043da5cc51a11cba3cfc5cb63d2c22",
+        "TESTS/test_work_phase1_acceptance.py": "4707f44ba326a50d7f6f79cdaf6fbb4eaac29f1c3eeee3b630f8aa73f7b50f6d",
+        "TESTS/test_windows_evidence_paths.py": "48375e6def5352027f874ef9d91305337569110502ab207da2192b25ea8ac028",
+        "TESTS/test_audit_v032.py": "0b3b88b0287226f962cf70f001524c6312d2c7c7b76c0e8429c4f90b5ae8249f",
+        "TESTS/test_campaigns.py": "b34fc47fceb5be5eb72a57a070bb12b057eabcd322bee76a1aca1e778bee4f82",
+        "TESTS/test_bridge_observation.py": "e9a81f013f59be257bca1a9a021d9d0aadab1d0639b5d15980cd51802c58ca39",
+        "TESTS/test_sparse_detector.py": "df9d1d1c1687ef7df7d19d140723ee98b4c24d2a188cefe51d281d2b9b8900b7",
+        "TESTS/test_phase3_integrated.py": "6e087ef594a90d50b8fa969021032b06b3d9262d8ab635a53e1197f4cb4d292c",
+        "TESTS/test_rework_v030.py": "4388b2d716b507765afd7e2a327b8d566809166ef583d742f740a849ce1db7c2",
+        "TESTS/test_package_distribution.py": "f786e3c787d14a4827ec81723d6c4f3b654f05e39b03feb03a1beae9c9c70a60",
+        "VALIDATION_PROFILES/rfb_grid.json": "5ae49fe65210ac80c89ece7f2fea61b447441d850762f4c1304b74c015e5a43f",
+        "VALIDATION_PROFILES/rfb_story.json": "fd5c8616dd83d8cd6f88f9155a5de7e2bed526070abc45dc0ba2dc69270835a8",
+        "VALIDATION_PROFILES/rfb_procedural.json": "5095d23482ab67bd80ad76390f367619b4799d6da3510c39f15160f51b17c24f",
+        "VALIDATION_PROFILES/rfb_workshop.json": "731f68350e27d7fa7fcf75183e52d7e890db5b9334306b9b82822fc1af258545",
+        "VALIDATION_PROFILES/rfb_realtime.json": "a2aaa3a674a82e4b120c635b33e5f3d212bae56d5f32841add1510585e791089",
+        "PROFILES/fixture_grid.json": "06c6f775bab0b5be993071e57a22f42d27c378278b26fe6fadc036ca51f70ee6",
+        "PROFILES/fixture_realtime.json": "58eea63ea69a61ba5c190dcc02da436dd62cf862767338ed8ee3e6a6c5600b68",
+        "PROFILES/fixture_procedural.json": "cfbd9f47ac40bbcfabe4ed223ba94f6f83d2a0218c6122b355f229963f327b19",
+        "PROFILES/fixture_narrative.json": "4cd42973a55bbf8adc67b93451ebed4a056ac49aa429a78c3f18abf50df8b123",
+        "PROFILES/fixture_management.json": "3c310ad6af3cec154eeb886305fcb2ea24b60fc6cd2b5d3c1552e0090ecd95fe",
+        "BASELINES/VALIDATION/rfb_grid/state.json": "f6e694910286f36e419e2c1b2bbdc0da1ea8a30213a18b1b69d303db619ca693",
+        "BASELINES/VALIDATION/rfb_grid/normal.bmp": "3fdfb404fd2997692647651bc0eb563577043c856a755c2fba092b9b7fa86028",
+        "GAME/virtual/grid.py": "d2a04ce4df4ec598b41f3cfc089040d3780b738c3887cf83114a0e295ccca393",
+        "GAME/virtual/realtime.py": "b313c41da56d1c85b85eb8907a1fac04d52a3294dcfef5ff5f725d1730308dec",
+        "GAME/virtual/procedural.py": "6ddeae4a0524433c2cd9b4497e528919e07a3b6b7d4307c2ac334bc73fa6bf77",
+        "GAME/virtual/workshop.py": "570a16b15323e2fa00bdd42f6800138d5f91dfa7812723685edfe650db2d01b0",
+        "GAME/virtual/story.py": "bd2e10a8378dbaa8c53029acd84dd36eb7454c3c6fd23b75e9b49710e7e55f77",
+        "GAME/virtual/display.py": "f09cbd01117e9d2fc6b5bbd6ee372ee3496046afadb1e5a98c889370c415bf7a",
+        "GAME/fixtures/project.godot": "6084b8f09b86f54b7a1396061af225e0544d4e155d1ac86cc2c23f3108c45212",
+        "GAME/fixtures/main.tscn": "0861643aeb3257599ab0dd732bf7439c85d72a6bbd0c2efda265a409ea891259",
+        "GAME/fixtures/fixture.gd": "5800ae898efbf1ee1051cdb13fe1ca0d320d12ff96cf1388b3c1aaa28ba0631f",
+        "LICENSES/ahk/license.txt": "b27c1a7c92686e47f8740850ad24877a50be23fd3dbd44edee50ac1223135e38",
+        "LICENSES/oculix/LICENSE": "3ae033da0bfd60f4609c5c99fe50c0c840685889d3b705d3f527fd7b52032f5c",
+        "LICENSES/oculix/LICENSE.txt": "ded46f818117fafb31847be5a210a5a2d77a4ca634d8348414786b7b79f03e88",
+        "LICENSES/oculix/NOTICE": "c53634c960163f00ba0b0147cc3dee5caf0e6a47bc9909a2fe94b7adcf5d983e",
+        "LICENSES/python/WPy64-313150/license.txt": "b88358ab18e3b058afbf9c940471143b9f76037781ee3101bc90c6d30b69ddb4",
+        "LICENSES/python/WPy64-313150/python/LICENSE.txt": "76900732e5f075b725f754000ad5cab1b2cf89e355c1570138476956b6413cd3",
+        "LICENSES/python/WPy64-313150/python/tcl/tk8.6/license.terms": "0d1e4405f6273f091732764ed89b57066be63ce64869be6c71ea337dc4f2f9b5",
+        "LICENSES/python/WPy64-313150/python/tcl/tk8.6/demos/license.terms": "0d1e4405f6273f091732764ed89b57066be63ce64869be6c71ea337dc4f2f9b5",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pyproject_hooks-1.2.0.dist-info/LICENSE": "1b22b049b5267d6dfc23a67bf4a84d8ec04b9fdfb1a51d360e42b4342c8b4154",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/sqlite_bro-1.3.2.dist-info/licenses/LICENSE": "2f88a705d5e83398a2df5073890ea25bc0e756ca431ba79b676c277b5071eb5f",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/LICENSE.txt": "634300a669d49aeae65b12c6c48c924c51a4cdf3d1ff086dc3456dc8bcaa2104",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/AUTHORS.txt": "4eb1fb1705e2def898e81bcba19c3aac80620d27ba3569d6a6df7b4629d1b5c2",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/pkg_resources/LICENSE": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/rich/LICENSE": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/platformdirs/LICENSE": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/packaging/LICENSE": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/packaging/LICENSE.APACHE": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/packaging/LICENSE.BSD": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/urllib3/LICENSE.txt": "130e3a64d5fdd5d096a752694634a7d9df284469de86e5732100268041e3d686",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/cachecontrol/LICENSE.txt": "86eeee87be2a43f3ff1f56496f451f69243926f025fedbb033666c304c4c161b",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/truststore/LICENSE": "33be7b7e8fa4fd19b1760e1a8ed8a668bdab852c91b692dd41424bcb725a9fca",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/distlib/LICENSE.txt": "808e10c8a6ab8deb149ff9b3fb19f447a808094606d712a9ca57fead3552599d",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/pygments/LICENSE": "a9d66f1d526df02e29dce73436d34e56e8632f46c275bbdffc70569e882f9f17",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/certifi/LICENSE": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/tomli/LICENSE": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/tomli_w/LICENSE": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/msgpack/COPYING": "492dedba85da5872f78e6091bcd1fea474d660d35acb4dee964b8aab3f007427",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/pyproject_hooks/LICENSE": "1b22b049b5267d6dfc23a67bf4a84d8ec04b9fdfb1a51d360e42b4342c8b4154",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/requests/LICENSE": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/resolvelib/LICENSE": "f388fd38cad13112c1dc0f669bbe80e7f84541edbafb72f3030d2ca7642c3c9d",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/distro/LICENSE": "cb5e8e7e5f4a3988e1063c142c60dc2df75605f4c46515e776e3aca6df976e14",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/colorama-0.4.6.dist-info/licenses/LICENSE.txt": "cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/build-1.5.0.dist-info/licenses/LICENSE": "aaf9a29ca5907971ccf07de025375db34539a8d5eeebce20b46099805722106f",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/wheel-0.47.0.dist-info/licenses/LICENSE.txt": "30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/config/NOTICE": "2dddf08818297a3b89d43d95ff659d8da85741108c9136dfa3a4d856c0623bd8",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/jaraco.text-4.0.0.dist-info/LICENSE": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/autocommand-2.2.2.dist-info/LICENSE": "ade78d04982d69972d444a8e14a94f87a2334dd3855cc80348ea8e240aa0df2d",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE": "458502e12d97bbf64438606a20044aa85eb05fb0a8a807bb35dbec253fd1fc04",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE": "9755a18519666e5f0f4cae3daad3d7012bcae48a600b31237d75e9fe134e6683",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt": "30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools/config/_validate_pyproject/NOTICE": "09c9bcea95ca086f8bc5bed174e40bc835b297d40fb5f86bbbb570fe0a5581a7",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/setuptools-83.0.0.dist-info/licenses/LICENSE": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/pkg_resources/LICENSE": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/rich/LICENSE": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/platformdirs/LICENSE": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/packaging/LICENSE": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/packaging/LICENSE.APACHE": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/packaging/LICENSE.BSD": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/urllib3/LICENSE.txt": "130e3a64d5fdd5d096a752694634a7d9df284469de86e5732100268041e3d686",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/cachecontrol/LICENSE.txt": "86eeee87be2a43f3ff1f56496f451f69243926f025fedbb033666c304c4c161b",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/truststore/LICENSE": "33be7b7e8fa4fd19b1760e1a8ed8a668bdab852c91b692dd41424bcb725a9fca",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/distlib/LICENSE.txt": "808e10c8a6ab8deb149ff9b3fb19f447a808094606d712a9ca57fead3552599d",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/pygments/LICENSE": "a9d66f1d526df02e29dce73436d34e56e8632f46c275bbdffc70569e882f9f17",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/certifi/LICENSE": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/tomli/LICENSE": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/tomli_w/LICENSE": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/msgpack/COPYING": "492dedba85da5872f78e6091bcd1fea474d660d35acb4dee964b8aab3f007427",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/pyproject_hooks/LICENSE": "1b22b049b5267d6dfc23a67bf4a84d8ec04b9fdfb1a51d360e42b4342c8b4154",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/idna/LICENSE.md": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/requests/LICENSE": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/resolvelib/LICENSE": "f388fd38cad13112c1dc0f669bbe80e7f84541edbafb72f3030d2ca7642c3c9d",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/pip/_vendor/distro/LICENSE": "cb5e8e7e5f4a3988e1063c142c60dc2df75605f4c46515e776e3aca6df976e14",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/wppm-17.12.20260816.dist-info/licenses/LICENSE": "41cebbc12b721a1adaeeb22b1a0d1a97e66734ed5c8a9337350ae84b46c44cd6",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/packaging-26.2.dist-info/licenses/LICENSE": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/packaging-26.2.dist-info/licenses/LICENSE.APACHE": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+        "LICENSES/python/WPy64-313150/python/Lib/site-packages/packaging-26.2.dist-info/licenses/LICENSE.BSD": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+        "LICENSES/node/node-v22.21.0-win-x64/LICENSE": "339c50294da6a84322dcbe7285b57b248123bd4d9e37a2f72d68d5abf2574783",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/LICENSE": "af1573a67c9d9051fbf8a9c123a22b7f51ec58cb6a588b4c23bead776dd046ab",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/corepack/LICENSE.md": "517d52969f11b2b587f2e5116069aea3887ff08251689a198a857a115f250dbf",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/spdx-correct/LICENSE": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/smart-buffer/LICENSE": "41f40a85a2ba5eb382752c6d235497ffc70445044866b62cf15995cc2c143409",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/lru-cache/LICENSE": "fcfe5955cdfd87d033a85466bbf7f33ff5394ae34b436a433670abbb05c4dbef",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/json-stringify-nice/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-user-validate/LICENSE": "c0846374a35a39d265a3f01fa0099d4acac288c03aebfeaf4f68179f6794c3b6",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmfund/LICENSE": "ae23f46306824f42c6ab243b232b571bb98d8dfa25c58bf02e1dac2520a4f44a",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/nopt/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ip-address/LICENSE": "40e3d8bff0eba21e2c8a4ca7f7ad3f48c9ffa200de4aa6637d677a7d65514825",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/color-name/LICENSE": "c064f7a3e353bc1bc977f3c897941c75ef763f44f41677e0a15370ca0853d6e2",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/walk-up-path/LICENSE": "1fccd0ad2e7e0e31ddfadeaf0660d7318947b425324645aa85afd7227cab52d7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tinyglobby/LICENSE": "885542bb1f08221d2c8a4075df7bbe4453bdeab11815b4d5281595435919d012",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/just-diff-apply/LICENSE": "c4f5a45599ea54331e65a21df7c3738f8c9b3e688e1913caf47facee9017a439",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tar/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/socks/LICENSE": "03fadbf0195740caca88c2de89aedc0f24c727e0a3f39decea4d0dc4f87aeff6",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cssesc/LICENSE-MIT.txt": "f996f6e050e6fc18086162b4b44e301bba345c87deca83f57a27e6d54195556e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/init-package-json/LICENSE.md": "30ae8a003712dae3986756f28f24c0ea8c8f85b233a542f7e9181b2d2af7fe5e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/string-width-cjs/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cacache/LICENSE.md": "b49c8d25a8b57fa92b2902d09c4b8a809157ee32fc10d17b7dbb43c4a8038f79",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-normalize-package-bin/LICENSE": "45e433413760dc3ae8169be5ed9c2c77adc31ad4d1bc5a28939576df240f29a0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/abbrev/LICENSE": "52e0397bbc1859a7891cd601cff0b9433ab9c235ce6b116f8bcf9a17c41a4b94",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/mute-stream/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/diff/LICENSE": "278c03ecada65be046e65cf7091e4378b2749eec2309eeb242650e195864d863",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/jsonparse/LICENSE": "c8e0305cd798b12d8d759594c69ca58d8d62c2e38448eabaeefa8dfac2480ae4",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass-fetch/LICENSE": "4457272cd4dbc8fc4f3502bc7656eda8e5414c2feecff8c9daa22ff73852e949",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/unique-slug/LICENSE": "175b91fc42b72433eb09f96e7063edb12f86a255522c677c76ed967a329206ee",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/package-json-from-dist/LICENSE.md": "a638a0768dbec922fd821d0b6cce6275231c4b57cfcddf584defce530fbfbbf5",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-registry-fetch/LICENSE.md": "733dcbf5b1c95dc765b76db969b998ce0cbb26f01be2e55e7bccd6c7af29cb04",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-audit-report/LICENSE": "b49c8d25a8b57fa92b2902d09c4b8a809157ee32fc10d17b7dbb43c4a8038f79",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/proggy/LICENSE": "a5103404e4615fa1ed46aef13082dd287bf4b95964e71ffdf198984b3d5882b8",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/yallist/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/brace-expansion/LICENSE": "ed40371bfea6cbc1da96366b4089031fc61808a2c0bbed5a6b173126fe36beac",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/emoji-regex/LICENSE-MIT.txt": "f996f6e050e6fc18086162b4b44e301bba345c87deca83f57a27e6d54195556e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/binary-extensions/license": "1e932c8b356239b8a54fe6451a356e4e6e83e11db4976e74bfe80adb3557f20e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/sigstore/LICENSE": "7b0ce3425a26fdba501cb13508af096ade77e4036dd2bd8849031ddecf64f7c9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/strip-ansi-cjs/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/util-deprecate/LICENSE": "140afde889594d07da403cf87c73ecfd55e1b8870fff358fa86f475dc3acde7a",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ci-info/LICENSE": "9886ff4a999c5f71e923fcbe508bd109cea8c532afe6b80dfcdc5b13d9f4bb3f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/aproba/LICENSE": "1b94c9898885c681c1e0ebbf96494e49662842f88ac1e4dd8ffad0ac047108ae",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/pacote/LICENSE": "7453dacb5bd21525d4a669d1bc06656030af39000ecbdcda8e5118d36cedc9be",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/socks-proxy-agent/LICENSE": "22427a9ca2a0ff9c27dde9e26fe6e940529aee030b342a70b435366af0fcc51b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/mkdirp/LICENSE": "108f281cb080b6686d140c5c455e35ef21a55967f85e7f1303c3a295e7724799",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmpack/LICENSE": "2ef361317adeda98117f14c5110182c28eae233af1f7050c83d4396961d14013",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/debug/LICENSE": "b42cd0a02e61c640f8b4132820ba6a3da322d094b32d3b5ef7feefb7099738e3",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/p-map/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/read-cmd-shim/LICENSE": "1b94c9898885c681c1e0ebbf96494e49662842f88ac1e4dd8ffad0ac047108ae",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/supports-color/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmsearch/LICENSE": "2ef361317adeda98117f14c5110182c28eae233af1f7050c83d4396961d14013",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/http-proxy-agent/LICENSE": "9b23600356d202082aee46de3e9878e9ff66f0b251438a2559cdc8609c930ab7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/is-cidr/LICENSE": "73f22b23c0069037f86eae441acd720dfa7c1637e1f91112e9bc1c533352e222",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/isexe/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/chalk/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/LICENSE": "855ae36906c2d355c6ad1b8ee53ebbe81afcdb79a1236f6436e0af3a7f2bc85d",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/validate-npm-package-license/LICENSE": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/normalize-package-data/LICENSE": "d1a9c0bec050e3fb375912c29720fbdeab64da034509206e414d8cb23ea1f9ee",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/fastest-levenshtein/LICENSE.md": "37304238fcfbe46a5b6038bd9c0f0a378d9b6b49b76c5012f0a887701fe29de6",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minizlib/LICENSE": "cf7f1747f25b023e8f304670601ba231456a7218f70548d9196b6015f1eaf84c",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tiny-relative-date/LICENSE.md": "a487062cbc5f9c5197614c3782b13f9049bd7321d8fe4d5e08283edac48fa199",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/read-package-json-fast/LICENSE": "24b8d53712087b867030d18f2bd6d1a72c78f9fb4dee0ce025374da25e4443b9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/archy/LICENSE": "a9ecf3da3825b3e7232f29c970a2869bb1752c900bd75ba7cbabeb69b8f032b4",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ms/license.md": "7e7740f8b42ce676ef87bcc2d721d62e538c0b7393c4186256ac3ee77ee756fc",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tuf-js/LICENSE": "6ba2fb4cc004819b1d872168a7ba6ac4a5a07400366680750321058fe21dd36b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/write-file-atomic/LICENSE.md": "009605dbf12d443d9ad128327f8b382086b3a817f1114d6c3e85b23538781c37",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/read/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-packlist/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/promise-all-reject-late/LICENSE": "1fccd0ad2e7e0e31ddfadeaf0660d7318947b425324645aa85afd7227cab52d7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmhook/LICENSE.md": "b49c8d25a8b57fa92b2902d09c4b8a809157ee32fc10d17b7dbb43c4a8038f79",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/spdx-expression-parse/LICENSE": "9874348297d23c486dfb13b9df158f3fe2f57153ddfd0513507d22f0438ea204",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/wrap-ansi-cjs/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/common-ancestor-path/LICENSE": "1fccd0ad2e7e0e31ddfadeaf0660d7318947b425324645aa85afd7227cab52d7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/json-parse-even-better-errors/LICENSE.md": "d2de5571e57dbcae5949f369d0d9894bf2ff7c0874d3759628652639b3e8167a",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/fs-minipass/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass-sized/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/promzard/LICENSE": "1fccd0ad2e7e0e31ddfadeaf0660d7318947b425324645aa85afd7227cab52d7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ini/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/qrcode-terminal/LICENSE": "b0c4d64802d2d91b929ad494b484751b472f40ce5abf0aa102277fc16f648ae7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/shebang-command/license": "5120c2541a9924b4e51184afeebe84ee0c2cff8e391476f0ef28e62a6703a92e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-bundled/LICENSE": "24b8d53712087b867030d18f2bd6d1a72c78f9fb4dee0ce025374da25e4443b9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/promise-retry/LICENSE": "d6cba7625055e0de7caa5ead87fb53f88eb7bbb015d5f3ba55b475298ea50623",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmversion/LICENSE": "1fccd0ad2e7e0e31ddfadeaf0660d7318947b425324645aa85afd7227cab52d7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/iconv-lite/LICENSE": "bae26f6bd2f7c50fc43e7a8afc1507ceccffc77a62133c84565e7874b5289058",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minimatch/LICENSE": "7562dad0a93e4fbf8547fccac664dc3187231e457c9c0d5c5834bc2d5f31749a",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/promise-call-limit/LICENSE": "1fccd0ad2e7e0e31ddfadeaf0660d7318947b425324645aa85afd7227cab52d7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/env-paths/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmteam/LICENSE": "2ef361317adeda98117f14c5110182c28eae233af1f7050c83d4396961d14013",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmdiff/LICENSE": "60aa4cf74af0ae39c694e32cab95606789180da3b79cb584e1b7f310242d6329",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/foreground-child/LICENSE": "2fc83522f818c1418c4a7390a94fa1d66d2f3bf6af475226d099bf4243e88fb8",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/proc-log/LICENSE": "a5103404e4615fa1ed46aef13082dd287bf4b95964e71ffdf198984b3d5882b8",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmaccess/LICENSE": "2ef361317adeda98117f14c5110182c28eae233af1f7050c83d4396961d14013",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/semver/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass-collect/LICENSE": "ca2d3d147116e1df566aa0e476273edb77229db7bb5849dd2e9ba2d43089c648",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/shebang-regex/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/jsbn/LICENSE": "b3d3d6289b9f32fe169d9ca5fd76c38fa333c034a8f4848046ad2c055288ee3c",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/safer-buffer/LICENSE": "e15582df774daf2392ca0c9248b08d5bb0522c875699de6c062f8be2fdc3e919",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmexec/LICENSE": "60aa4cf74af0ae39c694e32cab95606789180da3b79cb584e1b7f310242d6329",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ssri/LICENSE.md": "030c94ef243985fac9d59646ff042e58a73a090bdc6f5991786819a4261290ef",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ignore-walk/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-package-arg/LICENSE": "45e433413760dc3ae8169be5ed9c2c77adc31ad4d1bc5a28939576df240f29a0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/encoding/LICENSE": "367b0723daea6b0d1cb4bbf63bcc1375cb68c6a390f0330af0212c94b240de76",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ip-regex/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/strip-ansi/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/exponential-backoff/LICENSE": "5ebd9035b6813650acaea03024934d8b6fb5f62b2887e29dbd0dfcdb34bee88f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass-flush/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/chownr/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-pick-manifest/LICENSE.md": "b49c8d25a8b57fa92b2902d09c4b8a809157ee32fc10d17b7dbb43c4a8038f79",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/validate-npm-package-name/LICENSE": "218f573aa405a239f1265a3f7b80d8296739b87d2158c56568e6df1153ace95b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/agent-base/LICENSE": "22427a9ca2a0ff9c27dde9e26fe6e940529aee030b342a70b435366af0fcc51b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cross-spawn/LICENSE": "f0155399627a3bee975bb56ccd3a2aa51d8dda19b5ce36251682669ffb29a35e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/unique-filename/LICENSE": "8188b6a0d3db5ed1194d2655af1e43a61d6e9d6b058d4b3eb58d25478a2072c1",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/is-fullwidth-code-point/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/path-scurry/LICENSE.md": "865576de51d520f97c8869b9b9f96caf8efd69b82bb6e575fc00b0964dc7a3ca",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/https-proxy-agent/LICENSE": "22427a9ca2a0ff9c27dde9e26fe6e940529aee030b342a70b435366af0fcc51b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ansi-regex/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass/LICENSE": "1f16e79ed0491d739b6961d4c49a1659ff3158fa639704b4ed4671e59a2048dc",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/just-diff/LICENSE": "c4f5a45599ea54331e65a21df7c3738f8c9b3e688e1913caf47facee9017a439",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/parse-conflict-json/LICENSE.md": "733dcbf5b1c95dc765b76db969b998ce0cbb26f01be2e55e7bccd6c7af29cb04",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/bin-links/LICENSE": "45e433413760dc3ae8169be5ed9c2c77adc31ad4d1bc5a28939576df240f29a0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cli-columns/license": "9e67fa1c81c2d7e01f3de9c21541e7efb1f34d363e6da89cc118664f53df7462",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/http-cache-semantics/LICENSE": "1fbc6f0d4289ef63086faf6f1d6256969f0919a76262d70465ba06f771132ac8",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/glob/LICENSE": "d6860500566d903ff58fe4c8d4d595b23a011f5c37b6175fdde5b75921d56995",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/treeverse/LICENSE": "24b8d53712087b867030d18f2bd6d1a72c78f9fb4dee0ce025374da25e4443b9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmpublish/LICENSE": "2ef361317adeda98117f14c5110182c28eae233af1f7050c83d4396961d14013",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/jackspeak/LICENSE.md": "fd54a96ff95433409fdb1c7957a43a6383184363b4872df9035b36fbb4b68a2e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/path-key/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/hosted-git-info/LICENSE": "ac8c5bf1568ae996712633646201100150eb805c35ab90a893ba1b54cc575adf",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/postcss-selector-parser/LICENSE-MIT": "a562b4aeed0a03767c6ce2da49f1205f09b7d15705b226cf3c32e26d0fb7641b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/string-width/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/which/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass-pipeline/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/sprintf-js/LICENSE": "caf24e5160e50e57e57c926cbc36066a79f2096a2238cf5e7227d98a220075f4",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/libnpmorg/LICENSE": "2ef361317adeda98117f14c5110182c28eae233af1f7050c83d4396961d14013",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-install-checks/LICENSE": "8cacac5768d7ac631777d647f59ced980bc551fa469ca1b9be5538b6765d835c",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/npm-profile/LICENSE.md": "733dcbf5b1c95dc765b76db969b998ce0cbb26f01be2e55e7bccd6c7af29cb04",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cmd-shim/LICENSE": "24b8d53712087b867030d18f2bd6d1a72c78f9fb4dee0ce025374da25e4443b9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/wrap-ansi/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/ansi-styles/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/text-table/LICENSE": "a9ecf3da3825b3e7232f29c970a2869bb1752c900bd75ba7cbabeb69b8f032b4",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/retry/License": "09a2c75918fd382d125b7966f1a13a6ee0e12308c04e9a18159085783e443bc0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/make-fetch-happen/LICENSE": "c49d79211841d8fa00e008dcd7d9531baa35804d05f40e011615c28f970d14da",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cidr-regex/LICENSE": "73f22b23c0069037f86eae441acd720dfa7c1637e1f91112e9bc1c533352e222",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/color-convert/LICENSE": "ddac4c89025943978f67db000bb85a2b5acf8086e98234e223df11f14c4e1eef",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/graceful-fs/LICENSE": "dc1514d1b920fdea5307f3b3baaae6091918f2c7019343ebba5e4e48b4f510e0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/balanced-match/LICENSE.md": "22309088dd86fcb367b5bf3ed8ccb135f047b5a9867a84ae2f4c9ea572b9e882",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/signal-exit/LICENSE.txt": "a71b19749ebde7c65ee97c76dbb6a0287f09880e019fa554b04364c48aa15794",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/spdx-correct/node_modules/spdx-expression-parse/LICENSE": "9874348297d23c486dfb13b9df158f3fe2f57153ddfd0513507d22f0438ea204",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@pkgjs/parseargs/LICENSE": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tinyglobby/node_modules/picomatch/LICENSE": "060522635e5e0d1bdcbea583064dd47afbf52af9607b6e0e463087b9a06876b8",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tinyglobby/node_modules/fdir/LICENSE": "dd9d2fde1db2a559d7f534313f4754ba7c322dec0d39e584a2d1b41f0e976c2e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tar/node_modules/minizlib/LICENSE": "f7b1836544aad288a3eb30e1d6c41e9522572699d1ad2028d971ea93de44bc32",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tar/node_modules/fs-minipass/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tar/node_modules/minipass/LICENSE": "1f16e79ed0491d739b6961d4c49a1659ff3158fa639704b4ed4671e59a2048dc",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tar/node_modules/minizlib/node_modules/minipass/LICENSE": "04400db77d925de5b0264f6db5b44fe6f8b94f9419ad3473caaa8065c525c0be",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tar/node_modules/fs-minipass/node_modules/minipass/LICENSE": "04400db77d925de5b0264f6db5b44fe6f8b94f9419ad3473caaa8065c525c0be",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cacache/node_modules/tar/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cacache/node_modules/yallist/LICENSE.md": "a638a0768dbec922fd821d0b6cce6275231c4b57cfcddf584defce530fbfbbf5",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cacache/node_modules/mkdirp/LICENSE": "3941c7cf73d6aee97007374a5992512ad4f02f4981dc7cf1e99b3b0a42dc6f4b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cacache/node_modules/chownr/LICENSE.md": "a638a0768dbec922fd821d0b6cce6275231c4b57cfcddf584defce530fbfbbf5",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@sigstore/protobuf-specs/LICENSE": "7b0ce3425a26fdba501cb13508af096ade77e4036dd2bd8849031ddecf64f7c9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@sigstore/tuf/LICENSE": "7b0ce3425a26fdba501cb13508af096ade77e4036dd2bd8849031ddecf64f7c9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@tufjs/canonical-json/LICENSE": "6ba2fb4cc004819b1d872168a7ba6ac4a5a07400366680750321058fe21dd36b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/sigstore/node_modules/@sigstore/sign/LICENSE": "7b0ce3425a26fdba501cb13508af096ade77e4036dd2bd8849031ddecf64f7c9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/sigstore/node_modules/@sigstore/bundle/LICENSE": "7b0ce3425a26fdba501cb13508af096ade77e4036dd2bd8849031ddecf64f7c9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/sigstore/node_modules/@sigstore/core/LICENSE": "7b0ce3425a26fdba501cb13508af096ade77e4036dd2bd8849031ddecf64f7c9",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/gyp/LICENSE": "51b84235e57224d4b96500e29c957b4c4d1a5b93aef90fd3ac6e64ad4fd61169",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/gyp/pylib/packaging/LICENSE": "8ef81e4c883c5ccb2a08026cc74ba3193279dd5149b36839d976c0a896637d87",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/gyp/pylib/packaging/LICENSE.APACHE": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/gyp/pylib/packaging/LICENSE.BSD": "67daf15b478dbd91bcd83bff907efff68471d42d2138226b89f039d658d53435",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/node_modules/tar/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/node_modules/yallist/LICENSE.md": "a638a0768dbec922fd821d0b6cce6275231c4b57cfcddf584defce530fbfbbf5",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/node_modules/mkdirp/LICENSE": "3941c7cf73d6aee97007374a5992512ad4f02f4981dc7cf1e99b3b0a42dc6f4b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/node-gyp/node_modules/chownr/LICENSE.md": "a638a0768dbec922fd821d0b6cce6275231c4b57cfcddf584defce530fbfbbf5",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/validate-npm-package-license/node_modules/spdx-expression-parse/LICENSE": "9874348297d23c486dfb13b9df158f3fe2f57153ddfd0513507d22f0438ea204",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/tuf-js/node_modules/@tufjs/models/LICENSE": "6ba2fb4cc004819b1d872168a7ba6ac4a5a07400366680750321058fe21dd36b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/wrap-ansi-cjs/node_modules/ansi-styles/license": "67292c32894c8ac99db06ffa1cb8e9a5171ef988120723ebe673bf76712260ec",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass-sized/node_modules/minipass/LICENSE": "04400db77d925de5b0264f6db5b44fe6f8b94f9419ad3473caaa8065c525c0be",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass-flush/node_modules/minipass/LICENSE": "04400db77d925de5b0264f6db5b44fe6f8b94f9419ad3473caaa8065c525c0be",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/cross-spawn/node_modules/which/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/which/node_modules/isexe/LICENSE": "4dab71242d5f3863d664b4a33ea4cdc0fae0923e2ada0fbbb90e452a7d0d5d94",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/map-workspaces/LICENSE.md": "733dcbf5b1c95dc765b76db969b998ce0cbb26f01be2e55e7bccd6c7af29cb04",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/promise-spawn/LICENSE": "c7ec219b06de947768be869516c7021648e4d1445a07759e1327922de636ff45",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/node-gyp/LICENSE": "8efb18bbd2e321a1dc0b411574fa2b577c376e57e319a009b86d2f410f57676e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/run-script/LICENSE": "45e433413760dc3ae8169be5ed9c2c77adc31ad4d1bc5a28939576df240f29a0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/redact/LICENSE": "4e95371e332c07aca97824564ffe6550a417df5b8a4d1641c06e2d9f3177474e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/arborist/LICENSE.md": "733dcbf5b1c95dc765b76db969b998ce0cbb26f01be2e55e7bccd6c7af29cb04",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/query/LICENSE": "733dcbf5b1c95dc765b76db969b998ce0cbb26f01be2e55e7bccd6c7af29cb04",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/name-from-folder/LICENSE": "91d1e08e62edb2d6d0d291cfa7c5a366df6bc52cf8314d68596642f552adff13",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/fs/LICENSE.md": "733dcbf5b1c95dc765b76db969b998ce0cbb26f01be2e55e7bccd6c7af29cb04",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/config/LICENSE": "45e433413760dc3ae8169be5ed9c2c77adc31ad4d1bc5a28939576df240f29a0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/installed-package-contents/LICENSE": "45e433413760dc3ae8169be5ed9c2c77adc31ad4d1bc5a28939576df240f29a0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/package-json/LICENSE": "004dc539bb082ec99bc9f764e77a60ca0edb4e681464a73a46f534974ada5c48",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/git/LICENSE": "c7ec219b06de947768be869516c7021648e4d1445a07759e1327922de636ff45",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/metavuln-calculator/LICENSE": "45e433413760dc3ae8169be5ed9c2c77adc31ad4d1bc5a28939576df240f29a0",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/fs/lib/cp/LICENSE": "884b3df4817fa2502b7aa5c34e18c5f93788f6477c1a63cccc7486ce5ac49174",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@npmcli/metavuln-calculator/node_modules/pacote/LICENSE": "7453dacb5bd21525d4a669d1bc06656030af39000ecbdcda8e5118d36cedc9be",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@isaacs/string-locale-compare/LICENSE": "1fccd0ad2e7e0e31ddfadeaf0660d7318947b425324645aa85afd7227cab52d7",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@isaacs/fs-minipass/LICENSE": "3f24d692d165989cd9a00fe35ca15a2bc6859e3361fa42aa20babd435f2e4706",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@isaacs/cliui/LICENSE.txt": "2e01c4b44efee8906d0dbafaf0a32e81d666d3872f32d721443eac819a81d26b",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@isaacs/cliui/node_modules/emoji-regex/LICENSE-MIT.txt": "f996f6e050e6fc18086162b4b44e301bba345c87deca83f57a27e6d54195556e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@isaacs/cliui/node_modules/strip-ansi/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@isaacs/cliui/node_modules/ansi-regex/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/@isaacs/cliui/node_modules/string-width/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/minipass-pipeline/node_modules/minipass/LICENSE": "04400db77d925de5b0264f6db5b44fe6f8b94f9419ad3473caaa8065c525c0be",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/wrap-ansi/node_modules/emoji-regex/LICENSE-MIT.txt": "f996f6e050e6fc18086162b4b44e301bba345c87deca83f57a27e6d54195556e",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/wrap-ansi/node_modules/strip-ansi/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/wrap-ansi/node_modules/ansi-regex/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/wrap-ansi/node_modules/string-width/license": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+        "LICENSES/node/node-v22.21.0-win-x64/node_modules/npm/node_modules/make-fetch-happen/node_modules/negotiator/LICENSE": "afe9200bfd30d914879879f17f10b970a455b049d8916b6bb299ca515ce44994",
+        "LICENSES/obs/data/obs-studio/license/gplv2.txt": "78ce5d7501f02474332840dc892748c304033a94d23356ba7a95a939dc38f7b2",
+        "LICENSES/java/jdk-21.0.12.1+1/NOTICE": "c02756bcd9fa8191bf0fda4451bc018414dd44ee35bf09922c24377a475e4b5a",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jartool/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.scripting/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.security.auth/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.localedata/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.datatransfer/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.internal.jvmstat/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.xml.dom/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jpackage/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.compiler/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.crypto.cryptoki/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.internal.ed/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.incubator.vector/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.xml/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.base/LICENSE": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.se/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.hotspot.agent/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jsobject/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.desktop/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.crypto.ec/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.security.jgss/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.crypto.mscapi/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.editpad/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.javadoc/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.internal.opt/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jlink/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.accessibility/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.attach/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.naming.dns/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.internal.vm.compiler.management/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.compiler/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.prefs/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jfr/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.httpserver/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.naming/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jstatd/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.net/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.dynalink/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.security.sasl/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jshell/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.random/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.unsupported/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.rmi/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.zipfs/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.nio.mapmode/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.management.agent/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.management/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.management/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.management.rmi/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.internal.le/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.sql/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jcmd/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.instrument/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.sql.rowset/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.smartcardio/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.sctp/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jconsole/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.charsets/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.unsupported.desktop/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.logging/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jdi/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.internal.vm.ci/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.naming.rmi/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.net.http/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jdwp.agent/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.xml.crypto/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/java.transaction.xa/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.internal.vm.compiler/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.security.jgss/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.management.jfr/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/java/jdk-21.0.12.1+1/legal/jdk.jdeps/LICENSE": "86e0516b888276a492b19f9a84f5a866ed36925fae1510b3a94a0b6213e69192",
+        "LICENSES/ffmpeg/ffmpeg-9.0.2-essentials_build/LICENSE": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+        "LICENSES/oculix/Settings/LICENSE": "cea4b6292d59625e14968ec666faa7ae6e237b510d846a96875bd6a282677f3a",
+        "LICENSES/oculix/META-INF/NOTICE.txt": "4ddb61c39258e94981cc7b002e419b97bd40f1acbd91c2f62de1bc5201172642",
+        "LICENSES/oculix/META-INF/LICENSE": "521bb271ac56e0e29a1b1b688b94af17d00d378fc8e63478d8c8b2a7c4a229d0",
+        "LICENSES/oculix/META-INF/LICENSE.txt": "5c9d2d07ef2e47ae9c2af9f192c30549b148b9b57a06043ac2fd236250ef8521",
+        "LICENSES/oculix/META-INF/NOTICE": "1b53d18ba4f74933667701ba74d6b283ab84e53ee75128d84c221bcc4cc7aab2",
+        "LICENSES/oculix/Lib/xlutils/license.txt": "28907976ee86414cc720fafc966563b16eeb6a6aeb1da5f5ed40bac3a8808bcf",
+        "TESTS/profiles/visual.json": "0569a137a10f0d27037a1c224fe9d673e74b1d063fb4ecf50f6469faf7e3b8bb",
+        "TESTS/profiles/slow_start.json": "936401c9bdbf0a5fe17058f76a915f18ebbe4672c3e95d04e9c0210085cebc40",
+        "TESTS/profiles/behavior.json": "9dc3f589dfe68295f46a2d6222166e8cd9f8d16f9e1c1353fdd5a385a4181c68"
+      },
+      "original_source_unchanged": true,
+      "four_audited_cores_match_fixed_main": true
+    }
+  },
+  "requirement_analysis": {
+    "issue": "https://github.com/th060316-lgtm/fullautoQA/issues/1",
+    "sections": [
+      "C-1",
+      "C-2",
+      "C-3",
+      "G"
+    ],
+    "facts": [
+      "C-1 requires measurement/regression/Profile bounds or tolerance, and unavailable is not zero/PASS",
+      "management_evaluator defaults all six absolute resource quality gates REQUIRED; missing threshold is INCONCLUSIVE and blocks domain"
+    ],
+    "inference": "unconditional absolute limit requirement is added beyond Issue wording; separate measurement coverage/evaluator execution/quality outcome/Stable authorization",
+    "constraints": [
+      "do not change unconfigured resource quality to PASS",
+      "keep required measurements and real configured violations strict",
+      "preserve performance-quality NOT_RUN when no baseline tolerance exists",
+      "same-run behavior reproduction does not certify all seeds/Profile-order reversal"
+    ]
+  },
+  "management_final_verdict": "NOT_RUN",
+  "product_acceptance": "HOLD",
+  "stable": "HOLD",
+  "release": "HOLD",
+  "frozen_evaluator_reexecution": [
+    {
+      "run": 1,
+      "management_status": "NOT_RUN",
+      "reproducibility_status": "PASS",
+      "blocking_gates": [
+        "management.cpu",
+        "management.ram",
+        "management.handles",
+        "management.runtime",
+        "management.disk",
+        "management.evidence_size",
+        "management.performance_regression",
+        "management.manual_intervention",
+        "management.no_admin",
+        "management.offline"
+      ]
+    },
+    {
+      "run": 2,
+      "management_status": "NOT_RUN",
+      "reproducibility_status": "PASS",
+      "blocking_gates": [
+        "management.cpu",
+        "management.ram",
+        "management.handles",
+        "management.runtime",
+        "management.disk",
+        "management.evidence_size",
+        "management.performance_regression",
+        "management.manual_intervention",
+        "management.no_admin",
+        "management.offline"
+      ]
+    },
+    {
+      "run": 3,
+      "management_status": "NOT_RUN",
+      "reproducibility_status": "PASS",
+      "blocking_gates": [
+        "management.cpu",
+        "management.ram",
+        "management.handles",
+        "management.runtime",
+        "management.disk",
+        "management.evidence_size",
+        "management.performance_regression",
+        "management.manual_intervention",
+        "management.no_admin",
+        "management.offline"
+      ]
+    }
+  ],
+  "source_tests": {
+    "scope": "current fixed-main Source in isolated copy; not Final Windows E2E",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest TESTS.test_management_hq TESTS.test_phase3_integrated TESTS.test_hq_coordinator_integration -q",
+    "tests_run": 58,
+    "errors": 0,
+    "failures": 0,
+    "exit_code": 0
+  }
+}
