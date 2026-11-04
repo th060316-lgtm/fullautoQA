@@ -1,0 +1,285 @@
+{
+  "status": "IMPLEMENTED_SUPPORTING_VALIDATION_COMPLETE_WINDOWS_NOT_RUN",
+  "base_main": "23e0f3809ecb0da2ab68d62ffee443c68e68e408",
+  "source_tree": "d2fac7374b68677f037c5166d92e0da7a72e53b3",
+  "branch": "work/intake-blackbox-20261104",
+  "files": [
+    {
+      "path": "開発版/source/CORE/target_intake.py",
+      "sha256": "936c5a17c0696e5c0e8929478776728c1ecc46a2a0198b8442c10c621fb7e6e1"
+    },
+    {
+      "path": "開発版/source/SUPPLEMENTARY/blackbox/prepare_copy.py",
+      "sha256": "f1560d37a291d7af242b4dd320925d2ac6c1ea205a219df686321962e293b08f"
+    },
+    {
+      "path": "開発版/source/SUPPLEMENTARY/blackbox/politics_profile.json",
+      "sha256": "4389f3998a712c2a3b251b6d58638c089b9684f1ecd030d0cecc51801e973c6c"
+    },
+    {
+      "path": "開発版/source/SUPPLEMENTARY/blackbox/README.md",
+      "sha256": "2e60ec7d10efe4339fdc153db67138957ff4352929e6d97c5076529578502a02"
+    },
+    {
+      "path": "開発版/source/GAME/supplementary/blackbox_visual_adapter.py",
+      "sha256": "cc32827130df9b1d4432e666a47d93779d2783855bcced3370f3bdcaa474ff45"
+    },
+    {
+      "path": "開発版/source/TESTS/test_target_intake_cli.py",
+      "sha256": "5cba601404ca9e2e8e03bf22785b3313421c925c799ae994f1f4478eec0ea35b"
+    },
+    {
+      "path": "開発版/source/TESTS/test_supplementary_blackbox.py",
+      "sha256": "25ce3fca940486c0762d1266ab0ae8087ec8aabb345bfeb526b4c77a352fb7af"
+    }
+  ],
+  "verification": {
+    "intake_unit_tests": 5,
+    "copy_profile_unit_tests": 4,
+    "existing_phase3_tests": 14,
+    "total_pass": 23,
+    "windows_desktop": "NOT_RUN",
+    "core_bridge_less_desktop_run": "NOT_RUN",
+    "original_source_git_blobs_verified": 65,
+    "headless_import": "exit 0",
+    "headless_real_game_process": "exit 0",
+    "shutdown_diagnostics_retained": true
+  },
+  "intake_result": {
+    "scenario": "Explicit selection of existing frozen real-game Profile",
+    "command_argv": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+      "intake_work/source_recovered/CORE/target_intake.py",
+      "--root",
+      "intake_work/source_recovered",
+      "select",
+      "--profile",
+      "intake_work/source_recovered/PROFILES/targets/politicstrasport.json",
+      "--replace"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.053831216000162385,
+    "user_commands": 1,
+    "manually_authored_files": 0,
+    "profile_path_values_entered": 1,
+    "isolated_root_override_values_entered": 1,
+    "explicit_replace_decision": true,
+    "existing_profile_files_required": 1,
+    "source_files_prerequisite": 65,
+    "source_deployment": "Existing acceptance prepare_target.py prepared source and Adapter before intake; deployment is not included in the one selection command",
+    "acceptance": "NOT_RUN",
+    "result": {
+      "status": "SELECTED_UNRUN",
+      "manifest": "/workspace/scratch/166d6c67f044/intake_work/source_recovered/QA_TARGETS.json",
+      "profile": "PROFILES/targets/politicstrasport.json",
+      "target_id": "politicstrasport-development",
+      "auto_bound": false,
+      "acceptance": "NOT_RUN",
+      "manifest_readback_ok": true,
+      "files_created": 0,
+      "files_written": 1,
+      "profile_copied": false,
+      "existing_contract_preserved": true
+    }
+  },
+  "blackbox_linux_support": {
+    "base_main": "23e0f3809ecb0da2ab68d62ffee443c68e68e408",
+    "source_origin": {
+      "repository": "th060316-lgtm/PoliticsTrasport",
+      "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+      "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
+      "original_prototype_type": "logic",
+      "original_files": 65
+    },
+    "original_65_git_blobs_verified_against_latest_github_inventory": true,
+    "process_argv": [
+      "/usr/local/bin/godot",
+      "--headless",
+      "--path",
+      "/workspace/scratch/166d6c67f044/intake_work/source_recovered/GAME/supplementary/politics_blackbox",
+      "--quit-after",
+      "180",
+      "--max-fps",
+      "60"
+    ],
+    "pid": 249,
+    "exit_code": 0,
+    "duration_seconds": 3.817378725000026,
+    "process_samples": [
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 172032,
+        "cpu_seconds": 0.0,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 68444160,
+        "cpu_seconds": 0.19,
+        "handles": 5
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 99102720,
+        "cpu_seconds": 0.39,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 153104384,
+        "cpu_seconds": 0.59,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 154968064,
+        "cpu_seconds": 0.64,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 154968064,
+        "cpu_seconds": 0.65,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 154968064,
+        "cpu_seconds": 0.66,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 154968064,
+        "cpu_seconds": 0.66,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 155004928,
+        "cpu_seconds": 0.68,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 169984000,
+        "cpu_seconds": 0.76,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 169984000,
+        "cpu_seconds": 0.77,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 169984000,
+        "cpu_seconds": 0.78,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 169984000,
+        "cpu_seconds": 0.8,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 169984000,
+        "cpu_seconds": 0.81,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 170000384,
+        "cpu_seconds": 0.82,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 170033152,
+        "cpu_seconds": 0.86,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 170033152,
+        "cpu_seconds": 0.87,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 170033152,
+        "cpu_seconds": 0.88,
+        "handles": 4
+      },
+      {
+        "pid": 249,
+        "exit_code": null,
+        "ram": 170033152,
+        "cpu_seconds": 0.9,
+        "handles": 4
+      }
+    ],
+    "import_exit_code": 0,
+    "script_or_parse_error": false,
+    "shutdown_diagnostics": [
+      "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+      "ERROR: 15 resources still in use at exit (run with --verbose for details)."
+    ],
+    "window": "NOT_RUN",
+    "screenshot": "NOT_RUN",
+    "input": "NOT_RUN",
+    "ocr": "NOT_RUN",
+    "playable_e2e": "NOT_RUN",
+    "reason": "No X11 display/socket or Xvfb on Linux host; real headless process/logs are supporting evidence only",
+    "product_acceptance": "HOLD"
+  },
+  "source_copy_summary": {
+    "source_read_only_unchanged": true,
+    "removed": [
+      "qa/PoliticsTransportQaAdapter.gd",
+      "qa/QaBridge.gd"
+    ],
+    "changed": [
+      "project.godot",
+      "scenes/Main.tscn"
+    ],
+    "origin": {
+      "repository": "th060316-lgtm/PoliticsTrasport",
+      "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+      "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
+      "original_prototype_type": "logic",
+      "original_files": 65
+    },
+    "acceptance": "NOT_RUN"
+  },
+  "limitations": [
+    "No Linux desktop/display or Xvfb; Window/Screenshot/Input/OCR/Playable E2E are NOT_RUN",
+    "Visible crop response threshold has not been calibrated by a real desktop run",
+    "Visible changes are not OCR, semantic gameplay success or original prototype quality",
+    "Source and adapter deployment precede the one-command Profile selection; games and controls are not generated",
+    "Core manifest/package regeneration and full regression remain integration work",
+    "Formal Final A/B, Candidate, original game source, main, Stable and releases unchanged"
+  ],
+  "integration": "Apply only the listed 7 source files. Do not overlay QA_TARGETS.json, TARGET_PREPARATION.json, GAME/targets or generated supplementary game copies."
+}
