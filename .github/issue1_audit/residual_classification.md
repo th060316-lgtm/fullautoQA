@@ -37,3 +37,18 @@
 EVIDENCE_ONLY=既存証拠、SOURCE_LIGHT=小規模Source/fixture/negative、LIGHT_RUNTIME=軽量実対象、FINAL_PACKAGE_REQUIRED=製品bytes変更後の最終再構築・再系列、LOCAL_MACHINE_REQUIRED=利用者PC、HUMAN_REQUIRED=実人間、SPEC_SEMANTIC_CONFLICT=正本上の意味が一意に決まらない場合。
 
 旧Candidateで行った実ゲーム3RunはSource変更後のCandidateの証拠に流用しない。新規小Issueは作らず、Stable/Release/Issue closeはユーザーの明示承認なしに実行しない。
+
+
+## Integration checkpoint — 2026-11-05
+
+PR #17 now integrates the preserved residual branches through merge commit `592fc733eef29c49fe50ece9475e92a0d2d40e2a` plus report compatibility fix `18c81e46e797c8f2d25549d7647a7444a50f437d`.
+
+Integrated heads:
+- generic QA: `709f773b1b5a2af8ca273dec7753dfcdc815127e`
+- supplementary browser acceptance: `dc4db737897093e2343588602ff431b4d8acf3d8`
+- management evaluator/evidence: `880b648f872e764d2f3c897cfe1ba1f2b77989fd`
+- sales blind/model audit: `1a62f8dd309e6cd58b9d32184288a7a10e02da1e`
+- independent management audit: `4aaacdcc626e640b9bd1b336271a4016d8e54797`
+- local acceptance observer kit: `af08018acc1db852c0deb6f2dcce0b04e1fa699e`
+
+This checkpoint is integration provenance only. It does not mark Management, Sales, Human, local offline/non-admin, Stable, Product Acceptance, or Issue #1 complete. Existing final Candidate and final A-B-A evidence remain historical acceptance evidence until a shipped Candidate change is actually rebuilt and re-run.
