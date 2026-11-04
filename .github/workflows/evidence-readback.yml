@@ -53,35 +53,55 @@ jobs:
           if os.environ.get('READBACK_KIND')=='build_proof':
               reports={}
               for name in ['PHASE3_CANDIDATE_IDENTITY.json','WINDOWS_PHASE3_ACCEPTANCE.json','PHASE3_CANDIDATE_BUILD_REPORT.json','FRESH_EXTRACTION_INTEGRITY.json','ARCHIVE_INTEGRITY.json','STAGED_PACKAGE_INTEGRITY.json']:
-                  paths=list(pathlib.Path('_evidence').rglob(name)); assert len(paths)==1, 'BUILD_PROOF_MISSING:'+name
+                  paths=list(pathlib.Path('_evidence').rglob(name))
+                  assert len(paths)==1, 'BUILD_PROOF_MISSING:'+name
                   reports[name]=json.loads(paths[0].read_text(encoding='utf-8-sig'))
-              identity=reports['PHASE3_CANDIDATE_IDENTITY.json']; inventory=list(pathlib.Path('_evidence').rglob(identity['runtime_payload_inventory_file'])); assert len(inventory)==1, 'PRESERVED_INVENTORY_MISSING'
-              with inventory[0].open('rb') as f: digest=hashlib.file_digest(f,'sha256').hexdigest()
+              identity=reports['PHASE3_CANDIDATE_IDENTITY.json']
+              inventory=list(pathlib.Path('_evidence').rglob(identity['runtime_payload_inventory_file']))
+              assert len(inventory)==1, 'PRESERVED_INVENTORY_MISSING'
+              with inventory[0].open('rb') as f:
+                  digest=hashlib.file_digest(f,'sha256').hexdigest()
               assert digest==identity['runtime_payload_inventory_sha256'], 'PRESERVED_INVENTORY_HASH'
-              print('BUILD_PROOF_READBACK='+json.dumps({'reports':reports,'preserved_inventory_hash':'PASS'},ensure_ascii=True),flush=True); sys.exit(0)
-          archives=list(pathlib.Path('_evidence').rglob('RESULT_FOR_CHATGPT.zip')); assert archives, 'RESULT_ARCHIVE_MISSING'
+              print('BUILD_PROOF_READBACK='+json.dumps({'reports':reports,'preserved_inventory_hash':'PASS'},ensure_ascii=True),flush=True)
+              sys.exit(0)
+          archives=list(pathlib.Path('_evidence').rglob('RESULT_FOR_CHATGPT.zip'))
+          assert archives, 'RESULT_ARCHIVE_MISSING'
           for path in archives:
               with zipfile.ZipFile(path) as z:
-                  names=z.namelist(); assert len(names)==len(set(names)), 'DUPLICATE_ENTRY'
+                  names=z.namelist()
+                  assert len(names)==len(set(names)), 'DUPLICATE_ENTRY'
                   assert z.testzip() is None, 'CRC_FAILURE'
-                  manifest=json.loads(z.read('evidence_manifest.json')); assert {r['file'] for r in manifest}==set(names)-{'evidence_manifest.json'}, 'MANIFEST_SET'
+                  manifest=json.loads(z.read('evidence_manifest.json'))
+                  assert {r['file'] for r in manifest}==set(names)-{'evidence_manifest.json'}, 'MANIFEST_SET'
                   for row in manifest:
-                      raw=z.read(row['file']); assert len(raw)==row['size'] and hashlib.sha256(raw).hexdigest()==row['sha256'], 'EVIDENCE_HASH'
-                  data=json.loads(z.read('result.json')); events=[json.loads(l) for l in z.read('events.jsonl').decode('utf-8-sig').splitlines() if l.strip()]
+                      raw=z.read(row['file'])
+                      assert len(raw)==row['size'] and hashlib.sha256(raw).hexdigest()==row['sha256'], 'EVIDENCE_HASH'
+                  data=json.loads(z.read('result.json'))
+                  events=[json.loads(l) for l in z.read('events.jsonl').decode('utf-8-sig').splitlines() if l.strip()]
                   refs=[ref for row in data['results']+events for ref in row.get('evidence',[])]+[row['file'] for row in events if row.get('file')]
                   assert all(ref in names for ref in refs), 'MISSING_REFERENCE'
                   state=[e for e in events if e['type']=='state' and e['test_case'].endswith('.pause_resume')]
                   physical=[e for e in events if e['type']=='physical_input']
-                  report={'run_id':data['run_id'],'required_counts':dict(collections.Counter(r['status'] for r in data['results'] if r.get('gate')=='REQUIRED')),'crc':'PASS','manifest_entries':len(manifest),'evidence_missing':0,'result_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'diagnostics':data.get('supporting_diagnostics',[]),'physical_input_count':len(physical),'physical_input_samples':physical[:6],'pause_states':[{'paused':e['current_state'].get('paused'),'transitions':e['current_state'].get('observed_pause_transitions'),'mapping':e['current_state'].get('input_mapping')} for e in state],'smoke_actions':[e.get('action') for e in events if e['type']=='action' and e['test_case'].endswith('.smoke')],'headquarters':[{'name':d['name'],'status':d['status'],'reason_code':d.get('reason_code')} for d in data['headquarters']['domains']]}
-                  report['measurements']=json.loads(z.read('management_evidence.json')).get('measurements') if 'management_evidence.json' in names else None
-              report['environment']=json.loads(z.read('phase3_environment.json')) if 'phase3_environment.json' in names else None
-              report['action_event_count']=sum(e['type']=='action' for e in events)
-              report['physical_input_count_scope']='explicit selector adapter trace events; other inputs appear in action events'
-              report['video_files']=[{'file':n,'size':z.getinfo(n).file_size} for n in names if n.endswith('.mp4')]
-              print('EVIDENCE_READBACK='+json.dumps(report,ensure_ascii=False),flush=True)
-          PY
+                  report={
+                      'run_id':data['run_id'],
+                      'required_counts':dict(collections.Counter(r['status'] for r in data['results'] if r.get('gate')=='REQUIRED')),
+                      'crc':'PASS','manifest_entries':len(manifest),'evidence_missing':0,
+                      'result_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
+                      'diagnostics':data.get('supporting_diagnostics',[]),
+                      'resolved_selector_input_events':len(physical),'selector_input_samples':physical[:6],
+                      'action_event_count':sum(e['type']=='action' for e in events),
+                      'pause_states':[{'paused':e['current_state'].get('paused'),'transitions':e['current_state'].get('observed_pause_transitions'),'mapping':e['current_state'].get('input_mapping')} for e in state],
+                      'smoke_actions':[e.get('action') for e in events if e['type']=='action' and e['test_case'].endswith('.smoke')],
+                      'headquarters':[{'name':d['name'],'status':d['status'],'reason_code':d.get('reason_code')} for d in data['headquarters']['domains']],
+                      'measurements':json.loads(z.read('management_evidence.json')).get('measurements') if 'management_evidence.json' in names else None,
+                      'environment':json.loads(z.read('phase3_environment.json')) if 'phase3_environment.json' in names else None,
+                      'video_files':[{'file':n,'size':z.getinfo(n).file_size} for n in names if n.endswith('.mp4')]
+                  }
+                  print('EVIDENCE_READBACK='+json.dumps(report,ensure_ascii=True),flush=True)
           for name in ['SERIES_COMPARISON.json','CANDIDATE_FREEZE.json','TARGET_FREEZE.json','PERSISTENT_ENVIRONMENT_READBACK.json','OPERATION_LOG.json']:
               for path in pathlib.Path('_evidence').rglob(name):
                   value=json.loads(path.read_text(encoding='utf-8-sig'))
-                  if name=='OPERATION_LOG.json': value={k:v for k,v in value.items() if k!='automated_operations'}
+                  if name=='OPERATION_LOG.json':
+                      value={k:v for k,v in value.items() if k!='automated_operations'}
                   print('SIDECAR_READBACK='+json.dumps({'file':name,'data':value},ensure_ascii=True),flush=True)
+          PY
