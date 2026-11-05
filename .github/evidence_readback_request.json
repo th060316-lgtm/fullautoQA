@@ -1,6 +1,7 @@
 {
-  "scope": "Completed preflight readback only, not a Final Run",
-  "run_id": 41769703178,
-  "artifact_id": 13295435438,
-  "artifact_name": "Target-A-Preflight-41769703178"
+  "scope": "Read-only failing Candidate fixture implementation inspection",
+  "kind": "candidate_fixture_source",
+  "run_id": 41772879950,
+  "artifact_id": 13295677913,
+  "artifact_name": "FullAutoQA-Phase3-Candidate-780ae10c2ec14878747de94e9426130f4685e128-Attempt-1"
 }

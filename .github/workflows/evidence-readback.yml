@@ -13,6 +13,7 @@ jobs:
       changed: ${{ steps.check.outputs.changed }}
       run_id: ${{ steps.check.outputs.run_id }}
       artifact_name: ${{ steps.check.outputs.artifact_name }}
+      kind: ${{ steps.check.outputs.kind }}
     steps:
       - uses: actions/github-script@v7
         id: check
@@ -22,7 +23,7 @@ jobs:
             const specFile=(await github.rest.repos.getContent({owner,repo,path:'.github/evidence_readback_request.json',ref:context.payload.pull_request.head.sha})).data;
             const spec=JSON.parse(Buffer.from(specFile.content,'base64').toString('utf8'));
             if(!Number.isSafeInteger(spec.run_id)||!spec.artifact_name)throw new Error('READBACK_REQUEST_INVALID');
-            core.setOutput('run_id',String(spec.run_id));core.setOutput('artifact_name',spec.artifact_name);
+            core.setOutput('run_id',String(spec.run_id));core.setOutput('artifact_name',spec.artifact_name);core.setOutput('kind',spec.kind||'result_zip');
             if(context.payload.action!=='synchronize'||!context.payload.before){core.setOutput('changed','true');return;}
             const a=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
             const b=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
@@ -35,6 +36,8 @@ jobs:
     if: needs.inputs.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      READBACK_KIND: ${{ needs.inputs.outputs.kind }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -46,20 +49,87 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import collections,hashlib,json,pathlib,zipfile
-          archives=list(pathlib.Path('_evidence').rglob('RESULT_FOR_CHATGPT.zip')); assert archives, 'RESULT_ARCHIVE_MISSING'
+          import collections,hashlib,json,pathlib,zipfile,os,sys
+          if os.environ.get('READBACK_KIND')=='build_proof':
+              reports={}
+              for name in ['PHASE3_CANDIDATE_IDENTITY.json','WINDOWS_PHASE3_ACCEPTANCE.json','PHASE3_CANDIDATE_BUILD_REPORT.json','FRESH_EXTRACTION_INTEGRITY.json','ARCHIVE_INTEGRITY.json','STAGED_PACKAGE_INTEGRITY.json']:
+                  paths=list(pathlib.Path('_evidence').rglob(name))
+                  assert len(paths)==1, 'BUILD_PROOF_MISSING:'+name
+                  reports[name]=json.loads(paths[0].read_text(encoding='utf-8-sig'))
+              identity=reports['PHASE3_CANDIDATE_IDENTITY.json']
+              inventory=list(pathlib.Path('_evidence').rglob(identity['runtime_payload_inventory_file']))
+              assert len(inventory)==1, 'PRESERVED_INVENTORY_MISSING'
+              with inventory[0].open('rb') as f:
+                  digest=hashlib.file_digest(f,'sha256').hexdigest()
+              assert digest==identity['runtime_payload_inventory_sha256'], 'PRESERVED_INVENTORY_HASH'
+              print('BUILD_PROOF_READBACK='+json.dumps({'reports':reports,'preserved_inventory_hash':'PASS'},ensure_ascii=True),flush=True)
+              sys.exit(0)
+          if os.environ.get('READBACK_KIND')=='candidate_fixture_source':
+              archives=list(pathlib.Path('_evidence').rglob('FullAutoQA_PHASE3_CANDIDATE.zip'))
+              assert len(archives)==1, 'CANDIDATE_ARCHIVE_MISSING'
+              archive=archives[0]
+              with archive.open('rb') as stream:sha=hashlib.file_digest(stream,'sha256').hexdigest()
+              assert sha=='ea56efa813835427f6047898954476444b512cb2d1b48d4e600c7c9799363c2b', 'CANDIDATE_IDENTITY_MISMATCH'
+              files={}
+              with zipfile.ZipFile(archive) as z:
+                  for name in ['GAME/fixtures/fixture.gd','GAME/fixtures/project.godot','GAME/fixtures/main.tscn']:
+                      raw=z.read(next(n for n in z.namelist() if n.replace('\\','/')==name));files[name]={'sha256':hashlib.sha256(raw).hexdigest(),'content':raw.decode('utf-8-sig')}
+              print('CANDIDATE_SOURCE_READBACK='+json.dumps({'candidate_sha256':sha,'files':files},ensure_ascii=True),flush=True)
+              sys.exit(0)
+          archives=list(pathlib.Path('_evidence').rglob('RESULT_FOR_CHATGPT.zip'))
+          assert archives, 'RESULT_ARCHIVE_MISSING'
           for path in archives:
               with zipfile.ZipFile(path) as z:
-                  names=z.namelist(); assert len(names)==len(set(names)), 'DUPLICATE_ENTRY'
+                  names=z.namelist()
+                  assert len(names)==len(set(names)), 'DUPLICATE_ENTRY'
                   assert z.testzip() is None, 'CRC_FAILURE'
-                  manifest=json.loads(z.read('evidence_manifest.json')); assert {r['file'] for r in manifest}==set(names)-{'evidence_manifest.json'}, 'MANIFEST_SET'
+                  manifest=json.loads(z.read('evidence_manifest.json'))
+                  assert {r['file'] for r in manifest}==set(names)-{'evidence_manifest.json'}, 'MANIFEST_SET'
                   for row in manifest:
-                      raw=z.read(row['file']); assert len(raw)==row['size'] and hashlib.sha256(raw).hexdigest()==row['sha256'], 'EVIDENCE_HASH'
-                  data=json.loads(z.read('result.json')); events=[json.loads(l) for l in z.read('events.jsonl').decode('utf-8-sig').splitlines() if l.strip()]
+                      raw=z.read(row['file'])
+                      assert len(raw)==row['size'] and hashlib.sha256(raw).hexdigest()==row['sha256'], 'EVIDENCE_HASH'
+                  data=json.loads(z.read('result.json'))
+                  events=[json.loads(l) for l in z.read('events.jsonl').decode('utf-8-sig').splitlines() if l.strip()]
                   refs=[ref for row in data['results']+events for ref in row.get('evidence',[])]+[row['file'] for row in events if row.get('file')]
                   assert all(ref in names for ref in refs), 'MISSING_REFERENCE'
                   state=[e for e in events if e['type']=='state' and e['test_case'].endswith('.pause_resume')]
                   physical=[e for e in events if e['type']=='physical_input']
-                  report={'run_id':data['run_id'],'required_counts':dict(collections.Counter(r['status'] for r in data['results'] if r.get('gate')=='REQUIRED')),'crc':'PASS','manifest_entries':len(manifest),'evidence_missing':0,'result_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'diagnostics':data.get('supporting_diagnostics',[]),'physical_input_count':len(physical),'physical_input_samples':physical[:6],'pause_states':[{'paused':e['current_state'].get('paused'),'transitions':e['current_state'].get('observed_pause_transitions'),'mapping':e['current_state'].get('input_mapping')} for e in state],'smoke_actions':[e.get('action') for e in events if e['type']=='action' and e['test_case'].endswith('.smoke')],'headquarters':[{'name':d['name'],'status':d['status'],'reason_code':d.get('reason_code')} for d in data['headquarters']['domains']]}
-                  print('EVIDENCE_READBACK='+json.dumps(report,ensure_ascii=False),flush=True)
+                  for row in data['results']:
+                      if row.get('gate')!='REQUIRED' or row['status']=='PASS':continue
+                      details={}
+                      for ref in row.get('evidence',[]):
+                          if ref.endswith('.json') and z.getinfo(ref).file_size<200000:details[ref]=json.loads(z.read(ref))
+                      for value in list(details.values()):
+                          for verdict in value.get('raw_verdicts',[]):
+                              for ref in verdict.get('evidence',[]):
+                                  if ref.endswith('.json') and z.getinfo(ref).file_size<200000:details[ref]=json.loads(z.read(ref))
+                      case=row['test_case'];subject=case.rsplit('.',1)[-1]
+                      related=[e for e in events if (subject in e.get('test_case','').split('.') or ('_fault_'+subject) in e.get('test_case','')) and e['type'] in ('state','action','issue','failure','error','case_end','case_start')]
+                      print('FAILURE_READBACK='+json.dumps({'case':case,'result':row,'evidence':details,'events':related[-100:]},ensure_ascii=True),flush=True)
+                  report={
+                      'run_id':data['run_id'],
+                      'required_counts':dict(collections.Counter(r['status'] for r in data['results'] if r.get('gate')=='REQUIRED')),
+                      'crc':'PASS','manifest_entries':len(manifest),'evidence_missing':0,
+                      'result_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
+                      'diagnostics':data.get('supporting_diagnostics',[]),
+                      'resolved_selector_input_events':len(physical),'selector_input_samples':physical[:6],
+                      'action_event_count':sum(e['type']=='action' for e in events),
+                      'pause_states':[{'paused':e['current_state'].get('paused'),'transitions':e['current_state'].get('observed_pause_transitions'),'mapping':e['current_state'].get('input_mapping')} for e in state],
+                      'smoke_actions':[e.get('action') for e in events if e['type']=='action' and e['test_case'].endswith('.smoke')],
+                      'coverage':[{'case':r['test_case'],'status':r['status'],'gate':r.get('gate'),'reason_code':r.get('reason_code'),'detail':r.get('detail'),'evidence':r.get('evidence')} for r in data['results']],
+                      'hq_required_counts':{domain:dict(collections.Counter(row['status'] for row in (data.get(domain+'_readback',{}).get('gate_status') or []) if row.get('required'))) for domain in ('management','sales')},
+                      'management_readback':{key:data.get('management_readback',{}).get(key) for key in ('measurements','signals','unresolved_gates','real_game_acceptance')},
+                      'sales_readback':{key:data.get('sales_readback',{}).get(key) for key in ('reviewer','human_test_performed','phases','unresolved_gates')},
+                      'headquarters':[{'name':d['name'],'status':d['status'],'reason_code':d.get('reason_code')} for d in data['headquarters']['domains']],
+                      'measurements':json.loads(z.read('management_evidence.json')).get('measurements') if 'management_evidence.json' in names else None,
+                      'environment':json.loads(z.read('phase3_environment.json')) if 'phase3_environment.json' in names else None,
+                      'video_files':[{'file':n,'size':z.getinfo(n).file_size} for n in names if n.endswith('.mp4')]
+                  }
+                  print('EVIDENCE_READBACK='+json.dumps(report,ensure_ascii=True),flush=True)
+          for name in ['SERIES_COMPARISON.json','CANDIDATE_FREEZE.json','TARGET_FREEZE.json','PERSISTENT_ENVIRONMENT_READBACK.json','OPERATION_LOG.json']:
+              for path in pathlib.Path('_evidence').rglob(name):
+                  value=json.loads(path.read_text(encoding='utf-8-sig'))
+                  if name=='OPERATION_LOG.json':
+                      value={k:v for k,v in value.items() if k!='automated_operations'}
+                  print('SIDECAR_READBACK='+json.dumps({'file':name,'data':value},ensure_ascii=True),flush=True)
           PY
