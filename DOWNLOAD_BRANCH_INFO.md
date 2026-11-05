@@ -1,25 +1,20 @@
 # FullAutoQA lightweight download branch
 
-This branch is an update pack for the local final-acceptance run.
+This branch carries the current local final-acceptance update without the large donor block payload.
 
 Snapshot source main:
 16bcf4e209c4b65ca98273eb43ee47ab38dbae11
 
-Purpose:
-- Avoid downloading the large main tree again.
-- Reuse the preserved donor blocks already present in a previous complete download.
-- Update the current Source, acceptance targets, recovery source archive, JOIN metadata, and local completion entrypoint.
-
-This branch intentionally does not contain complete_v033/blocks and is not standalone.
-
 ## Use
 
 1. Download this branch as ZIP and extract it.
-2. Keep the previous complete FullAutoQA download that contains the donor blocks.
-3. Run APPLY_UPDATE.cmd from this update pack.
-4. After UPDATE PASS, run RUN_LOCAL_COMPLETION.cmd inside the updated complete download.
-5. To validate offline operation at the same time, disconnect external network access before starting the local completion runner.
+2. Run APPLY_UPDATE.cmd.
+3. Enter the folder you want to update.
+4. The updater only requires that the folder exists and is not the update package itself. It copies the current payload and SHA-256 verifies every copied file.
+5. Run RUN_LOCAL_COMPLETION.cmd in the updated folder.
 
-The local completion runner now creates and removes its own temporary logical workspace, so the user does not need to move the download folder to shorten build paths.
+The local runner itself is responsible for discovering and validating the donor blocks, Source, acceptance bundle, Candidate integrity, selftest, and A-B-A requirements. The updater does not reject a folder based on guessed repository structure.
+
+This branch intentionally omits complete_v033/blocks to keep the download small. A local run still needs those preserved donor blocks to exist in the updated folder because Candidate reconstruction actually consumes them.
 
 Main remains authoritative. This branch is transport-only.
