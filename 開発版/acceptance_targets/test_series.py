@@ -46,9 +46,15 @@ class SeriesIntegrityTests(unittest.TestCase):
             env=os.environ.copy();env['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
             parent=os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER')
             before=len(OPERATION_LOG)
-            code=run_logged(
-                [sys.executable,'-c',"import os;print(os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER',''))"],
-                root,log,timeout=30,env=env)
+            core_path=str(Path(__file__).resolve().parents[1]/'source'/'CORE')
+            inserted=core_path not in sys.path
+            if inserted:sys.path.insert(0,core_path)
+            try:
+                code=run_logged(
+                    [sys.executable,'-c',"import os;print(os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER',''))"],
+                    root,log,timeout=30,env=env)
+            finally:
+                if inserted:sys.path.remove(core_path)
             self.assertEqual(code,0)
             self.assertEqual(log.read_text(encoding='utf-8').strip(),'1')
             self.assertEqual(os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER'),parent)
