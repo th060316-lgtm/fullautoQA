@@ -9,6 +9,7 @@ from __future__ import annotations
 import ctypes
 import json
 import os
+import subprocess
 from pathlib import Path
 
 from common import archive_eligible, inside, write_json
@@ -126,6 +127,38 @@ def _has_real_launch(results):
     )
 
 
+def _network_adapter_snapshot():
+    if os.name != "nt":
+        return {"status": "NOT_MEASURED", "reason": "WINDOWS_REQUIRED"}
+    system_root = os.environ.get("SystemRoot")
+    if not system_root:
+        return {"status": "NOT_MEASURED", "reason": "SYSTEMROOT_UNAVAILABLE"}
+    shell = Path(system_root) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    if not shell.is_file():
+        return {"status": "NOT_MEASURED", "reason": "WINDOWS_POWERSHELL_UNAVAILABLE"}
+    command = "@(Get-NetAdapter -ErrorAction Stop | Where-Object {$_.Status -eq 'Up'}).Count"
+    try:
+        result = subprocess.run(
+            [str(shell), "-NoLogo", "-NoProfile", "-Command", command],
+            capture_output=True,
+            timeout=15,
+            text=True,
+        )
+        if result.returncode != 0:
+            return {
+                "status": "NOT_MEASURED",
+                "reason": "GET_NET_ADAPTER_FAILED",
+                "exit_code": result.returncode,
+            }
+        lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        if not lines:
+            return {"status": "NOT_MEASURED", "reason": "GET_NET_ADAPTER_EMPTY"}
+        count = int(lines[-1])
+        return {"status": "MEASURED", "up_adapter_count": count}
+    except Exception as ex:
+        return {"status": "NOT_MEASURED", "reason": type(ex).__name__}
+
+
 def _write_environment_evidence(e):
     data = {
         "platform": os.name,
@@ -133,7 +166,9 @@ def _write_environment_evidence(e):
         "start_qa_marker": os.environ.get("FULLAUTOQA_START_QA") == "1",
         "fresh_extraction_marker": os.environ.get("FULLAUTOQA_FRESH_EXTRACTION") == "1",
         "fresh_extraction_id": os.environ.get("FULLAUTOQA_FRESH_EXTRACTION_ID") or None,
+        "automated_controller_marker": os.environ.get("FULLAUTOQA_AUTOMATED_CONTROLLER") == "1",
         "admin_status": "UNKNOWN",
+        "network_observation": _network_adapter_snapshot(),
     }
     if os.name == "nt":
         try:
@@ -174,7 +209,7 @@ def _preseal_integrity(results, root):
     return not problems, name
 
 
-def _signals(results, start_qa, fresh, environment_evidence, root):
+def _signals(results, start_qa, fresh, environment_evidence, environment, root):
     out = {}
     perf = _rows(results, ".performance_regression")
     if perf and all(r.get("status") in ("PASS", "FAIL") for r in perf):
@@ -198,6 +233,21 @@ def _signals(results, start_qa, fresh, environment_evidence, root):
         out["one_click"] = {
             "status": True,
             "evidence": ["reproduction.json", environment_evidence],
+        }
+
+    if environment.get("automated_controller_marker"):
+        out["manual_intervention"] = {
+            "status": False,
+            "evidence": [environment_evidence],
+            "scope": "controller_required_steps",
+        }
+
+    network = environment.get("network_observation") or {}
+    if network.get("status") == "MEASURED" and network.get("up_adapter_count") == 0:
+        out["offline"] = {
+            "status": True,
+            "evidence": [environment_evidence],
+            "scope": "no_up_windows_network_adapters_observed",
         }
 
     if os.name == "nt":
@@ -244,6 +294,7 @@ def build_management_evidence(*, e, sessions, results, run_mode, prepared):
             env["start_qa_marker"] and (Path(e.root) / "reproduction.json").is_file(),
             fresh,
             env_name,
+            env,
             e.root,
         ),
     }
