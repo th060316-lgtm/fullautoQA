@@ -1,7 +1,7 @@
 # FullAutoQA local final-completion runner.
 # Uses a temporary drive mapping so the user-selected download location does not become part of deep build paths.
 [CmdletBinding()]
-param([switch]$NativeProcessContractTest)
+param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -167,10 +167,31 @@ function Copy-TopLevelFiles([string]$Source,[string]$Destination,[switch]$SkipAr
   }
 }
 
+function Copy-StableEvidenceTree([string]$Source,[string]$Destination) {
+  if (-not (Test-Path -LiteralPath $Source -PathType Container)) { return }
+  New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+  foreach ($item in @(Get-ChildItem -LiteralPath $Source -Force -ErrorAction Stop)) {
+    if ($item.Name -ieq 'WORK' -or $item.Name -ieq 'video_frames') { continue }
+    if (-not $item.PSIsContainer -and $item.Name -ieq 'RESULT_FOR_CHATGPT.zip') { continue }
+    $dest=Join-Path $Destination $item.Name
+    if ($item.PSIsContainer) {
+      Copy-StableEvidenceTree $item.FullName $dest
+    } else {
+      Copy-Item -LiteralPath $item.FullName -Destination $dest -Force -ErrorAction Stop
+    }
+  }
+}
+
 function Zip-DirectoryIfPresent([string]$Source,[string]$ZipPath) {
   if (-not (Test-Path -LiteralPath $Source -PathType Container)) { return }
-  if (Test-Path -LiteralPath $ZipPath) { Remove-Item -LiteralPath $ZipPath -Force }
-  [IO.Compression.ZipFile]::CreateFromDirectory($Source,$ZipPath,[IO.Compression.CompressionLevel]::Optimal,$false)
+  $stage=Join-Path ([IO.Path]::GetDirectoryName($ZipPath)) ('.stable_zip_stage_' + [Guid]::NewGuid().ToString('N'))
+  try {
+    Copy-StableEvidenceTree $Source $stage
+    if (Test-Path -LiteralPath $ZipPath) { Remove-Item -LiteralPath $ZipPath -Force }
+    [IO.Compression.ZipFile]::CreateFromDirectory($stage,$ZipPath,[IO.Compression.CompressionLevel]::Optimal,$false)
+  } finally {
+    if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue }
+  }
 }
 
 function ConvertTo-NativeArgument {
@@ -290,6 +311,47 @@ function Invoke-NativeProcessContractTest {
   }
 }
 
+function Invoke-EvidenceExportContractTest {
+  if ($env:OS -ne 'Windows_NT') { throw 'EVIDENCE_EXPORT_CONTRACT_TEST_REQUIRES_WINDOWS' }
+  $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('fqa evidence export ' + [Guid]::NewGuid().ToString('N'))
+  $source=Join-Path $testRoot 'RESULTS'
+  $run=Join-Path $source 'Run1'
+  $work=Join-Path $run 'WORK\case\shader_cache'
+  $full=Join-Path $run 'FULL_EVIDENCE'
+  New-Item -ItemType Directory -Path $work -Force | Out-Null
+  New-Item -ItemType Directory -Path $full -Force | Out-Null
+  Set-Content -LiteralPath (Join-Path $run 'result.json') -Value '{"run_id":"contract"}' -Encoding ASCII
+  Set-Content -LiteralPath (Join-Path $full 'stable.txt') -Value 'stable' -Encoding ASCII
+  Set-Content -LiteralPath (Join-Path $run 'RESULT_FOR_CHATGPT.zip') -Value 'nested archive sentinel' -Encoding ASCII
+  $locked=Join-Path $work 'locked.bin'
+  $lock=[IO.File]::Open($locked,[IO.FileMode]::Create,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
+  try {
+    $zip=Join-Path $testRoot 'SELFTEST_RESULTS.zip'
+    Zip-DirectoryIfPresent $source $zip
+    $archive=[IO.Compression.ZipFile]::OpenRead($zip)
+    try {
+      $names=@($archive.Entries | ForEach-Object { $_.FullName.Replace('\','/') })
+      if ($names -notcontains 'Run1/result.json' -or $names -notcontains 'Run1/FULL_EVIDENCE/stable.txt') {
+        throw 'EVIDENCE_EXPORT_STABLE_CONTENT_MISSING'
+      }
+      $forbidden=@($names | Where-Object {
+        $_ -match '(^|/)WORK(/|$)' -or
+        $_ -match '(^|/)video_frames(/|$)' -or
+        $_ -match 'RESULT_FOR_CHATGPT[.]zip$'
+      })
+      if ($forbidden.Count -ne 0) {
+        throw 'EVIDENCE_EXPORT_INCLUDED_TRANSIENT_OR_NESTED_ARCHIVE'
+      }
+    } finally {
+      $archive.Dispose()
+    }
+    Write-Host 'EVIDENCE_EXPORT_CONTRACT_TEST_PASS'
+  } finally {
+    $lock.Dispose()
+    Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+
 function Export-ResultReadback {
   param([string]$ResultZip,[string]$Destination)
   if (-not (Test-Path -LiteralPath $ResultZip -PathType Leaf)) { return }
@@ -350,6 +412,18 @@ function Export-TransientEvidence {
   if ($SelftestRoot) {
     $selfResults=Join-Path $SelftestRoot 'RESULTS'
     if (Test-Path -LiteralPath $selfResults -PathType Container) {
+      $readbackRoot=Join-Path $OutRoot 'selftest_readback'
+      New-Item -ItemType Directory -Path $readbackRoot -Force | Out-Null
+      foreach ($runDir in @(Get-ChildItem -LiteralPath $selfResults -Directory -ErrorAction Stop | Sort-Object Name)) {
+        $certified=Join-Path $runDir.FullName 'RESULT_FOR_CHATGPT.zip'
+        if (Test-Path -LiteralPath $certified -PathType Leaf) {
+          $dest=Join-Path $OutRoot ('SELFTEST_' + $runDir.Name + '_RESULT_FOR_CHATGPT.zip')
+          Copy-Item -LiteralPath $certified -Destination $dest -Force -ErrorAction Stop
+          Export-ResultReadback -ResultZip $certified -Destination (Join-Path $readbackRoot $runDir.Name)
+        }
+      }
+      # Diagnostic archive mirrors CORE evidence boundaries and never descends
+      # into producer-owned WORK or video_frames.
       Zip-DirectoryIfPresent $selfResults (Join-Path $OutRoot 'SELFTEST_RESULTS.zip')
     }
   }
@@ -385,6 +459,10 @@ function Export-ChatEvidence {
     Get-ChildItem -LiteralPath $candidateMetadata -File -Force | Where-Object { $_.Extension -ine '.zip' } | ForEach-Object {
       Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $candidateStage $_.Name) -Force
     }
+  }
+  $selftestReadback=Join-Path $OutRoot 'selftest_readback'
+  if (Test-Path -LiteralPath $selftestReadback -PathType Container) {
+    Copy-Item -LiteralPath $selftestReadback -Destination (Join-Path $stage 'selftest') -Recurse -Force
   }
   if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
     $seriesStage=Join-Path $stage 'series'
@@ -431,6 +509,10 @@ function Export-ChatEvidence {
 
 if ($NativeProcessContractTest) {
   Invoke-NativeProcessContractTest
+  exit 0
+}
+if ($EvidenceExportContractTest) {
+  Invoke-EvidenceExportContractTest
   exit 0
 }
 
