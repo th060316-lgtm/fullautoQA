@@ -1,5 +1,6 @@
 from __future__ import annotations
 import hashlib, json, os, sys, tempfile, unittest, zipfile
+from unittest.mock import patch
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -89,6 +90,54 @@ class Phase3IntegratedTests(unittest.TestCase):
             self.assertNotEqual(report.reason_code,'MANAGEMENT_EVALUATION_NOT_PERFORMED')
             self.assertTrue((root/'phase3_environment.json').is_file())
             self.assertTrue((root/'phase3_preseal_integrity.json').is_file())
+
+    def test_management_controller_and_offline_signals_require_observation(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            (root/'core_check.json').write_text('{}',encoding='utf-8')
+            (root/'launch.bmp').write_bytes(b'x')
+            sess=SimpleNamespace(p={'game_id':'g'},metrics=[])
+            prepared={'identity_snapshot':json.dumps({'T':{
+                'certifies_real_target':True,'generation':3,'fingerprint':'abc'}})}
+            results=[
+                {'test_case':'preflight.core','status':'PASS','evidence':['core_check.json'],'gate':'REQUIRED'},
+                {'test_case':'g.s.launch','status':'PASS','evidence':['launch.bmp'],'gate':'REQUIRED'},
+            ]
+            ev=Evidence(root,'run-phase3')
+            old=os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER')
+            os.environ['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
+            try:
+                with patch('phase3_run_evidence._network_adapter_snapshot',
+                           return_value={'status':'MEASURED','up_adapter_count':0}):
+                    data=build_management_evidence(
+                        e=ev,sessions=[sess],results=results,run_mode='target',prepared=prepared)
+            finally:
+                if old is None:os.environ.pop('FULLAUTOQA_AUTOMATED_CONTROLLER',None)
+                else:os.environ['FULLAUTOQA_AUTOMATED_CONTROLLER']=old
+            self.assertFalse(data['manual_intervention']['status'])
+            self.assertTrue(data['offline']['status'])
+            environment=json.loads((root/'phase3_environment.json').read_text(encoding='utf-8'))
+            self.assertTrue(environment['automated_controller_marker'])
+            self.assertEqual(environment['network_observation']['up_adapter_count'],0)
+
+    def test_management_offline_signal_absent_when_adapter_is_up(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            (root/'core_check.json').write_text('{}',encoding='utf-8')
+            (root/'launch.bmp').write_bytes(b'x')
+            sess=SimpleNamespace(p={'game_id':'g'},metrics=[])
+            prepared={'identity_snapshot':json.dumps({'T':{
+                'certifies_real_target':True,'generation':3,'fingerprint':'abc'}})}
+            results=[
+                {'test_case':'preflight.core','status':'PASS','evidence':['core_check.json'],'gate':'REQUIRED'},
+                {'test_case':'g.s.launch','status':'PASS','evidence':['launch.bmp'],'gate':'REQUIRED'},
+            ]
+            ev=Evidence(root,'run-phase3')
+            with patch('phase3_run_evidence._network_adapter_snapshot',
+                       return_value={'status':'MEASURED','up_adapter_count':1}):
+                data=build_management_evidence(
+                    e=ev,sessions=[sess],results=results,run_mode='target',prepared=prepared)
+            self.assertNotIn('offline',data)
 
     def test_target_identity_without_launch_is_not_real_game(self):
         with tempfile.TemporaryDirectory() as td:
