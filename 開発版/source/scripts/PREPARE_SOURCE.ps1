@@ -10,7 +10,9 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $RepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
 $Destination = [IO.Path]::GetFullPath($Destination)
 if (Test-Path -LiteralPath $Destination) { throw 'SOURCE_DESTINATION_MUST_BE_FRESH' }
-$archive = Join-Path $RepositoryRoot '開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip'
+$archives = @(Get-ChildItem -LiteralPath $RepositoryRoot -Recurse -File -Filter 'FullAutoQA_Recovery_Source_20261102.zip' | Where-Object { -not $_.FullName.StartsWith($Destination + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase) })
+if ($archives.Count -ne 1) { throw ('SOURCE_ARCHIVE_DISCOVERY_FAILED:' + $archives.Count) }
+$archive = $archives[0].FullName
 $zip = [IO.Compression.ZipFile]::OpenRead($archive)
 try {
   foreach ($entry in $zip.Entries) {
@@ -24,7 +26,8 @@ $matches = @(Get-ChildItem -LiteralPath $Destination -Recurse -Filter 'test_core
   Where-Object { $_.Directory.Name -eq 'TESTS' })
 if ($matches.Count -ne 1) { throw ('SOURCE_ROOT_AMBIGUOUS:' + $matches.Count) }
 $sourceRoot = $matches[0].Directory.Parent.FullName
-$current = Join-Path $RepositoryRoot '開発版/source'
+$current = Split-Path -Parent $PSScriptRoot
+if (-not (Test-Path -LiteralPath (Join-Path $current 'CORE') -PathType Container)) { throw 'CURRENT_SOURCE_ROOT_INVALID' }
 Get-ChildItem -LiteralPath $current -Force | ForEach-Object {
   Copy-Item -LiteralPath $_.FullName -Destination $sourceRoot -Recurse -Force
 }
