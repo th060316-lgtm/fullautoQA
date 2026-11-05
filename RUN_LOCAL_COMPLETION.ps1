@@ -486,6 +486,13 @@ try {
   if ($resultZips.Count -ne 3) { throw ('ABA_RESULT_ZIP_COUNT:' + $resultZips.Count) }
   $Summary.aba_series='PASS'
   $Summary.aba_result_zip_count=$resultZips.Count
+  $seriesEnvironmentPath=Join-Path $SeriesOut 'EXECUTION_ENVIRONMENT.json'
+  if (Test-Path -LiteralPath $seriesEnvironmentPath -PathType Leaf) {
+    $seriesEnvironment=Get-Content -LiteralPath $seriesEnvironmentPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($seriesEnvironment.local_windows_offline -eq 'NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED') {
+      $Summary.offline_internet_status='NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_ALL_FINAL_RUNS'
+    }
+  }
   Write-Summary
 
   Write-Host '=== 6/6 Local environment readback ==='
