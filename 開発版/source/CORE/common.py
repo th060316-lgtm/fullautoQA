@@ -23,25 +23,27 @@ def write_json(p,v):
     tmp=p.with_name(p.name+'.tmp'); tmp.write_text(json.dumps(v,ensure_ascii=False,indent=2),encoding='utf-8'); os.replace(tmp,p)
 def read_json(p): return json.loads(Path(p).read_text(encoding='utf-8-sig'))
 def inside(root,rel):
-    root=Path(root).resolve()
-    candidate=root/rel
-    # A producer may atomically replace a regular file while Windows resolves
-    # its final handle path. Resolve the stable parent instead. Links and
-    # reparse points must still resolve their destination before containment.
+    operational_root=Path(root)
+    identity_root=operational_root.resolve()
+    candidate=operational_root/rel
+    # Keep the caller's operational spelling (for example a subst drive) for
+    # downstream file operations. Resolve only for containment identity.
     try:
         info=candidate.lstat()
         link=stat.S_ISLNK(info.st_mode) or bool(getattr(info,'st_file_attributes',0)&0x400)
     except FileNotFoundError:
         link=False
-    p=candidate.resolve() if link else candidate.parent.resolve()/candidate.name
-    if p.is_relative_to(root):return p
-    # Windows may expose one spelling as an 8.3 alias while another is long.
-    # Prove containment by filesystem identity, after resolving reparse points.
-    # Never accept a lexical prefix as a substitute for this identity check.
-    for ancestor in (p,*p.parents):
+    identity_candidate=candidate.resolve() if link else candidate.parent.resolve()/candidate.name
+    if identity_candidate.is_relative_to(identity_root):
+        return operational_root.joinpath(*identity_candidate.relative_to(identity_root).parts)
+    # Windows can expose different spellings for the same directory. Require
+    # filesystem identity; a lexical prefix is never sufficient.
+    for ancestor in (identity_candidate,*identity_candidate.parents):
         try:
-            if ancestor.samefile(root):return root.joinpath(*p.parts[len(ancestor.parts):])
-        except OSError:pass
+            if ancestor.samefile(identity_root):
+                return operational_root.joinpath(*identity_candidate.parts[len(ancestor.parts):])
+        except OSError:
+            pass
     raise ValueError('PATH_ESCAPE: '+str(rel))
 
 def extract_zip(src,dst):
@@ -102,15 +104,25 @@ class Evidence:
                 except (ValueError,TypeError):pass # retain the original log as evidence
         excluded=[]
         for p in sorted(self.root.rglob('*')):
-            if p.is_file() and not archive_eligible(p.relative_to(self.root)):
-                excluded.append({'file':p.relative_to(self.root).as_posix(),'size':p.stat().st_size,'sha256':digest(p),'reason':'TRANSIENT_WORK_NOT_EVIDENCE'})
+            rel=p.relative_to(self.root)
+            if archive_eligible(rel):continue
+            try:
+                info=p.stat()
+                if not stat.S_ISREG(info.st_mode):continue
+                excluded.append({'file':rel.as_posix(),'size':info.st_size,'sha256':digest(p),'reason':'TRANSIENT_WORK_NOT_EVIDENCE'})
+            except FileNotFoundError:
+                excluded.append({'file':rel.as_posix(),'size':None,'sha256':None,'reason':'TRANSIENT_EXCLUDED_FILE_VANISHED'})
+            except OSError:
+                raise
         write_json(self.root/'excluded_work_inventory.json',excluded)
         out=[]
         for p in sorted(self.root.rglob('*')):
             rel=p.relative_to(self.root)
-            if not p.is_file() or not archive_eligible(rel) or rel.as_posix()=='evidence_manifest.json':continue
+            if not archive_eligible(rel) or rel.as_posix()=='evidence_manifest.json':continue
+            info=p.stat()
+            if not stat.S_ISREG(info.st_mode):continue
             rel=rel.as_posix();refs=[e for e in events if rel in e.get('evidence',[]) or rel==e.get('file')]
-            out.append({'file':rel,'type':p.suffix,'size':p.stat().st_size,'sha256':digest(p),'timestamp':stamp(),'run_id':self.run_id,'event_ids':[e.get('event_id') for e in refs],'test_cases':sorted({e.get('test_case','run') for e in refs})})
+            out.append({'file':rel,'type':p.suffix,'size':info.st_size,'sha256':digest(p),'timestamp':stamp(),'run_id':self.run_id,'event_ids':[e.get('event_id') for e in refs],'test_cases':sorted({e.get('test_case','run') for e in refs})})
         write_json(self.root/'evidence_manifest.json',out);return out
 
 def overall(results):
@@ -160,6 +172,30 @@ def report(root,data):
 def archive_eligible(rel):
     rel=Path(rel)
     return rel.name!='RESULT_FOR_CHATGPT.zip' and 'WORK' not in rel.parts and 'video_frames' not in rel.parts
+
+def tree_size(root,eligible_only=False,tolerate_excluded_vanish=False):
+    root=Path(root);total=0
+    def walk_error(ex):
+        filename=getattr(ex,'filename',None)
+        if tolerate_excluded_vanish and isinstance(ex,FileNotFoundError) and filename:
+            try:rel=Path(filename).relative_to(root)
+            except ValueError:pass
+            else:
+                if not archive_eligible(rel):return
+        raise ex
+    for current,dirs,files in os.walk(root,topdown=True,onerror=walk_error,followlinks=False):
+        current=Path(current)
+        if eligible_only:
+            dirs[:]=[name for name in dirs if archive_eligible((current/name).relative_to(root))]
+        for name in files:
+            p=current/name;rel=p.relative_to(root)
+            if eligible_only and not archive_eligible(rel):continue
+            try:info=p.stat()
+            except FileNotFoundError:
+                if tolerate_excluded_vanish and not archive_eligible(rel):continue
+                raise
+            if stat.S_ISREG(info.st_mode):total+=info.st_size
+    return total
 
 def validate_result_zip(path,require_manifest=False,expected_run_id=None):
     with zipfile.ZipFile(path) as z:
