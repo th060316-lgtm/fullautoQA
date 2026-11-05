@@ -14,6 +14,7 @@ $MappedDrive = $null
 $RepoRoot = $PhysicalRepoRoot
 $WorkRoot = $null
 $OutRoot = $null
+$PhysicalOutRoot = $null
 $SummaryPath = $null
 $ExitCode = 1
 $PathBefore = $null
@@ -23,7 +24,7 @@ $SeriesOut = $null
 $BuildOut = $null
 
 $Summary = [ordered]@{
-  schema_version = 3
+  schema_version = 4
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
@@ -50,6 +51,7 @@ $Summary = [ordered]@{
   product_acceptance = 'HOLD'
   stable = 'HOLD'
   evidence_root = $null
+  logical_evidence_root = $null
   chatgpt_evidence_file = 'CHATGPT_EVIDENCE.zip'
   error = $null
 }
@@ -171,6 +173,127 @@ function Zip-DirectoryIfPresent([string]$Source,[string]$ZipPath) {
   [IO.Compression.ZipFile]::CreateFromDirectory($Source,$ZipPath,[IO.Compression.CompressionLevel]::Optimal,$false)
 }
 
+function ConvertTo-NativeArgument {
+  param([AllowEmptyString()][string]$Value)
+  if ($null -eq $Value -or $Value.Length -eq 0) { return '""' }
+  if ($Value -notmatch '[\s"]') { return $Value }
+
+  $builder=New-Object Text.StringBuilder
+  [void]$builder.Append('"')
+  $backslashes=0
+  foreach ($ch in $Value.ToCharArray()) {
+    if ($ch -eq '\') {
+      $backslashes++
+      continue
+    }
+    if ($ch -eq '"') {
+      if ($backslashes -gt 0) { [void]$builder.Append(('\' * ($backslashes * 2))) }
+      [void]$builder.Append('\"')
+      $backslashes=0
+      continue
+    }
+    if ($backslashes -gt 0) {
+      [void]$builder.Append(('\' * $backslashes))
+      $backslashes=0
+    }
+    [void]$builder.Append($ch)
+  }
+  if ($backslashes -gt 0) { [void]$builder.Append(('\' * ($backslashes * 2))) }
+  [void]$builder.Append('"')
+  return $builder.ToString()
+}
+
+function Join-NativeArguments {
+  param([string[]]$Values)
+  return (($Values | ForEach-Object { ConvertTo-NativeArgument ([string]$_) }) -join ' ')
+}
+
+function Invoke-NativeLogged {
+  param(
+    [string]$FilePath,
+    [string[]]$Arguments,
+    [string]$WorkingDirectory,
+    [string]$LogPath
+  )
+  if (-not $WorkRoot) { throw 'WORKSPACE_NOT_INITIALIZED' }
+  $token=[Guid]::NewGuid().ToString('N')
+  $stdout=Join-Path $WorkRoot ('.native_'+$token+'.stdout.log')
+  $stderr=Join-Path $WorkRoot ('.native_'+$token+'.stderr.log')
+  $params=@{
+    FilePath=$FilePath
+    ArgumentList=(Join-NativeArguments $Arguments)
+    NoNewWindow=$true
+    PassThru=$true
+    RedirectStandardOutput=$stdout
+    RedirectStandardError=$stderr
+  }
+  if ($WorkingDirectory) { $params.WorkingDirectory=$WorkingDirectory }
+  $process=Start-Process @params
+  $process.WaitForExit()
+  $code=$process.ExitCode
+  $lines=New-Object 'System.Collections.Generic.List[string]'
+  if (Test-Path -LiteralPath $stdout -PathType Leaf) {
+    foreach ($line in @(Get-Content -LiteralPath $stdout)) { $lines.Add($line) }
+  }
+  if (Test-Path -LiteralPath $stderr -PathType Leaf) {
+    foreach ($line in @(Get-Content -LiteralPath $stderr)) { $lines.Add($line) }
+  }
+  $lines | Set-Content -LiteralPath $LogPath -Encoding UTF8
+  foreach ($line in $lines) { Write-Host $line }
+  Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
+  return [pscustomobject]@{ExitCode=$code}
+}
+
+function Export-ResultReadback {
+  param([string]$ResultZip,[string]$Destination)
+  if (-not (Test-Path -LiteralPath $ResultZip -PathType Leaf)) { return }
+  New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+  [ordered]@{
+    file=[IO.Path]::GetFileName($ResultZip)
+    size=(Get-Item -LiteralPath $ResultZip).Length
+    sha256=Get-SHA256 $ResultZip
+  } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $Destination 'RESULT_ZIP_IDENTITY.json') -Encoding UTF8
+  $wanted=@(
+    'result.json',
+    'SUMMARY.txt',
+    'evidence_manifest.json',
+    'phase3_environment.json',
+    'phase3_preseal_integrity.json',
+    'management_evidence.json',
+    'sales_evidence.json',
+    'player_review_packet.json',
+    'full_evidence_index.json'
+  )
+  $archive=[IO.Compression.ZipFile]::OpenRead($ResultZip)
+  try {
+    foreach ($name in $wanted) {
+      $entry=$archive.Entries | Where-Object { $_.FullName.Replace('\','/') -eq $name } | Select-Object -First 1
+      if ($entry) {
+        $dest=Join-Path $Destination $name
+        [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$dest,$true)
+      }
+    }
+    foreach ($entry in $archive.Entries) {
+      $name=$entry.FullName.Replace('\','/')
+      if ($name.Contains('/') -or -not $name.EndsWith('.json',[StringComparison]::OrdinalIgnoreCase)) { continue }
+      if ($name -eq 'reproduction.json' -or
+          $name -like '*_behavioral_regression.json' -or
+          $name -like '*_performance_regression.json' -or
+          $name -like '*_resources.json') {
+        [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,(Join-Path $Destination $name),$true)
+      }
+    }
+  } finally { $archive.Dispose() }
+}
+function Persist-SeriesEvidence {
+  param([string]$Source)
+  if (-not $Source -or -not (Test-Path -LiteralPath $Source -PathType Container)) { return $Source }
+  $destination=Join-Path $OutRoot 'series_full'
+  if ([IO.Path]::GetFullPath($Source) -eq [IO.Path]::GetFullPath($destination)) { return $Source }
+  if (Test-Path -LiteralPath $destination) { throw 'SERIES_EVIDENCE_DESTINATION_EXISTS' }
+  Move-Item -LiteralPath $Source -Destination $destination
+  return $destination
+}
 function Export-TransientEvidence {
   if (-not $OutRoot) { return }
 
@@ -185,26 +308,17 @@ function Export-TransientEvidence {
     }
   }
 
-  if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
-    Zip-DirectoryIfPresent $SeriesOut (Join-Path $OutRoot 'ABA_EVIDENCE.zip')
-    $resultZips=@(Get-ChildItem -LiteralPath $SeriesOut -Recurse -Filter 'RESULT_FOR_CHATGPT.zip' -File | Sort-Object FullName)
-    $i=0
-    foreach ($item in $resultZips) {
-      $i++
-      Copy-Item -LiteralPath $item.FullName -Destination (Join-Path $OutRoot ('Run'+$i+'_RESULT_FOR_CHATGPT.zip')) -Force
-    }
-  }
+  # Full A-B-A evidence is moved once into OutRoot/series_full so it survives
+  # workspace cleanup without duplicating the large Result ZIPs.
 }
 
 function Export-ChatEvidence {
   if (-not $OutRoot -or -not (Test-Path -LiteralPath $OutRoot -PathType Container)) { return }
-
   $stage=Join-Path $OutRoot '.chat_evidence_stage'
   $zip=Join-Path $OutRoot 'CHATGPT_EVIDENCE.zip'
   $identity=Join-Path $OutRoot 'CHATGPT_EVIDENCE_IDENTITY.json'
   if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
   New-Item -ItemType Directory -Path $stage -Force | Out-Null
-
   foreach ($name in @(
     'LOCAL_COMPLETION_SUMMARY.json',
     'DONOR_JOIN.log',
@@ -218,7 +332,6 @@ function Export-ChatEvidence {
       Copy-Item -LiteralPath $source -Destination (Join-Path $stage $name) -Force
     }
   }
-
   $candidateMetadata=Join-Path $OutRoot 'candidate_build'
   if (Test-Path -LiteralPath $candidateMetadata -PathType Container) {
     $candidateStage=Join-Path $stage 'candidate_build'
@@ -227,22 +340,38 @@ function Export-ChatEvidence {
       Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $candidateStage $_.Name) -Force
     }
   }
-
   if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
     $seriesStage=Join-Path $stage 'series'
     New-Item -ItemType Directory -Path $seriesStage -Force | Out-Null
-    foreach ($name in @('SERIES_COMPARISON.json','PERSISTENT_ENVIRONMENT_READBACK.json','OPERATION_LOG.json')) {
+    foreach ($name in @(
+      'CANDIDATE_FREEZE.json',
+      'TARGET_FREEZE.json',
+      'EXECUTION_ENVIRONMENT.json',
+      'SERIES_RECORDS.json',
+      'SERIES_COMPARISON.json',
+      'PERSISTENT_ENVIRONMENT_READBACK.json',
+      'OPERATION_LOG.json'
+    )) {
       $source=Join-Path $SeriesOut $name
       if (Test-Path -LiteralPath $source -PathType Leaf) {
         Copy-Item -LiteralPath $source -Destination (Join-Path $seriesStage $name) -Force
       }
     }
+    foreach ($runDir in @(Get-ChildItem -LiteralPath $SeriesOut -Directory -Filter 'Run*' | Sort-Object Name)) {
+      $runStage=Join-Path $seriesStage $runDir.Name
+      New-Item -ItemType Directory -Path $runStage -Force | Out-Null
+      foreach ($name in @('RUN_IDENTITY.json','FRESH_PACKAGE_INTEGRITY.json','TARGET_PREPARATION.json')) {
+        $source=Join-Path $runDir.FullName $name
+        if (Test-Path -LiteralPath $source -PathType Leaf) {
+          Copy-Item -LiteralPath $source -Destination (Join-Path $runStage $name) -Force
+        }
+      }
+      Export-ResultReadback -ResultZip (Join-Path $runDir.FullName 'RESULT_FOR_CHATGPT.zip') -Destination (Join-Path $runStage 'result_readback')
+    }
   }
-
   if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
   [IO.Compression.ZipFile]::CreateFromDirectory($stage,$zip,[IO.Compression.CompressionLevel]::Optimal,$false)
   Remove-Item -LiteralPath $stage -Recurse -Force
-
   $chatIdentity=[ordered]@{
     file=[IO.Path]::GetFileName($zip)
     size=(Get-Item -LiteralPath $zip).Length
@@ -266,13 +395,15 @@ try {
   $RepoRoot = ($MappedDrive + '\')
   $WorkRoot = Join-Path $RepoRoot ('.fqa_work_' + $RunTag)
   $OutRoot = Join-Path $RepoRoot ('LOCAL_FINAL_ACCEPTANCE_' + $RunTag)
+  $PhysicalOutRoot = Join-Path $PhysicalRepoRoot ('LOCAL_FINAL_ACCEPTANCE_' + $RunTag)
   New-Item -ItemType Directory -Path $WorkRoot -Force | Out-Null
   New-Item -ItemType Directory -Path $OutRoot -Force | Out-Null
   $SummaryPath = Join-Path $OutRoot 'LOCAL_COMPLETION_SUMMARY.json'
   $Summary.logical_repository_root = $RepoRoot
   $Summary.workspace_drive = $MappedDrive
   $Summary.workspace_root = $WorkRoot
-  $Summary.evidence_root = $OutRoot
+  $Summary.evidence_root = $PhysicalOutRoot
+  $Summary.logical_evidence_root = $OutRoot
   $Summary.status = 'RUNNING'
 
   $Summary.network_snapshot = Get-NetworkSnapshot
@@ -282,9 +413,9 @@ try {
   Write-Host '=== 1/6 Reconstruct preserved v0.3.3 donor ==='
   $join = Find-RepositoryFile -Root $RepoRoot -Name 'JOIN_COMPLETE.ps1' -RequiredSiblings @('manifest.json','blocks')
   $complete = Split-Path -Parent $join
-  & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $join 2>&1 |
-    Tee-Object -FilePath (Join-Path $OutRoot 'DONOR_JOIN.log')
-  if ($LASTEXITCODE -ne 0) { throw ('DONOR_JOIN_FAILED:' + $LASTEXITCODE) }
+  $donorRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$join) -WorkingDirectory $complete -LogPath (Join-Path $OutRoot 'DONOR_JOIN.log')
+  $donorCode=$donorRun.ExitCode
+  if ($donorCode -ne 0) { throw ('DONOR_JOIN_FAILED:' + $donorCode) }
   $manifest = Get-Content -LiteralPath (Join-Path $complete 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
   $donor = Join-Path $complete ([string]$manifest.file)
   if (-not (Test-Path -LiteralPath $donor -PathType Leaf)) { throw 'DONOR_ARCHIVE_MISSING_AFTER_JOIN' }
@@ -320,9 +451,9 @@ try {
     '-DonorArchive',$donor,'-SourceRoot',$sourceRoot,'-OutputDir',$BuildOut,
     '-SourceBaseline',$Summary.source_tree_fingerprint
   )
-  & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" @buildArgs 2>&1 |
-    Tee-Object -FilePath (Join-Path $OutRoot 'CANDIDATE_BUILD.log')
-  if ($LASTEXITCODE -ne 0) { throw ('CANDIDATE_BUILD_FAILED:' + $LASTEXITCODE) }
+  $buildRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments $buildArgs -WorkingDirectory $sourceRoot -LogPath (Join-Path $OutRoot 'CANDIDATE_BUILD.log')
+  $buildCode=$buildRun.ExitCode
+  if ($buildCode -ne 0) { throw ('CANDIDATE_BUILD_FAILED:' + $buildCode) }
   $Summary.candidate_build='PASS'
 
   $identityPath = Join-Path $BuildOut 'PHASE3_CANDIDATE_IDENTITY.json'
@@ -353,19 +484,21 @@ try {
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   $bundledPython = Join-Path $SelftestRoot 'RUNTIME\python\python.exe'
   if (-not (Test-Path -LiteralPath $bundledPython -PathType Leaf)) { throw 'BUNDLED_PYTHON_NOT_FOUND' }
-  & $bundledPython -B -E -s -m unittest discover -s (Join-Path $SelftestRoot 'TESTS') -v 2>&1 |
-    Tee-Object -FilePath (Join-Path $OutRoot 'BUNDLED_SOURCE_TESTS.log')
-  $sourceTestCode=$LASTEXITCODE
+  $sourceArgs=@('-B','-E','-s','-m','unittest','discover','-s',(Join-Path $SelftestRoot 'TESTS'),'-v')
+  $sourceRun=Invoke-NativeLogged -FilePath $bundledPython -Arguments $sourceArgs -WorkingDirectory $SelftestRoot -LogPath (Join-Path $OutRoot 'BUNDLED_SOURCE_TESTS.log')
+  $sourceTestCode=$sourceRun.ExitCode
   if ($sourceTestCode -ne 0) { throw ('BUNDLED_SOURCE_REGRESSION_FAILED:' + $sourceTestCode) }
   $Summary.source_regression='PASS'
   Write-Summary
 
+  Remove-Item -LiteralPath $SelftestRoot -Recurse -Force
+  $SelftestRoot = Join-Path $WorkRoot 'selftest_fresh'
+  [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
+  Set-Content -LiteralPath (Join-Path $SelftestRoot 'PHASE3_FRESH_EXTRACTION.marker') -Value ([Guid]::NewGuid().ToString('N')) -Encoding ASCII
+
   Write-Host '=== 4/6 Fresh Candidate START_QA selftest ==='
-  Push-Location $SelftestRoot
-  try {
-    & cmd.exe /d /c 'START_QA.cmd -SelfTest' 2>&1 | Tee-Object -FilePath (Join-Path $OutRoot 'START_QA_SELFTEST.log')
-    $selfCode=$LASTEXITCODE
-  } finally { Pop-Location }
+  $selfRun=Invoke-NativeLogged -FilePath (Join-Path $env:SystemRoot 'System32\cmd.exe') -Arguments @('/d','/c','START_QA.cmd','-SelfTest') -WorkingDirectory $SelftestRoot -LogPath (Join-Path $OutRoot 'START_QA_SELFTEST.log')
+  $selfCode=$selfRun.ExitCode
   Export-TransientEvidence
   if ($selfCode -ne 0) { throw ('WINDOWS_SELFTEST_FAILED:' + $selfCode) }
   $Summary.windows_selftest='PASS'
@@ -380,9 +513,12 @@ try {
   $controllerPython = Join-Path $ControllerRoot 'RUNTIME\python\python.exe'
   $seriesScript = Join-Path $ControllerRoot 'ACCEPTANCE\run_series.py'
   $SeriesOut = Join-Path $WorkRoot 'series'
-  & $controllerPython -B -E -s $seriesScript --candidate $candidate --expected-sha $candidateSha --output $SeriesOut 2>&1 |
-    Tee-Object -FilePath (Join-Path $OutRoot 'ABA_SERIES.log')
-  $seriesCode=$LASTEXITCODE
+  $seriesArgs=@('-B','-E','-s',$seriesScript,'--candidate',$candidate,'--expected-sha',$candidateSha,'--output',$SeriesOut)
+  $seriesRun=Invoke-NativeLogged -FilePath $controllerPython -Arguments $seriesArgs -WorkingDirectory $ControllerRoot -LogPath (Join-Path $OutRoot 'ABA_SERIES.log')
+  $seriesCode=$seriesRun.ExitCode
+  if (Test-Path -LiteralPath $SeriesOut -PathType Container) {
+    $SeriesOut=Persist-SeriesEvidence -Source $SeriesOut
+  }
   Export-TransientEvidence
   if ($seriesCode -ne 0) { throw ('ABA_SERIES_FAILED:' + $seriesCode) }
 
@@ -395,6 +531,13 @@ try {
   if ($resultZips.Count -ne 3) { throw ('ABA_RESULT_ZIP_COUNT:' + $resultZips.Count) }
   $Summary.aba_series='PASS'
   $Summary.aba_result_zip_count=$resultZips.Count
+  $seriesEnvironmentPath=Join-Path $SeriesOut 'EXECUTION_ENVIRONMENT.json'
+  if (Test-Path -LiteralPath $seriesEnvironmentPath -PathType Leaf) {
+    $seriesEnvironment=Get-Content -LiteralPath $seriesEnvironmentPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($seriesEnvironment.local_windows_offline -eq 'NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED') {
+      $Summary.offline_internet_status='NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_ALL_FINAL_RUNS'
+    }
+  }
   Write-Summary
 
   Write-Host '=== 6/6 Local environment readback ==='
@@ -409,7 +552,7 @@ try {
   Write-Host ''
   Write-Host 'LOCAL TECHNICAL ACCEPTANCE PASS'
   Write-Host ('Candidate SHA256: ' + $candidateSha)
-  Write-Host ('Evidence root: ' + $OutRoot)
+  Write-Host ('Evidence root: ' + $PhysicalOutRoot)
   Write-Host 'Offline internet use and Human/Product acceptance remain separate claims; do not mark them PASS unless actually performed.'
 }
 catch {
@@ -427,7 +570,7 @@ catch {
   }
   Write-Summary
   [Console]::Error.WriteLine('LOCAL_COMPLETION_FAILED: ' + $_.Exception.Message)
-  if ($OutRoot) { [Console]::Error.WriteLine('Preserve evidence at: ' + $OutRoot) }
+  if ($PhysicalOutRoot) { [Console]::Error.WriteLine('Preserve evidence at: ' + $PhysicalOutRoot) }
   $ExitCode=1
 }
 finally {

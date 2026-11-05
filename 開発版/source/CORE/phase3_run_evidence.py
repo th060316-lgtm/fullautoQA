@@ -9,6 +9,8 @@ from __future__ import annotations
 import ctypes
 import json
 import os
+import ipaddress
+import socket
 from pathlib import Path
 
 from common import archive_eligible, inside, write_json
@@ -126,6 +128,41 @@ def _has_real_launch(results):
     )
 
 
+def _network_adapter_snapshot():
+    if os.name != "nt":
+        return {"status": "NOT_MEASURED", "reason": "WINDOWS_REQUIRED"}
+    try:
+        import psutil
+        stats = psutil.net_if_stats()
+        addrs = psutil.net_if_addrs()
+        up_external = []
+        for name, stat in stats.items():
+            if not stat.isup:
+                continue
+            usable = False
+            for addr in addrs.get(name, ()):
+                if addr.family not in (socket.AF_INET, socket.AF_INET6):
+                    continue
+                raw = str(addr.address).split("%", 1)[0]
+                try:
+                    ip = ipaddress.ip_address(raw)
+                except ValueError:
+                    continue
+                if not ip.is_loopback and not ip.is_unspecified:
+                    usable = True
+                    break
+            if usable:
+                up_external.append(str(name))
+        return {
+            "status": "MEASURED",
+            "up_adapter_count": len(up_external),
+            "up_adapters": sorted(up_external),
+            "method": "psutil_non_loopback_ip_interfaces",
+        }
+    except Exception as ex:
+        return {"status": "NOT_MEASURED", "reason": type(ex).__name__}
+
+
 def _write_environment_evidence(e):
     data = {
         "platform": os.name,
@@ -133,7 +170,9 @@ def _write_environment_evidence(e):
         "start_qa_marker": os.environ.get("FULLAUTOQA_START_QA") == "1",
         "fresh_extraction_marker": os.environ.get("FULLAUTOQA_FRESH_EXTRACTION") == "1",
         "fresh_extraction_id": os.environ.get("FULLAUTOQA_FRESH_EXTRACTION_ID") or None,
+        "automated_controller_marker": os.environ.get("FULLAUTOQA_AUTOMATED_CONTROLLER") == "1",
         "admin_status": "UNKNOWN",
+        "network_observation": _network_adapter_snapshot(),
     }
     if os.name == "nt":
         try:
@@ -174,7 +213,8 @@ def _preseal_integrity(results, root):
     return not problems, name
 
 
-def _signals(results, start_qa, fresh, environment_evidence, root):
+def _signals(results, start_qa, fresh, environment_evidence, root, environment=None):
+    environment = environment or {}
     out = {}
     perf = _rows(results, ".performance_regression")
     if perf and all(r.get("status") in ("PASS", "FAIL") for r in perf):
@@ -198,6 +238,21 @@ def _signals(results, start_qa, fresh, environment_evidence, root):
         out["one_click"] = {
             "status": True,
             "evidence": ["reproduction.json", environment_evidence],
+        }
+
+    if environment.get("automated_controller_marker"):
+        out["manual_intervention"] = {
+            "status": False,
+            "evidence": [environment_evidence],
+            "scope": "controller_required_steps",
+        }
+
+    network = environment.get("network_observation") or {}
+    if network.get("status") == "MEASURED" and network.get("up_adapter_count") == 0:
+        out["offline"] = {
+            "status": True,
+            "evidence": [environment_evidence],
+            "scope": "no_up_non_loopback_ip_interfaces_observed",
         }
 
     if os.name == "nt":
@@ -245,6 +300,7 @@ def build_management_evidence(*, e, sessions, results, run_mode, prepared):
             fresh,
             env_name,
             e.root,
+            environment=env,
         ),
     }
     if len(identities) == 1:
