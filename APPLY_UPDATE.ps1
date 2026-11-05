@@ -13,36 +13,21 @@ function Get-SHA256([string]$Path) {
   finally { $h.Dispose(); $s.Dispose() }
 }
 
-function Test-FullDownload([string]$Root) {
-  try {
-    $r=[IO.Path]::GetFullPath($Root)
-    if (-not (Test-Path -LiteralPath $r -PathType Container)) { return $false }
-    $joins=@(Get-ChildItem -LiteralPath $r -Recurse -File -Filter 'JOIN_COMPLETE.ps1' -ErrorAction Stop | Where-Object {
-      (Test-Path -LiteralPath (Join-Path $_.Directory.FullName 'manifest.json') -PathType Leaf) -and
-      (Test-Path -LiteralPath (Join-Path $_.Directory.FullName 'blocks') -PathType Container)
-    })
-    return ($joins.Count -eq 1)
-  } catch { return $false }
+if ([string]::IsNullOrWhiteSpace($TargetRoot)) {
+  $TargetRoot=Read-Host 'Enter the folder to update'
 }
 
+$TargetRoot=$TargetRoot.Trim().Trim('"')
 if ([string]::IsNullOrWhiteSpace($TargetRoot)) {
-  $parent=Split-Path -Parent $PackageRoot
-  $candidates=@(Get-ChildItem -LiteralPath $parent -Directory | Where-Object {
-    $_.FullName -ne $PackageRoot -and (Test-FullDownload $_.FullName)
-  })
-  if ($candidates.Count -eq 1) {
-    $TargetRoot=$candidates[0].FullName
-  } else {
-    $TargetRoot=Read-Host 'Enter the path of the previous full fullautoQA download'
-  }
+  throw 'UPDATE_TARGET_NOT_SUPPLIED'
 }
 
 $TargetRoot=[IO.Path]::GetFullPath($TargetRoot)
-if (-not (Test-FullDownload $TargetRoot)) {
-  throw 'TARGET_IS_NOT_A_COMPLETE_PREVIOUS_DOWNLOAD'
+if (-not (Test-Path -LiteralPath $TargetRoot -PathType Container)) {
+  throw ('UPDATE_TARGET_DIRECTORY_NOT_FOUND:' + $TargetRoot)
 }
 if ($TargetRoot.Equals($PackageRoot,[StringComparison]::OrdinalIgnoreCase)) {
-  throw 'TARGET_MUST_DIFFER_FROM_UPDATE_PACKAGE'
+  throw 'UPDATE_TARGET_MUST_DIFFER_FROM_UPDATE_PACKAGE'
 }
 
 $excluded=@('APPLY_UPDATE.cmd','APPLY_UPDATE.ps1','DOWNLOAD_BRANCH_INFO.md')
@@ -65,17 +50,17 @@ foreach ($file in $files) {
   $copied++
 }
 
-$joins=@(Get-ChildItem -LiteralPath $TargetRoot -Recurse -File -Filter 'JOIN_COMPLETE.ps1' | Where-Object {
-  (Test-Path -LiteralPath (Join-Path $_.Directory.FullName 'manifest.json') -PathType Leaf) -and
-  (Test-Path -LiteralPath (Join-Path $_.Directory.FullName 'blocks') -PathType Container)
-})
-if ($joins.Count -ne 1) { throw ('POST_UPDATE_JOIN_DISCOVERY_FAILED:' + $joins.Count) }
-
-$runner=Join-Path $TargetRoot 'RUN_LOCAL_COMPLETION.cmd'
-if (-not (Test-Path -LiteralPath $runner -PathType Leaf)) { throw 'POST_UPDATE_RUNNER_MISSING' }
+$runnerSource=Join-Path $PackageRoot 'RUN_LOCAL_COMPLETION.ps1'
+$runnerDest=Join-Path $TargetRoot 'RUN_LOCAL_COMPLETION.ps1'
+if (-not (Test-Path -LiteralPath $runnerDest -PathType Leaf)) {
+  throw 'UPDATED_RUNNER_MISSING'
+}
+if ((Get-SHA256 $runnerSource) -ne (Get-SHA256 $runnerDest)) {
+  throw 'UPDATED_RUNNER_VERIFY_FAILED'
+}
 
 Write-Host 'UPDATE PASS'
 Write-Host ('Files copied and verified: ' + $copied)
-Write-Host ('Updated full download: ' + $TargetRoot)
-Write-Host 'Next: disconnect external network if testing offline operation, then run RUN_LOCAL_COMPLETION.cmd in the updated full download.'
+Write-Host ('Updated folder: ' + $TargetRoot)
+Write-Host 'Next: run RUN_LOCAL_COMPLETION.cmd in the updated folder.'
 exit 0
