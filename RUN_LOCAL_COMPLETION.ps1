@@ -302,13 +302,34 @@ function Export-ChatEvidence {
   if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
     $seriesStage=Join-Path $stage 'series'
     New-Item -ItemType Directory -Path $seriesStage -Force | Out-Null
-    foreach ($name in @('CANDIDATE_FREEZE.json','TARGET_FREEZE.json','EXECUTION_ENVIRONMENT.json','SERIES_RECORDS.json','SERIES_COMPARISON.json','PERSISTENT_ENVIRONMENT_READBACK.json','OPERATION_LOG.json')) {
+    foreach ($name in @(
+      'CANDIDATE_FREEZE.json',
+      'TARGET_FREEZE.json',
+      'EXECUTION_ENVIRONMENT.json',
+      'SERIES_RECORDS.json',
+      'SERIES_COMPARISON.json',
+      'PERSISTENT_ENVIRONMENT_READBACK.json',
+      'OPERATION_LOG.json'
+    )) {
       $source=Join-Path $SeriesOut $name
       if (Test-Path -LiteralPath $source -PathType Leaf) {
         Copy-Item -LiteralPath $source -Destination (Join-Path $seriesStage $name) -Force
       }
     }
-    foreach ($runDir in @(Get-ChildItem -LiteralPath $SeriesOut -Directory | Where-Object { $_.Name -match '^Run[0-9]+
+
+    foreach ($runDir in @(Get-ChildItem -LiteralPath $SeriesOut -Directory -Filter 'Run*' | Sort-Object Name)) {
+      $runStage=Join-Path $seriesStage $runDir.Name
+      New-Item -ItemType Directory -Path $runStage -Force | Out-Null
+      foreach ($name in @('RUN_IDENTITY.json','FRESH_PACKAGE_INTEGRITY.json','TARGET_PREPARATION.json')) {
+        $source=Join-Path $runDir.FullName $name
+        if (Test-Path -LiteralPath $source -PathType Leaf) {
+          Copy-Item -LiteralPath $source -Destination (Join-Path $runStage $name) -Force
+        }
+      }
+      Export-ResultReadback (Join-Path $runDir.FullName 'RESULT_FOR_CHATGPT.zip') (Join-Path $runStage 'result_readback')
+    }
+  }
+
   if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
   [IO.Compression.ZipFile]::CreateFromDirectory($stage,$zip,[IO.Compression.CompressionLevel]::Optimal,$false)
   Remove-Item -LiteralPath $stage -Recurse -Force
