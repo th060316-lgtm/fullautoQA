@@ -1,21 +1,16 @@
-# FullAutoQA lightweight download branch
+# FullAutoQA lightweight local final-acceptance update
 
-This branch carries the current local final-acceptance update without the large donor block payload.
+Authoritative main snapshot:
+`dcad269b21c81eb901d1965280264ce98b564a2c`
 
-Snapshot source main:
-6311396d9b867e5ae90f958a5c7f80e5ac48c0b1
+This branch is a small transport/update surface. It intentionally omits the large preserved donor block payload.
 
-## Use
+## Update behavior
 
-1. Download this branch as ZIP and extract it.
-2. Run APPLY_UPDATE.cmd.
-3. Enter the folder you want to update.
-4. The updater only requires that the folder exists and is not the update package itself. It copies the current payload and SHA-256 verifies every copied file.
-5. Run RUN_LOCAL_COMPLETION.cmd in the updated folder.
-6. Keep the large Candidate archive locally. For chat review, upload CHATGPT_EVIDENCE.zip instead of the Candidate archive.
+`APPLY_UPDATE.cmd` updates an existing complete FullAutoQA download. It discovers the packaged Source, acceptance bundle and transfer tree from their structural marker files, removes only the corresponding destination trees, recreates them from this package, and verifies copied bytes. This prevents files removed from the current Source from surviving in an older local copy.
 
-The local runner itself is responsible for discovering and validating the donor blocks, Source, acceptance bundle, Candidate integrity, selftest, and A-B-A requirements. The updater does not reject a folder based on guessed repository structure.
+The preserved donor block payload is outside those managed trees and is retained. The updater does not require a particular drive letter, username, or localized directory literal in its PowerShell logic.
 
-This branch intentionally omits complete_v033/blocks to keep the download small. A local run still needs those preserved donor blocks to exist in the updated folder because Candidate reconstruction actually consumes them.
+After `UPDATE PASS`, run `RUN_LOCAL_COMPLETION.cmd` from the updated complete download. Keep the large Candidate and per-run Result archives locally; upload `CHATGPT_EVIDENCE.zip` for review.
 
-Main remains authoritative. This branch is transport-only.
+If the same run is intended to establish the offline condition, disconnect external network interfaces before starting the local runner. The runner only claims the locally observed network state actually recorded by the final runs.

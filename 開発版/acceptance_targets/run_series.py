@@ -84,11 +84,32 @@ def compare_records(records,plan,frozen,candidate_sha):
             'independent_hq_final_verdict':'PENDING','human_test':'NOT_RUN',
             'product_acceptance':'HOLD','stable':'HOLD','qa_complete':False}
 
-def run_logged(argv,cwd,log,timeout=1800):
+def summarize_execution_environment(records,plan,base):
+    data=dict(base)
+    observations=[row.get('environment_observation') or {} for row in records]
+    complete=(len(records)==len(plan.get('series',[])) and bool(records))
+    data['local_windows_offline']='NOT_VERIFIED'
+    data['non_admin_series']='NOT_VERIFIED'
+    data['controller_only_series']='NOT_VERIFIED'
+    if complete and all(
+        (obs.get('network_observation') or {}).get('status')=='MEASURED'
+        and (obs.get('network_observation') or {}).get('up_adapter_count')==0
+        for obs in observations
+    ):
+        data['local_windows_offline']='NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED'
+    if complete and all(obs.get('admin_status')=='STANDARD_USER' for obs in observations):
+        data['non_admin_series']='STANDARD_USER_ALL_RUNS'
+    if complete and all(obs.get('automated_controller_marker') is True for obs in observations):
+        data['controller_only_series']='AUTOMATED_CONTROLLER_ALL_RUNS'
+    data['run_observations']=observations
+    return data
+
+def run_logged(argv,cwd,log,timeout=1800,env=None):
     started=time.monotonic();row={'argv':[str(x) for x in argv],'cwd':str(cwd),'log':str(log),'timeout_seconds':timeout}
+    row['automated_controller']=bool(env and env.get('FULLAUTOQA_AUTOMATED_CONTROLLER')=='1')
     OPERATION_LOG.append(row)
     with Path(log).open('wb') as stream:
-        process=subprocess.Popen([str(x) for x in argv],cwd=cwd,stdout=stream,stderr=subprocess.STDOUT)
+        process=subprocess.Popen([str(x) for x in argv],cwd=cwd,stdout=stream,stderr=subprocess.STDOUT,env=env)
         job=None
         try:
             if os.name=='nt':
@@ -111,6 +132,12 @@ def main():
     if output.exists():raise ValueError('SERIES_OUTPUT_ALREADY_EXISTS')
     output.mkdir(parents=True);bundle=Path(__file__).resolve().parent;controller=bundle.parent
     plan=read(args.plan);records=[];frozen={};sha=args.expected_sha.lower();persistent_before=persistent_path_snapshot()
+    elevated=bool(ctypes.windll.shell32.IsUserAnAdmin()) if os.name=='nt' else None
+    execution_environment={'os':os.name,'hosted_ci':os.environ.get('GITHUB_ACTIONS')=='true',
+                           'elevated':elevated,'local_windows_offline':'NOT_VERIFIED',
+                           'non_admin_series':'NOT_VERIFIED','controller_only_series':'NOT_VERIFIED',
+                           'human_test':'NOT_RUN'}
+    write(output/'EXECUTION_ENVIRONMENT.json',execution_environment)
     sys.path.insert(0,str(controller/'CORE'))
     from common import validate_result_zip
     from run_target import authoritative_result
@@ -135,8 +162,6 @@ def main():
             frozen[label]=record
             shutil.rmtree(temp)
         write(output/'TARGET_FREEZE.json',frozen)
-        elevated=bool(ctypes.windll.shell32.IsUserAnAdmin()) if os.name=='nt' else None
-        write(output/'EXECUTION_ENVIRONMENT.json',{'os':os.name,'hosted_ci':os.environ.get('GITHUB_ACTIONS')=='true','elevated':elevated,'local_windows_offline':'NOT_VERIFIED','human_test':'NOT_RUN'})
         for index,label in enumerate(plan['series'],1):
             if digest(archive)!=sha:raise ValueError('CANDIDATE_CHANGED_DURING_SERIES')
             slot=output/('Run'+str(index));slot.mkdir()
@@ -154,7 +179,8 @@ def main():
             target=target_record(fresh)
             if target!=frozen[label]:raise ValueError('TARGET_CHANGED_AFTER_FREEZE')
             shutil.copy2(fresh/'TARGET_PREPARATION.json',slot/'TARGET_PREPARATION.json')
-            code=run_logged(['cmd.exe','/d','/c','START_QA.cmd'],fresh,slot/'START_QA.log')
+            run_env=os.environ.copy();run_env['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
+            code=run_logged(['cmd.exe','/d','/c','START_QA.cmd'],fresh,slot/'START_QA.log',env=run_env)
             result=authoritative_result(fresh,set())
             validate_result_zip(result,require_manifest=True,expected_run_id=result.parent.name)
             with zipfile.ZipFile(result) as z:
@@ -174,7 +200,12 @@ def main():
                  'foreign_target_evidence':foreign,'required_nonpass':[{'case':r['test_case'],'status':r['status'],'reason':r.get('reason_code')} for r in data['results'] if r.get('gate')=='REQUIRED' and r['status']!='PASS'],
                  'required_counts':{status:sum(r.get('gate')=='REQUIRED' and r['status']==status for r in data['results']) for status in ('PASS','FAIL','NOT_RUN','HARNESS_ERROR','INCONCLUSIVE')},
                  'headquarters':data.get('headquarters'),'completion_certified':data.get('completion_certified'),
-                 'human_test_performed':data.get('human_test_performed'),'baseline_provenance':sorted(baseline_scopes)}
+                 'human_test_performed':data.get('human_test_performed'),'baseline_provenance':sorted(baseline_scopes),
+                 'environment_observation':{
+                     'admin_status':env.get('admin_status'),
+                     'network_observation':env.get('network_observation'),
+                     'automated_controller_marker':env.get('automated_controller_marker'),
+                 }}
             records.append(row)
             print('FINAL_RUN_READBACK='+json.dumps({**{k:row[k] for k in ('index','target_key','target','candidate_sha256','run_id','fresh_extraction_id','result_sha256','start_qa_exit_code','archive_integrity','evidence_missing','required_counts','baseline_provenance')},'headquarters':[{'name':x['name'],'status':x['status'],'reason_code':x.get('reason_code')} for x in (row.get('headquarters') or {}).get('domains',[])]},ensure_ascii=True),flush=True)
             write(slot/'RUN_IDENTITY.json',row)
@@ -186,6 +217,8 @@ def main():
         result=compare_records(records,plan,frozen,sha)
     except Exception as ex:
         result=compare_records(records,plan,frozen,sha);result['technical_series_status']='FAIL';result['fatal_error']=repr(ex)
+    execution_environment=summarize_execution_environment(records,plan,execution_environment)
+    write(output/'EXECUTION_ENVIRONMENT.json',execution_environment)
     persistent_after=persistent_path_snapshot()
     write(output/'PERSISTENT_ENVIRONMENT_READBACK.json',{'scope':'Persistent user and machine PATH values only; not a complete Registry write audit','before':persistent_before,'after':persistent_after,'persistent_path_status':('UNCHANGED' if persistent_before==persistent_after else 'CHANGED_REQUIRES_REVIEW') if persistent_before['status']==persistent_after['status']=='MEASURED' else 'NOT_MEASURED','registry_write_audit':'NOT_RUN'})
     write(output/'OPERATION_LOG.json',{'automated_operations':OPERATION_LOG,'automated_operation_count':len(OPERATION_LOG),'start_qa_invocations':sum('START_QA.cmd' in row['argv'] for row in OPERATION_LOG),'manual_intervention':'NOT_OBSERVED_BY_CONTROLLER','controller_retry_count':0})

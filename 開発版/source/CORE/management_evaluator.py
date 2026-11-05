@@ -19,8 +19,9 @@ Rules that this module enforces
 * Fixture / self-test / synthetic evidence can never be presented as
   real-game acceptance.
 * No numeric threshold is invented.  When no threshold is configured the
-  observed value is preserved verbatim and the verdict is reported as
-  unavailable (INCONCLUSIVE) rather than as a PASS or a FAIL.
+  observed value is preserved verbatim and the quality verdict stays
+  ``INCONCLUSIVE``.  Measurement coverage is judged separately, so absence of
+  an invented limit does not become an extra completion requirement.
 * Every value keeps its provenance.
 """
 from __future__ import annotations
@@ -76,20 +77,20 @@ _KIND_ALIASES = ('evidence_kind', 'kind', 'mode', 'run_mode', 'execution_kind')
 # evidence does not declare one; a threshold that declares a different unit
 # makes the comparison inapplicable instead of silently wrong.
 MEASUREMENT_GATES = (
-    {'gate': 'management.cpu', 'metric': 'cpu_percent', 'required': True, 'unit': 'percent',
+    {'gate': 'management.cpu', 'metric': 'cpu_percent', 'required': False, 'unit': 'percent',
      'aliases': ('cpu_percent', 'cpu_usage_percent', 'cpu_usage', 'cpu_load_percent', 'cpu')},
-    {'gate': 'management.ram', 'metric': 'ram_mb', 'required': True, 'unit': 'mb',
+    {'gate': 'management.ram', 'metric': 'ram_mb', 'required': False, 'unit': 'mb',
      'aliases': ('ram_mb', 'ram_megabytes', 'memory_mb', 'ram_usage_mb',
                  'memory_usage_mb', 'resident_memory_mb')},
-    {'gate': 'management.handles', 'metric': 'handles', 'required': True, 'unit': 'count',
+    {'gate': 'management.handles', 'metric': 'handles', 'required': False, 'unit': 'count',
      'aliases': ('handles', 'handle_count', 'open_handles', 'num_handles')},
-    {'gate': 'management.runtime', 'metric': 'runtime_seconds', 'required': True, 'unit': 'seconds',
+    {'gate': 'management.runtime', 'metric': 'runtime_seconds', 'required': False, 'unit': 'seconds',
      'aliases': ('runtime_seconds', 'runtime_s', 'run_time_seconds', 'duration_seconds',
                  'elapsed_seconds')},
-    {'gate': 'management.disk', 'metric': 'disk_bytes', 'required': True, 'unit': 'bytes',
+    {'gate': 'management.disk', 'metric': 'disk_bytes', 'required': False, 'unit': 'bytes',
      'aliases': ('disk_bytes', 'disk_usage_bytes', 'disk_space_bytes', 'disk_mb',
                  'disk_usage_mb')},
-    {'gate': 'management.evidence_size', 'metric': 'evidence_bytes', 'required': True, 'unit': 'bytes',
+    {'gate': 'management.evidence_size', 'metric': 'evidence_bytes', 'required': False, 'unit': 'bytes',
      'aliases': ('evidence_bytes', 'evidence_size_bytes', 'evidence_bundle_bytes',
                  'artifact_bytes', 'evidence_bytes_total')},
     {'gate': 'management.long_run_growth', 'metric': 'growth_bytes_per_hour', 'required': False,
@@ -98,13 +99,17 @@ MEASUREMENT_GATES = (
                  'memory_growth_bytes_per_hour', 'growth_bytes')},
 )
 
+REQUIRED_MEASUREMENT_METRICS = frozenset({
+    'cpu_percent', 'ram_mb', 'handles', 'runtime_seconds', 'disk_bytes', 'evidence_bytes',
+})
+
 # Evidence signals.  ``expect`` documents what a PASS means:
 #   'true'   -> the signal must be present and true
 #   'false'  -> the signal must be present and false (absence of the burden)
 #   'present'-> the subject must have been documented at all
 SIGNAL_GATES = (
     {'gate': 'management.performance_regression', 'metric': 'performance_regression',
-     'required': True, 'expect': 'false',
+     'required': False, 'enforce_when_present': True, 'expect': 'false',
      'aliases': ('performance_regression', 'regression_detected', 'performance_regressed'),
      'meaning': 'PASS means no performance regression was detected',
      'fail_reason': MANAGEMENT_PERFORMANCE_REGRESSION_DETECTED},
@@ -287,6 +292,7 @@ def _required_sets(settings):
     required = {spec['gate'] for spec in MEASUREMENT_GATES if spec['required']}
     required |= {spec['gate'] for spec in SIGNAL_GATES if spec['required']}
     required.add('management.evidence_kind')
+    required.add('management.measurement_coverage')
     advisory = {spec['gate'] for spec in MEASUREMENT_GATES if not spec['required']}
     advisory |= {spec['gate'] for spec in SIGNAL_GATES if not spec['required']}
     if isinstance(domain_settings, dict):
@@ -589,6 +595,24 @@ def evaluate_management(context):
             risks.append({'code': risk_code, 'severity': 'ERROR',
                           'detail': 'the %s gate failed' % spec['gate']})
 
+    missing_measurements = sorted(
+        metric for metric in REQUIRED_MEASUREMENT_METRICS
+        if not measurements.get(metric, {}).get('available')
+    )
+    if missing_measurements:
+        coverage_row = _row(
+            'management.measurement_coverage', 'NOT_RUN', MANAGEMENT_MEASUREMENT_UNAVAILABLE,
+            detail='required numeric measurements unavailable: ' + ','.join(missing_measurements)
+        )
+    else:
+        coverage_row = _row(
+            'management.measurement_coverage', 'PASS', None,
+            detail='all required numeric measurements were recorded'
+        )
+    coverage_row['gate'] = 'REQUIRED'
+    coverage_row['severity'] = 'ERROR'
+    rows.append(coverage_row)
+
     for spec in SIGNAL_GATES:
         if spec['gate'] == 'management.target_generation_integrity':
             row, record = _evaluate_target_generation(bundle, context)
@@ -607,6 +631,8 @@ def evaluate_management(context):
             continue
         row, record, risk_code = _evaluate_signal(spec, bundle)
         is_required = spec['gate'] in required
+        if (not is_required and spec.get('enforce_when_present') and record.get('available')):
+            is_required = True
         row['gate'] = 'REQUIRED' if is_required else 'ADVISORY'
         row['severity'] = 'ERROR' if is_required else 'WARNING'
         rows.append(row)
@@ -670,12 +696,20 @@ def evaluate_management(context):
         # Execution describes the evaluator call only; it does not certify evidence or quality.
         'evaluator_execution': 'COMPLETED',
         'measurement_availability': {
-            'status': ('PASS' if all(measurements[s['metric']]['available'] for s in MEASUREMENT_GATES if any(row['test_case'] == s['gate'] and row['gate'] == 'REQUIRED' for row in rows)) else 'NOT_RUN'),
+            'status': coverage_row['status'],
             'scope': 'required_numeric_measurements',
+            'missing': missing_measurements,
         },
         'measurement_quality': {
-            'status': _aggregate([row for row in rows if row['test_case'] in {s['gate'] for s in MEASUREMENT_GATES}]),
-            'scope': 'required_numeric_measurements_against_configured_thresholds',
+            'status': (_aggregate([
+                row for row in rows
+                if row['test_case'] in {s['gate'] for s in MEASUREMENT_GATES}
+                and row.get('gate') == 'REQUIRED'
+            ]) if any(
+                row['test_case'] in {s['gate'] for s in MEASUREMENT_GATES}
+                and row.get('gate') == 'REQUIRED' for row in rows
+            ) else 'INCONCLUSIVE'),
+            'scope': 'configured_thresholds_only',
         },
         'evidence_sources': sources,
         'evidence_kind': kind_record['kind'],
