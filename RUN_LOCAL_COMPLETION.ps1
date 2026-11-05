@@ -368,9 +368,9 @@ try {
   Write-Host '=== 1/6 Reconstruct preserved v0.3.3 donor ==='
   $join = Find-RepositoryFile -Root $RepoRoot -Name 'JOIN_COMPLETE.ps1' -RequiredSiblings @('manifest.json','blocks')
   $complete = Split-Path -Parent $join
-  & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $join 2>&1 |
-    Tee-Object -FilePath (Join-Path $OutRoot 'DONOR_JOIN.log')
-  if ($LASTEXITCODE -ne 0) { throw ('DONOR_JOIN_FAILED:' + $LASTEXITCODE) }
+  $donorRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$join) -WorkingDirectory $complete -LogPath (Join-Path $OutRoot 'DONOR_JOIN.log')
+  $donorCode=$donorRun.ExitCode
+  if ($donorCode -ne 0) { throw ('DONOR_JOIN_FAILED:' + $donorCode) }
   $manifest = Get-Content -LiteralPath (Join-Path $complete 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
   $donor = Join-Path $complete ([string]$manifest.file)
   if (-not (Test-Path -LiteralPath $donor -PathType Leaf)) { throw 'DONOR_ARCHIVE_MISSING_AFTER_JOIN' }
@@ -406,9 +406,9 @@ try {
     '-DonorArchive',$donor,'-SourceRoot',$sourceRoot,'-OutputDir',$BuildOut,
     '-SourceBaseline',$Summary.source_tree_fingerprint
   )
-  & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" @buildArgs 2>&1 |
-    Tee-Object -FilePath (Join-Path $OutRoot 'CANDIDATE_BUILD.log')
-  if ($LASTEXITCODE -ne 0) { throw ('CANDIDATE_BUILD_FAILED:' + $LASTEXITCODE) }
+  $buildRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments $buildArgs -WorkingDirectory $sourceRoot -LogPath (Join-Path $OutRoot 'CANDIDATE_BUILD.log')
+  $buildCode=$buildRun.ExitCode
+  if ($buildCode -ne 0) { throw ('CANDIDATE_BUILD_FAILED:' + $buildCode) }
   $Summary.candidate_build='PASS'
 
   $identityPath = Join-Path $BuildOut 'PHASE3_CANDIDATE_IDENTITY.json'
