@@ -91,6 +91,17 @@ class WindowsEvidencePathTests(unittest.TestCase):
         excluded=json.loads((self.root/'excluded_work_inventory.json').read_text(encoding='utf-8'))
         self.assertTrue(any(row['file']=='WORK/case/state.json' and row['reason']=='TRANSIENT_EXCLUDED_FILE_VANISHED' for row in excluded))
 
+    def test_manifest_transient_permission_failure_still_raises(self):
+        work=self.root/'WORK'/'case'/'state.json';work.parent.mkdir(parents=True);work.write_bytes(b'transient')
+        ev=Evidence(self.root,'run')
+        original=Path.stat
+        def denied(path,*args,**kwargs):
+            if path==work:raise PermissionError(str(path))
+            return original(path,*args,**kwargs)
+        with patch.object(Path,'stat',autospec=True,side_effect=denied):
+            with self.assertRaises(PermissionError):
+                ev.manifest()
+
     def test_manifest_certified_file_read_failure_still_raises(self):
         proof=self.root/'proof.bin';proof.write_bytes(b'proof')
         ev=Evidence(self.root,'run')
