@@ -1,0 +1,230 @@
+{
+  "session_id": "sales_read_after_02",
+  "created_utc": "2026-11-04T14:44:38.585764+00:00",
+  "assessment_type": "model_proxy",
+  "human": false,
+  "blind_session_modified": false,
+  "blind_frozen_sha256": "4598fdb884d88801829a1b1307e8f0fcb2170d36c2d688b7e88a122709f227ce",
+  "scope": "Separate explanation-informed communication review of Run1/Run2 result.json, SUMMARY.txt, report.html only; no game/core/default branch or release change.",
+  "governance_review": "Internal five-view review approved this bounded source/communication audit, evidence/status separation, immutable blind artifact and independent branch packaging. Not human/third-party review.",
+  "runs": {
+    "Run1": {
+      "archive_sha256": "2698b15086d899bf16d13a1f88c8226b29ec12e26c596203ac5e77d3ebee748f",
+      "source_hashes": {
+        "result.json": "ba5cc5f663070f63cf7de1e44a6958aa006d5da498182c02789a1bfc601fd561",
+        "SUMMARY.txt": "7fe1d989d64b15dfe2b6c7505cc297ed36d2d6915d52d0986f6e3eb53700b7d2",
+        "report.html": "ee6682551f2659135cdfc73a54ccda531234bb78a888a4656e4e0132a21a9c2c"
+      },
+      "recorded_statuses": {
+        "run_id": "20261104T054954_472a6a42",
+        "overall": "PASS",
+        "target_qa_certified": true,
+        "completion_certified": false,
+        "human_test_performed": false,
+        "qualification": "Automated QA evidence is not human satisfaction or product acceptance; review player/product gates separately."
+      },
+      "headquarters": {
+        "overall": "NOT_RUN",
+        "accepted": false,
+        "decision": "NOT_ACCEPTED"
+      },
+      "sales": {
+        "status": "NOT_RUN",
+        "reason": "SALES_OBSERVATION_INCOMPLETE",
+        "human": false,
+        "phase_statuses": {
+          "first_30_seconds": "NOT_RUN",
+          "first_5_minutes": "NOT_RUN",
+          "product_shelf_test": "NOT_RUN",
+          "communication_readability": "NOT_RUN"
+        },
+        "certifications": {
+          "qa_complete": {
+            "granted": false,
+            "scope": "sales_hq_evaluation",
+            "basis": "SALES_QA_REVIEW_INCOMPLETE",
+            "unresolved_gates": [
+              "sales.first_30_seconds",
+              "sales.first_5_minutes",
+              "sales.product_shelf_test",
+              "sales.communication_readability",
+              "sales.human_test"
+            ],
+            "note": "scope is the Sales headquarters evaluation only; it is not the global QA-complete certification of the candidate"
+          },
+          "product_accepted": {
+            "granted": false,
+            "scope": "global_release_pipeline",
+            "basis": "SALES_PRODUCT_ACCEPTANCE_HOLD",
+            "note": "Product Acceptance remains HOLD in this source phase"
+          },
+          "stable": {
+            "granted": false,
+            "scope": "global_release_pipeline",
+            "basis": "SALES_STABLE_HOLD",
+            "note": "Stable remains HOLD in this source phase"
+          },
+          "release_approved": {
+            "granted": false,
+            "scope": "global_release_pipeline",
+            "basis": "SALES_RELEASE_APPROVAL_HOLD",
+            "note": "Release Approved remains HOLD in this source phase"
+          }
+        }
+      },
+      "html_evidence_links": {
+        "total": 107,
+        "missing_inside_archive": []
+      },
+      "test_rows_before_acceptance_status": 94
+    },
+    "Run2": {
+      "archive_sha256": "c3c75df3c82781fe9980445b78942b17f12563f7d19f38169d2c8317ec2e2a3f",
+      "source_hashes": {
+        "result.json": "a6685dd9366819662eb0a76232719b982bf2062278294c2d5af2ed58857e1df4",
+        "SUMMARY.txt": "96e2744481507cb230532a167c7eb5f65b78f5b5be389bc07fb8d244334d7ee3",
+        "report.html": "a1b976dabad6ccd51a208e4ea5a5c9d1296d420ebee705f5050339df0c3c1210"
+      },
+      "recorded_statuses": {
+        "run_id": "20261104T055820_f1051db3",
+        "overall": "PASS",
+        "target_qa_certified": true,
+        "completion_certified": false,
+        "human_test_performed": false,
+        "qualification": "Automated QA evidence is not human satisfaction or product acceptance; review player/product gates separately."
+      },
+      "headquarters": {
+        "overall": "NOT_RUN",
+        "accepted": false,
+        "decision": "NOT_ACCEPTED"
+      },
+      "sales": {
+        "status": "NOT_RUN",
+        "reason": "SALES_OBSERVATION_INCOMPLETE",
+        "human": false,
+        "phase_statuses": {
+          "first_30_seconds": "NOT_RUN",
+          "first_5_minutes": "NOT_RUN",
+          "product_shelf_test": "NOT_RUN",
+          "communication_readability": "NOT_RUN"
+        },
+        "certifications": {
+          "qa_complete": {
+            "granted": false,
+            "scope": "sales_hq_evaluation",
+            "basis": "SALES_QA_REVIEW_INCOMPLETE",
+            "unresolved_gates": [
+              "sales.first_30_seconds",
+              "sales.first_5_minutes",
+              "sales.product_shelf_test",
+              "sales.communication_readability",
+              "sales.human_test"
+            ],
+            "note": "scope is the Sales headquarters evaluation only; it is not the global QA-complete certification of the candidate"
+          },
+          "product_accepted": {
+            "granted": false,
+            "scope": "global_release_pipeline",
+            "basis": "SALES_PRODUCT_ACCEPTANCE_HOLD",
+            "note": "Product Acceptance remains HOLD in this source phase"
+          },
+          "stable": {
+            "granted": false,
+            "scope": "global_release_pipeline",
+            "basis": "SALES_STABLE_HOLD",
+            "note": "Stable remains HOLD in this source phase"
+          },
+          "release_approved": {
+            "granted": false,
+            "scope": "global_release_pipeline",
+            "basis": "SALES_RELEASE_APPROVAL_HOLD",
+            "note": "Release Approved remains HOLD in this source phase"
+          }
+        }
+      },
+      "html_evidence_links": {
+        "total": 98,
+        "missing_inside_archive": []
+      },
+      "test_rows_before_acceptance_status": 85
+    }
+  },
+  "findings": [
+    {
+      "id": "RA01",
+      "outcome": "PASS",
+      "severity": "INFO",
+      "finding": "Technical/harness status and global product status are distinct in the actual content: both result roots say overall PASS and target_qa_certified true, but completion_certified false, human false, headquarters NOT_RUN/NOT_ACCEPTED; sales product/stable/release certifications are not granted. SUMMARY explicitly says Product Acceptance HOLD and Stable HOLD.",
+      "evidence": [
+        "Run1/result.json: $.overall, $.qualification, $.headquarters, $.sales_readback.certifications",
+        "Run2/result.json: same JSON paths",
+        "Run1/SUMMARY.txt lines 1-13",
+        "Run2/SUMMARY.txt lines 1-13"
+      ],
+      "limit": "This reviews reported statuses; it does not independently rerun or certify the technical tests."
+    },
+    {
+      "id": "RA02",
+      "outcome": "FAIL",
+      "severity": "MEDIUM",
+      "finding": "Information hierarchy obscures acceptance scope. SUMMARY leads with QA COMPLETE and Overall Result PASS before clarifying processing-only meaning. HTML h1 is PASS; the explicit Acceptance status/HOLD block follows the main 94-row or 85-row test table. A reader must pass a large technical detail section before seeing acceptance boundaries.",
+      "evidence": [
+        "Run1/SUMMARY.txt opening lines",
+        "Run2/SUMMARY.txt opening lines",
+        "Run1/report.html h1 and Acceptance status DOM order",
+        "Run2/report.html h1 and Acceptance status DOM order"
+      ],
+      "limit": "A model communication judgment, not measured reader misunderstanding. Source order is verified; actual viewport/pixel layout was not rendered."
+    },
+    {
+      "id": "RA03",
+      "outcome": "PASS",
+      "severity": "INFO",
+      "finding": "Sales readbacks correctly preserve NOT_RUN rather than inventing reviewed quality from recording presence. The first 30s/5min phases carry no outcome/findings in these original reports, shelf/readability are absent, human=false and model-proxy-is-not-human reason is explicit. This later independent audit does not retroactively replace those original statuses.",
+      "evidence": [
+        "Run1/result.json: $.sales_readback.phases, $.sales_readback.human_test_evidence",
+        "Run2/result.json: same JSON paths"
+      ],
+      "limit": "A cold_start=true software fresh-extraction provenance flag is not proof of a fresh human or uninformed evaluator; resumed blind audit retains its separate exposure limitation."
+    },
+    {
+      "id": "RA04",
+      "outcome": "PASS",
+      "severity": "INFO",
+      "finding": "All literal HTML evidence href targets exist within each original ZIP: Run1 107/107, Run2 98/98. Machine-readable result JSON and evidence-manifest links are included.",
+      "evidence": [
+        "Run1/report.html anchor hrefs compared with Run1 ZIP entry names",
+        "Run2/report.html anchor hrefs compared with Run2 ZIP entry names"
+      ],
+      "limit": "File membership only. No assertion of every link click, media playback, evidence semantic correctness or independent hash revalidation."
+    },
+    {
+      "id": "RA05",
+      "outcome": "INCONCLUSIVE",
+      "severity": "INFO",
+      "finding": "Browser visual rendering could not be performed. Chromium headless failed at process_singleton socket creation with Operation not permitted. No screenshot was generated. HTML readability judgment is therefore limited to source structure/text and supplied stylesheet.",
+      "evidence": [
+        "Recorded command failure: process_singleton_posix.cc socket() failed: Operation not permitted (1)"
+      ],
+      "limit": "No pixel clipping, screen-reader behavior, mobile layout or actual human readability claim."
+    }
+  ],
+  "improvement_candidates": [
+    "Put processing completed / technical contract PASS / Product HOLD / Stable HOLD / Human not performed together at the beginning.",
+    "Label the top PASS with its technical/harness scope; show acceptance blockers before the long test table.",
+    "Retain original NOT_RUN and incomplete evidence details; link this later model audit as a separate assessment instead of rewriting original execution facts."
+  ],
+  "status_separation": {
+    "read_after_evaluator_execution": "COMPLETED_WITH_LIMITATIONS",
+    "report_content_status_integrity": "PASS for examined fields",
+    "communication_hierarchy": "FAIL",
+    "visual_render_verification": "INCONCLUSIVE",
+    "human_evaluation": "NOT_PERFORMED",
+    "target_product": "Previous bounded X/Y model FAIL unchanged",
+    "global_product": "HOLD recorded in source; no independent approval",
+    "stable": "HOLD recorded in source; no independent promotion",
+    "core_changes": false,
+    "game_changes": false,
+    "issue_close": false
+  }
+}

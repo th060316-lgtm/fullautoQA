@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "supplementary_lantern_steps",
+  "name": "Lantern Steps",
+  "version": "1.0.0",
+  "classification": "independently authored supplementary playable browser target",
+  "is_selftest_fixture": false,
+  "is_third_party_or_commercial": false,
+  "is_final_A_B_target": false,
+  "final_A_B_identity_unchanged": true,
+  "source": [
+    {
+      "path": "index.html",
+      "sha256": "75be926fe10dfade9fab6d2d03ca25e24b03e4a245780d6845b4e75de82020ac"
+    }
+  ],
+  "provenance": "Original HTML/CSS/JavaScript authored in the authorized FullAutoQA Issue #1 browser task; no external assets, frameworks, downloads or services.",
+  "license_action": "No new license grant or publication; existing repository rights unchanged.",
+  "runtime_contract": "Preprovisioned Chromium-family executable, explicit path/SHA, dynamic work-local DevTools endpoint, declared viewport. Actual runtime version and process identity recorded per execution.",
+  "acceptance": [
+    "file target launch",
+    "loopback HTTP target launch",
+    "viewport and browser-window evidence",
+    "actual keyboard and normalized pointer input",
+    "real screenshot pixels",
+    "console/process evidence",
+    "Smoke",
+    "Goal without Explorer/Random fallback",
+    "Explorer",
+    "Random without Goal competence attribution"
+  ],
+  "excluded_claims": [
+    "selftest completion",
+    "third-party/commercial acceptance",
+    "final A-B-A",
+    "continuous recording",
+    "user PC completely offline/non-admin acceptance",
+    "Human acceptance",
+    "Stable/Release promotion"
+  ]
+}

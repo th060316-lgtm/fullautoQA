@@ -1,0 +1,153 @@
+{
+  "status": "SOURCE_VERIFIED_CANDIDATE_NOT_FINAL_ACCEPTANCE",
+  "base_commit": "23e0f3809ecb0da2ab68d62ffee443c68e68e408",
+  "base_source_tree": "d2fac7374b68677f037c5166d92e0da7a72e53b3",
+  "branch": "work/issue1-generic-qa-20261104",
+  "files": [
+    {
+      "path": "CORE/agents.py",
+      "repo_path": "開発版/source/CORE/agents.py",
+      "size": 13903,
+      "sha256": "88af4356df9209198715c4e7602f9af97c3e3271594a2ee48751e52b9ad285c5"
+    },
+    {
+      "path": "CORE/capability_contract.py",
+      "repo_path": "開発版/source/CORE/capability_contract.py",
+      "size": 9918,
+      "sha256": "bb0abf8e3f4571dda94368a9036821c7341d5a4a60bac527fb043843fbc656d0"
+    },
+    {
+      "path": "CORE/storage_qa.py",
+      "repo_path": "開発版/source/CORE/storage_qa.py",
+      "size": 18406,
+      "sha256": "8c3d0819669140c59dafa59baec8c5c20bd1c1f193122a3eed8f345d1a362290"
+    },
+    {
+      "path": "CORE/regression.py",
+      "repo_path": "開発版/source/CORE/regression.py",
+      "size": 6703,
+      "sha256": "84990895e5e045e98d1e593cabe54cdfea9d4130fcec3ade302bcecb2062c613"
+    },
+    {
+      "path": "CORE/target_identity.py",
+      "repo_path": "開発版/source/CORE/target_identity.py",
+      "size": 15152,
+      "sha256": "4529d9729733c4a624458da2c4f6812fd69011c32e3dde7af73e10510293cfdc"
+    },
+    {
+      "path": "CORE/tools.py",
+      "repo_path": "開発版/source/CORE/tools.py",
+      "size": 14083,
+      "sha256": "5dbb9acc043c05be5e017ef7a4ec5aad8d92028f0a413b75966518f7e118b8b1"
+    },
+    {
+      "path": "CORE/windows_runner.py",
+      "repo_path": "開発版/source/CORE/windows_runner.py",
+      "size": 62971,
+      "sha256": "9a012683e0a3dce28576b7d97c957887cdc02a13e52d24c48ecfa10a2cb17239"
+    },
+    {
+      "path": "CORE/contracts.py",
+      "repo_path": "開発版/source/CORE/contracts.py",
+      "size": 6272,
+      "sha256": "0d4dc48f70675376d3fdede4f94d0d1135c91176b0b64f21d293c949059f362f"
+    },
+    {
+      "path": "TESTS/test_issue1_generic_integrity.py",
+      "repo_path": "開発版/source/TESTS/test_issue1_generic_integrity.py",
+      "size": 6008,
+      "sha256": "44a3d1f60ba2acf2e4f2b49c67380d9f06f9d9bff9138f13275e578dee3fc170"
+    },
+    {
+      "path": "TESTS/test_issue1_order_and_bindings.py",
+      "repo_path": "開発版/source/TESTS/test_issue1_order_and_bindings.py",
+      "size": 8042,
+      "sha256": "69cd58d6e6c0492124603256b0389495718ed2a3be01b00be88d9b90a50f3bf7"
+    },
+    {
+      "path": "TESTS/test_issue1_storage_lifecycle.py",
+      "repo_path": "開発版/source/TESTS/test_issue1_storage_lifecycle.py",
+      "size": 6060,
+      "sha256": "7f00d1f674678e5d68609f9dc7b9ab6135d4906139deb66865d042bbaf322b68"
+    },
+    {
+      "path": "TESTS/test_issue1_explorer_cycles.py",
+      "repo_path": "開発版/source/TESTS/test_issue1_explorer_cycles.py",
+      "size": 2533,
+      "sha256": "c87204947396fc963095c8e9b2d826812643f54bf1258241b748d9dfa6701487"
+    },
+    {
+      "path": "TESTS/fixtures/storage_process.py",
+      "repo_path": "開発版/source/TESTS/fixtures/storage_process.py",
+      "size": 951,
+      "sha256": "b7b9afca0b7e58aa0dd4434e2ad17652a86662363a096921ecc1fbfa440371ab"
+    },
+    {
+      "path": "acceptance_profile_candidates/codegeas/profile.json",
+      "repo_path": "開発版/acceptance_targets/codegeas/profile.json",
+      "size": 7407,
+      "sha256": "852575be1b0b45cc16cb1e2b0fc6eb4e388d08da773d96f61001f8ca65ee6812"
+    }
+  ],
+  "full_suite": {
+    "ran": 396,
+    "passed": 391,
+    "skipped": 5,
+    "failures": 0,
+    "errors": 0,
+    "log": "generic_full_suite.log",
+    "scope": "Linux source regression, not Windows or game E2E"
+  },
+  "new_tests": {
+    "ran": 33,
+    "passed": 33,
+    "log": "generic_issue1_suite.log"
+  },
+  "negative_baseline": {
+    "ran": 9,
+    "failures": 6,
+    "errors": 3,
+    "log": "generic_negative_baseline.log",
+    "note": "six rejected invariants reproduced; three missing new Goal API errors are distinguished from false-PASS evidence"
+  },
+  "explorer_cycle_negative": {
+    "before": {
+      "ran": 4,
+      "failures": 2,
+      "errors": 1,
+      "log": "explorer_cycle_before.log"
+    },
+    "after": {
+      "ran": 4,
+      "passed": 4,
+      "log": "explorer_cycle_after.log"
+    },
+    "browser_actual": "independent browser agent is rerunning real Chrome supplemental acceptance; no dynamic PASS claimed here"
+  },
+  "goal_gate": "Frozen target required_agents Goal, or explicit profile/scenario require_goal_agent true, adds Goal+goal scenario goal_agent REQUIRED before execution; otherwise assessment is informational. Required goal attainment remains unchanged. Terminal fallback cannot PASS Goal policy.",
+  "storage": "opt-in real adapter action/state/bytes/process evidence, supported false NOT_RUN; supported incomplete INCONCLUSIVE, failed assertions FAIL; corruption role requires actual fixture injection",
+  "order_scope": "A/B synthetic contract fixture compares Required/binding/baseline/cache/runtime/latest in A-B and B-A. Not real A/B dynamic order evidence.",
+  "B_profile": {
+    "version": "1.3-storage-restart",
+    "new_required": "codegeas_development.smoke.storage.restart_restore",
+    "schema_static": "PASS",
+    "real_restart": "NOT_RUN",
+    "old_same_process_test_preserved": true
+  },
+  "remaining": [
+    "Root finalize.py bound-archive integration",
+    "B real restart and real A/B reversed-order evidence",
+    "Windows source/tool/runtime dynamic checks",
+    "browser real supplemental rerun after Explorer fix",
+    "all Source integration before a single new Candidate and fresh A-B-A series"
+  ],
+  "preserved": [
+    "No existing features/tests deleted",
+    "No Required reduction",
+    "Historical cross-version baseline feature preserved",
+    "No target game repository writes",
+    "Current Final Candidate and 3Run untouched",
+    "main unchanged by this branch"
+  ],
+  "runtime_limit": "ZIP cached executable and pointer verified against payload; no new claim that every SFX extracted dependency was independently hashed by this module"
+}

@@ -110,7 +110,7 @@ class CapabilityContract:
         required = {}
         requirements = {}
         target_capabilities = {}
-        for entry in entries:
+        for entry in sorted(entries, key=lambda item: str(item.get('id'))):
             for capability, source in target_required_capabilities(entry).items():
                 required.setdefault(capability, source)
             target_id = str(entry.get('id'))

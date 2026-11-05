@@ -1,0 +1,342 @@
+{
+  "session_id": "sales_blind_resumed_20261104",
+  "frozen_utc": "2026-11-04T14:41:21.303723+00:00",
+  "assessment_type": "model_proxy",
+  "human": false,
+  "strict_first_exposure": false,
+  "prior_exposure": "Evaluator retains previous video-only findings in conversation. Previous files disappeared. This is a resumed explanation-unread model audit, not a new cold-start person or reconstruction of the missing frozen artifact.",
+  "previous_artifact": "Missing; previous conversational hash ae1029753fce7b83efbf5cc60fe3819208398090c8dd7fd6f1de86270ee6626d is historical text only, not reverified file preservation.",
+  "materials": "Only restored X/Y videos, sales rules, and GitHub branch metadata. No game README, Profile, specs, developer explanations, RESULT/SUMMARY/HTML or other agent conclusions read before this freeze.",
+  "method": "Timestamped frame extraction plus visual inspection; not continuous real-time viewing and no direct gameplay input. 30s/300s are video windows relative to first observed game frame, not measured human comprehension. Key intentions and precise causes are not certified. Title/IP/free-price corrections excluded.",
+  "governance": {
+    "scope": "Only audit_sales artifacts and independent GitHub sales evidence branch; no core/game/default branch/release/Stable/issue-close change.",
+    "review": "Single-model internal review across intent preservation, operational traceability, market evidence, editorial clarity and publication boundary; not five independent reviewers.",
+    "decision": "APPROVED before generation; readback/hash verification required."
+  },
+  "targets": {
+    "X": {
+      "video_sha256": "39eb989b87517f80a840a31ac8dba47794f0bfa239c1a067388ed92b569b4366",
+      "duration_seconds": 456.9,
+      "fps": 10,
+      "gameplay_visible_t0": {
+        "video_seconds": 60.3,
+        "t0_relative_seconds": 0.0,
+        "frame_index_zero_based": 603,
+        "artifact": "frames/X_60.3.png",
+        "sha256": "422e010232029abaf58f36d6353278e034823c21eb4ac764b17349b373e0e0b7"
+      },
+      "prior_non_game_frame": {
+        "video_seconds": 60.2,
+        "t0_relative_seconds": -0.1,
+        "frame_index_zero_based": 602,
+        "artifact": "frames/X_60.2.png",
+        "sha256": "0b8e138df67f9573bf82fd26e042ae5d4ce689a2b93c808717868088825ae61b"
+      },
+      "t0_detection_limit": "First game-world/HUD frame at inspected onset, distinguished from console/harness and Godot splash. Full earlier timeline was sampled previously, not a new exhaustive per-frame replay.",
+      "window_30s": [
+        60.3,
+        90.3
+      ],
+      "window_5min": [
+        60.3,
+        360.3
+      ],
+      "evidence": [
+        {
+          "video_seconds": 60.2,
+          "t0_relative_seconds": -0.1,
+          "frame_index_zero_based": 602,
+          "artifact": "frames/X_60.2.png",
+          "sha256": "0b8e138df67f9573bf82fd26e042ae5d4ce689a2b93c808717868088825ae61b"
+        },
+        {
+          "video_seconds": 60.3,
+          "t0_relative_seconds": 0.0,
+          "frame_index_zero_based": 603,
+          "artifact": "frames/X_60.3.png",
+          "sha256": "422e010232029abaf58f36d6353278e034823c21eb4ac764b17349b373e0e0b7"
+        },
+        {
+          "video_seconds": 90.3,
+          "t0_relative_seconds": 30.0,
+          "frame_index_zero_based": 903,
+          "artifact": "frames/X_90.3.png",
+          "sha256": "d71c9274f248773a54381bfe31d4bcc863ba67910432146329fb1ab4ef65de12"
+        },
+        {
+          "video_seconds": 120.3,
+          "t0_relative_seconds": 60.0,
+          "frame_index_zero_based": 1203,
+          "artifact": "frames/X_120.3.png",
+          "sha256": "cc68d4593642b857ed654303f1e14f0e40733d028d1664c911089e3c96294c8c"
+        },
+        {
+          "video_seconds": 180.3,
+          "t0_relative_seconds": 120.0,
+          "frame_index_zero_based": 1803,
+          "artifact": "frames/X_180.3.png",
+          "sha256": "e879455383596ea232ee418c39cb090d09e578e397e13a0d5ce7be79853e65b8"
+        },
+        {
+          "video_seconds": 240.3,
+          "t0_relative_seconds": 180.0,
+          "frame_index_zero_based": 2403,
+          "artifact": "frames/X_240.3.png",
+          "sha256": "bce0cf96aae0f3a64449818c906f51f2379556cad5b544060908b374fb8d5c4a"
+        },
+        {
+          "video_seconds": 300.3,
+          "t0_relative_seconds": 240.0,
+          "frame_index_zero_based": 3003,
+          "artifact": "frames/X_300.3.png",
+          "sha256": "deb30d6adece1bf80dc58f3358abf0dbbc76d76fd061d59abeb63fb9af005661"
+        },
+        {
+          "video_seconds": 360.3,
+          "t0_relative_seconds": 300.0,
+          "frame_index_zero_based": 3603,
+          "artifact": "frames/X_360.3.png",
+          "sha256": "ec4a24373099e46236ac1dc7a88b6e1efee54c5bd36b85c1bf4e7b4e758bb24a"
+        }
+      ],
+      "tests": {
+        "30_second": {
+          "outcome": "FAIL",
+          "findings": "Transport/economy genre and construction controls are understandable: R/T plus tile click/drag, funds, cities and time speed. At +30s railway mode/cost is visible. However this window does not clearly communicate a concrete player objective, success criterion or reason to choose one link; dense raw logs compete with explanation. This is a failure of the combined objective/value/operation onboarding criterion, not total incomprehensibility.",
+          "evidence": [
+            "X_60.3.png",
+            "X_90.3.png"
+          ],
+          "limitations": ""
+        },
+        "5_minute": {
+          "outcome": "INCONCLUSIVE",
+          "findings": "Construction feedback exists: by +60s railway count 29, road count 4, funds 468 rather than 500; networks grow and war/economy state changes. World-reactive transport is a plausible continuation hook. At +300s player company still shows route 0 and profit +0.0. A completed player build→economic result→next decision loop or retry result has not been established.",
+          "evidence": [
+            "X_120.3.png",
+            "X_180.3.png",
+            "X_240.3.png",
+            "X_300.3.png",
+            "X_360.3.png"
+          ],
+          "limitations": "Autonomous world changes are not credited as player-caused results. No specification was read."
+        },
+        "debug_dependency": {
+          "outcome": "INCONCLUSIVE",
+          "findings": "In-game construction prompts exist. Seed, v0.2, Test operation, Force war and raw event logs are visible. Developer-facing presentation is established; successful play requiring debug controls is not.",
+          "evidence": [
+            "X_60.3.png",
+            "X_360.3.png"
+          ],
+          "limitations": ""
+        },
+        "shelf": {
+          "outcome": "FAIL",
+          "findings": "Flat colored circles/tiles and dense small text provide little immediate player challenge or visual invitation. The changing-world transport premise has potential, but the first image does not clearly sell that value.",
+          "evidence": [
+            "X_60.3.png"
+          ],
+          "limitations": "Visual model judgment of supplied game image; no store page, competitor study or human choice experiment."
+        },
+        "price_blind_product": {
+          "outcome": "FAIL",
+          "findings": "Debug controls, unprioritized logs, clipped content and unclear player outcome read as an internal simulation prototype. Functioning state changes are a positive component, not proof of finished product quality.",
+          "evidence": [
+            "X_60.3.png",
+            "X_360.3.png"
+          ],
+          "limitations": "Title/IP/price removed; no market demand, sales, global QA, rights or release claim."
+        }
+      }
+    },
+    "Y": {
+      "video_sha256": "88e5e79071022100df98d36c45ea0ed0dd45075e351bc8fb43775fe4e61869cf",
+      "duration_seconds": 505.5,
+      "fps": 10,
+      "gameplay_visible_t0": {
+        "video_seconds": 23.1,
+        "t0_relative_seconds": 0.0,
+        "frame_index_zero_based": 231,
+        "artifact": "frames/Y_23.1.png",
+        "sha256": "ebdb3c29c7c6be7571b9dd2aa983287c9e4f931e1fd45aac0008c169092089b1"
+      },
+      "prior_non_game_frame": {
+        "video_seconds": 23.0,
+        "t0_relative_seconds": -0.1,
+        "frame_index_zero_based": 230,
+        "artifact": "frames/Y_23.0.png",
+        "sha256": "5914570119fd8d0256d6014162adf80ba487ed75e68c7961d18b957981602634"
+      },
+      "t0_detection_limit": "First game-world/HUD frame at inspected onset, distinguished from console/harness and Godot splash. Full earlier timeline was sampled previously, not a new exhaustive per-frame replay.",
+      "window_30s": [
+        23.1,
+        53.1
+      ],
+      "window_5min": [
+        23.1,
+        323.1
+      ],
+      "evidence": [
+        {
+          "video_seconds": 23,
+          "t0_relative_seconds": -0.1,
+          "frame_index_zero_based": 230,
+          "artifact": "frames/Y_23.0.png",
+          "sha256": "5914570119fd8d0256d6014162adf80ba487ed75e68c7961d18b957981602634"
+        },
+        {
+          "video_seconds": 23.1,
+          "t0_relative_seconds": 0.0,
+          "frame_index_zero_based": 231,
+          "artifact": "frames/Y_23.1.png",
+          "sha256": "ebdb3c29c7c6be7571b9dd2aa983287c9e4f931e1fd45aac0008c169092089b1"
+        },
+        {
+          "video_seconds": 38,
+          "t0_relative_seconds": 14.9,
+          "frame_index_zero_based": 380,
+          "artifact": "frames/Y_38.0.png",
+          "sha256": "76fc2fc3d1f0d1795534101c7ff012fd010bd5f1102a671bffeb0f3dde899193"
+        },
+        {
+          "video_seconds": 40,
+          "t0_relative_seconds": 16.9,
+          "frame_index_zero_based": 400,
+          "artifact": "frames/Y_40.0.png",
+          "sha256": "c5f0b43128745a5c8453038c0e848647c2e90b172403b35e31fd4aa0f28a430f"
+        },
+        {
+          "video_seconds": 53.1,
+          "t0_relative_seconds": 30.0,
+          "frame_index_zero_based": 531,
+          "artifact": "frames/Y_53.1.png",
+          "sha256": "16fbcbc20d61dc5e099a849d1557144cc5114dc3565c9be47d9254f91940780d"
+        },
+        {
+          "video_seconds": 79,
+          "t0_relative_seconds": 55.9,
+          "frame_index_zero_based": 790,
+          "artifact": "frames/Y_79.0.png",
+          "sha256": "b91e7d2a3a40cd201b7ed2b028ea3338a51452cfd3e5fa17c2e107f8880109b6"
+        },
+        {
+          "video_seconds": 80,
+          "t0_relative_seconds": 56.9,
+          "frame_index_zero_based": 800,
+          "artifact": "frames/Y_80.0.png",
+          "sha256": "417da91ca37d952e99f2baa44fae554b2641f5dce4027ed201d3638d415368b3"
+        },
+        {
+          "video_seconds": 83.1,
+          "t0_relative_seconds": 60.0,
+          "frame_index_zero_based": 831,
+          "artifact": "frames/Y_83.1.png",
+          "sha256": "49fd53bfdbd27e6007f9eb95b2c3183491b9e1dac003b77ffb6a99a35adede03"
+        },
+        {
+          "video_seconds": 143.1,
+          "t0_relative_seconds": 120.0,
+          "frame_index_zero_based": 1431,
+          "artifact": "frames/Y_143.1.png",
+          "sha256": "4867f88a045bbabd2c33a020c3038d3072de5f15c94be0028e593ade91f950b6"
+        },
+        {
+          "video_seconds": 203.1,
+          "t0_relative_seconds": 180.0,
+          "frame_index_zero_based": 2031,
+          "artifact": "frames/Y_203.1.png",
+          "sha256": "a48d023d7933ce956b6b1139b8027115e6217da0186c3e42173fe4c0ffb06420"
+        },
+        {
+          "video_seconds": 263.1,
+          "t0_relative_seconds": 240.0,
+          "frame_index_zero_based": 2631,
+          "artifact": "frames/Y_263.1.png",
+          "sha256": "a6dada5bb32ba317cd00b3d0dfdcc4f4fe0af60bcab98a7216ff54b12018c7eb"
+        },
+        {
+          "video_seconds": 323.1,
+          "t0_relative_seconds": 300.0,
+          "frame_index_zero_based": 3231,
+          "artifact": "frames/Y_323.1.png",
+          "sha256": "d0b96d380144ec8bed55a80edcc388bfc6252c85b6733a1f101ae1fc5f3731a9"
+        }
+      ],
+      "continuity": {
+        "outcome": "FAIL_FOR_UNINTERRUPTED_5_MIN_EVIDENCE",
+        "findings": "At 40s and 79s game view is replaced by engine-dark screen, at 80s Godot splash appears, and later game time has reset to Day1 08:00. Thus t0-relative 30s/5min windows cross restart activity and cannot establish a single continuous first run.",
+        "evidence": [
+          "Y_38.0.png",
+          "Y_40.0.png",
+          "Y_79.0.png",
+          "Y_80.0.png",
+          "Y_83.1.png"
+        ],
+        "limitations": "Exact full restart intervals not exhaustively localized; recording interruption is not labeled a game crash without cause evidence."
+      },
+      "tests": {
+        "30_second": {
+          "outcome": "FAIL",
+          "findings": "An immediate objective is readable: speak with the contact at base; medical transport/rescue jobs have deadlines. F report and E vehicle entry are contextual prompts. But near-black world visibility, HUD overlap/clipping and poorly communicated movement/navigation obstruct the complete first-use presentation.",
+          "evidence": [
+            "Y_23.1.png",
+            "Y_53.1.png"
+          ],
+          "limitations": "Window crosses restart; no human confusion/comprehension was measured."
+        },
+        "5_minute": {
+          "outcome": "INCONCLUSIVE",
+          "findings": "Distance and mode change, vehicle exit message, resource changes, NPC warning/fear and a new rescue objective provide screen feedback and a possible social consequence hook. At +300s the objective remains in progress; no rescue/delivery completion, explicit failure or retry result is established. Restarts break first-run continuity.",
+          "evidence": [
+            "Y_83.1.png",
+            "Y_143.1.png",
+            "Y_203.1.png",
+            "Y_263.1.png",
+            "Y_323.1.png"
+          ],
+          "limitations": "Goal change alone is not proof of successful prior completion, and input causality is not fully certified."
+        },
+        "debug_dependency": {
+          "outcome": "INCONCLUSIVE",
+          "findings": "Goal and contextual keys are available in game. Raw faction identifiers, NPC lists and crowded panels give diagnostic presentation. Neither mandatory debug use nor independent human navigation success is established.",
+          "evidence": [
+            "Y_53.1.png",
+            "Y_323.1.png"
+          ],
+          "limitations": ""
+        },
+        "shelf": {
+          "outcome": "FAIL",
+          "findings": "Near-black world, barely discernible actors/locations, overlapped blocks and large textual overlays obscure the image. Rescue/transport and vehicle premises are inferable but not clearly presented as an inviting play experience.",
+          "evidence": [
+            "Y_23.1.png"
+          ],
+          "limitations": "No store page or actual human selection test."
+        },
+        "price_blind_product": {
+          "outcome": "FAIL",
+          "findings": "World visibility and overlapping/clipped HUD plus raw NPC lists read as an internal gameplay slice. Contextual action/status responses exist, but a finished player-facing product is not demonstrated.",
+          "evidence": [
+            "Y_23.1.png",
+            "Y_203.1.png",
+            "Y_323.1.png"
+          ],
+          "limitations": "Does not assert absent content outside the recording; no sales forecast."
+        }
+      }
+    }
+  },
+  "status_separation": {
+    "sales_evaluator_execution": "COMPLETED_WITH_LIMITATIONS",
+    "evidence_completeness": "PARTIAL: timestamped recordings/frames available; no continuous viewing/direct input logs; prior first exposure retained; Y restarts",
+    "target_product_verdict": {
+      "X": "FAIL",
+      "Y": "FAIL"
+    },
+    "human_evaluation": "NOT_PERFORMED",
+    "human": false,
+    "global_product_verdict": "NOT_DETERMINED",
+    "stable_release_issue_close": "NOT_DETERMINED / NO_AUTHORITY"
+  },
+  "freeze_policy": "Do not overwrite. Explanation-informed sessions must use separate files. GitHub upload may package identical bytes without changing this evaluation."
+}

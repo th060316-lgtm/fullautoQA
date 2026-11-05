@@ -1,0 +1,94 @@
+test_boolean_generation_cannot_impersonate_one (test_issue1_generic_integrity.GenericIntegrityTests.test_boolean_generation_cannot_impersonate_one) ... FAIL
+test_deliberate_goal_policy_and_initial_goal_are_distinct (test_issue1_generic_integrity.GenericIntegrityTests.test_deliberate_goal_policy_and_initial_goal_are_distinct) ... ERROR
+test_goal_label_falling_back_before_first_action_is_not_goal_capability (test_issue1_generic_integrity.GenericIntegrityTests.test_goal_label_falling_back_before_first_action_is_not_goal_capability) ... FAIL
+test_goal_then_explorer_or_random_terminal_action_never_certifies_goal_policy (test_issue1_generic_integrity.GenericIntegrityTests.test_goal_then_explorer_or_random_terminal_action_never_certifies_goal_policy) ... ERROR
+test_matching_cache_marker_cannot_hide_replaced_executable (test_issue1_generic_integrity.GenericIntegrityTests.test_matching_cache_marker_cannot_hide_replaced_executable) ... FAIL
+test_prepared_runtime_pointer_cannot_be_rebound (test_issue1_generic_integrity.GenericIntegrityTests.test_prepared_runtime_pointer_cannot_be_rebound) ... FAIL
+test_random_lucky_goal_does_not_certify_goal_agent (test_issue1_generic_integrity.GenericIntegrityTests.test_random_lucky_goal_does_not_certify_goal_agent) ... ERROR
+test_runtime_executable_pointer_cannot_escape (test_issue1_generic_integrity.GenericIntegrityTests.test_runtime_executable_pointer_cannot_escape) ... FAIL
+test_stale_runtime_cache_marker_is_rejected (test_issue1_generic_integrity.GenericIntegrityTests.test_stale_runtime_cache_marker_is_rejected) ... FAIL
+
+======================================================================
+ERROR: test_deliberate_goal_policy_and_initial_goal_are_distinct (test_issue1_generic_integrity.GenericIntegrityTests.test_deliberate_goal_policy_and_initial_goal_are_distinct)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 21, in test_deliberate_goal_policy_and_initial_goal_are_distinct
+    self.assertNotEqual(agent.goal_assessment(True)['status'],'PASS');agent.choose({'won':False});self.assertEqual(agent.goal_assessment(True)['status'],'PASS')
+                        ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Agent' object has no attribute 'goal_assessment'
+
+======================================================================
+ERROR: test_goal_then_explorer_or_random_terminal_action_never_certifies_goal_policy (test_issue1_generic_integrity.GenericIntegrityTests.test_goal_then_explorer_or_random_terminal_action_never_certifies_goal_policy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 25, in test_goal_then_explorer_or_random_terminal_action_never_certifies_goal_policy
+    agent.choose({'won':False});self.assertEqual(agent.action_modes,['Goal']);agent.mode=fallback;agent.choose({'won':False})
+                                                 ^^^^^^^^^^^^^^^^^^
+AttributeError: 'Agent' object has no attribute 'action_modes'
+
+======================================================================
+ERROR: test_random_lucky_goal_does_not_certify_goal_agent (test_issue1_generic_integrity.GenericIntegrityTests.test_random_lucky_goal_does_not_certify_goal_agent)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 18, in test_random_lucky_goal_does_not_certify_goal_agent
+    result=agent.goal_assessment(True);self.assertNotEqual(result['status'],'PASS');self.assertTrue(result['goal_reached'])
+           ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Agent' object has no attribute 'goal_assessment'
+
+======================================================================
+FAIL: test_boolean_generation_cannot_impersonate_one (test_issue1_generic_integrity.GenericIntegrityTests.test_boolean_generation_cannot_impersonate_one)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 14, in test_boolean_generation_cannot_impersonate_one
+    self.assertTrue(check_result_binding(identity,recorded))
+AssertionError: [] is not true
+
+======================================================================
+FAIL: test_goal_label_falling_back_before_first_action_is_not_goal_capability (test_issue1_generic_integrity.GenericIntegrityTests.test_goal_label_falling_back_before_first_action_is_not_goal_capability)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 38, in test_goal_label_falling_back_before_first_action_is_not_goal_capability
+    self.assertNotIn('Goal',session.coverage['agents']);self.assertNotEqual(next(r for r in session.results if r['test_case']=='g.lucky.goal_agent')['status'],'PASS');self.assertEqual(exported['actions_by_mode'],{'Explorer':1})
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'Goal' unexpectedly found in {'Goal'}
+
+======================================================================
+FAIL: test_matching_cache_marker_cannot_hide_replaced_executable (test_issue1_generic_integrity.GenericIntegrityTests.test_matching_cache_marker_cannot_hide_replaced_executable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 54, in test_matching_cache_marker_cannot_hide_replaced_executable
+    obj=self.prepare(Path(td),marker='current',replaced=True);self.assertIn('node',obj.required_failures());self.assertNotIn('node',obj.paths)
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'node' not found in set()
+
+======================================================================
+FAIL: test_prepared_runtime_pointer_cannot_be_rebound (test_issue1_generic_integrity.GenericIntegrityTests.test_prepared_runtime_pointer_cannot_be_rebound)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 63, in test_prepared_runtime_pointer_cannot_be_rebound
+    with self.assertRaisesRegex(OSError,'RUNTIME_POINTER_CHANGED'):obj.get('node')
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: OSError not raised
+
+======================================================================
+FAIL: test_runtime_executable_pointer_cannot_escape (test_issue1_generic_integrity.GenericIntegrityTests.test_runtime_executable_pointer_cannot_escape)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 59, in test_runtime_executable_pointer_cannot_escape
+    self.assertIn('node',obj.required_failures());self.assertNotIn('node',obj.paths)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'node' not found in set()
+
+======================================================================
+FAIL: test_stale_runtime_cache_marker_is_rejected (test_issue1_generic_integrity.GenericIntegrityTests.test_stale_runtime_cache_marker_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/166d6c67f044/issue1_closeout_20261104/work_generic_qa/TESTS/test_issue1_generic_integrity.py", line 51, in test_stale_runtime_cache_marker_is_rejected
+    obj=self.prepare(Path(td),marker='stale',replaced=True);self.assertIn('node',obj.required_failures());self.assertNotIn('node',obj.paths)
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'node' not found in set()
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.066s
+
+FAILED (failures=6, errors=3)

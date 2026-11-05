@@ -1,7 +1,7 @@
 {
   "game_id": "codegeas_development",
   "game_version": "b5a0d2207a77854be5187a0b00fc2d234b0745b8",
-  "profile_version": "1.2-probe",
+  "profile_version": "1.3-storage-restart",
   "schema_version": 1,
   "prototype_type": "playable",
   "qa_role": "target",
@@ -266,7 +266,61 @@
     "root": "isolated_user",
     "locations": [],
     "required": true,
-    "contract": "persisted_save"
+    "contract": "persisted_save",
+    "scenarios": [
+      {
+        "id": "restart_restore",
+        "feature": "restart_restore",
+        "supported": true,
+        "required": true,
+        "state_fields": [
+          "position.x",
+          "position.y",
+          "mode"
+        ],
+        "steps": [
+          {
+            "action": "move_right"
+          },
+          {
+            "action": "save",
+            "role": "save"
+          },
+          {
+            "snapshot": "saved"
+          },
+          {
+            "action": "move_down",
+            "role": "mutate"
+          },
+          {
+            "snapshot": "changed"
+          },
+          {
+            "restart": true
+          },
+          {
+            "action": "load",
+            "role": "load"
+          },
+          {
+            "snapshot": "restored"
+          },
+          {
+            "compare": {
+              "left": "saved",
+              "right": "restored",
+              "state_fields": [
+                "position.x",
+                "position.y",
+                "mode"
+              ],
+              "equal": true
+            }
+          }
+        ]
+      }
+    ]
   },
   "qa_plan": {
     "faults": [],
@@ -325,3 +379,4 @@
   ],
   "adapter_version": "read-only-load-observer-1"
 }
+
