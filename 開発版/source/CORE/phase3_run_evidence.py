@@ -252,7 +252,7 @@ def _signals(results, start_qa, fresh, environment_evidence, root, environment=N
         out["offline"] = {
             "status": True,
             "evidence": [environment_evidence],
-            "scope": "no_up_windows_network_adapters_observed",
+            "scope": "no_up_non_loopback_ip_interfaces_observed",
         }
 
     if os.name == "nt":
