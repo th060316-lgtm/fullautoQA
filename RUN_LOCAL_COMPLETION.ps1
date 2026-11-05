@@ -412,6 +412,18 @@ function Export-TransientEvidence {
   if ($SelftestRoot) {
     $selfResults=Join-Path $SelftestRoot 'RESULTS'
     if (Test-Path -LiteralPath $selfResults -PathType Container) {
+      $readbackRoot=Join-Path $OutRoot 'selftest_readback'
+      New-Item -ItemType Directory -Path $readbackRoot -Force | Out-Null
+      foreach ($runDir in @(Get-ChildItem -LiteralPath $selfResults -Directory -ErrorAction Stop | Sort-Object Name)) {
+        $certified=Join-Path $runDir.FullName 'RESULT_FOR_CHATGPT.zip'
+        if (Test-Path -LiteralPath $certified -PathType Leaf) {
+          $dest=Join-Path $OutRoot ('SELFTEST_' + $runDir.Name + '_RESULT_FOR_CHATGPT.zip')
+          Copy-Item -LiteralPath $certified -Destination $dest -Force -ErrorAction Stop
+          Export-ResultReadback -ResultZip $certified -Destination (Join-Path $readbackRoot $runDir.Name)
+        }
+      }
+      # Diagnostic archive mirrors CORE evidence boundaries and never descends
+      # into producer-owned WORK or video_frames.
       Zip-DirectoryIfPresent $selfResults (Join-Path $OutRoot 'SELFTEST_RESULTS.zip')
     }
   }
@@ -447,6 +459,10 @@ function Export-ChatEvidence {
     Get-ChildItem -LiteralPath $candidateMetadata -File -Force | Where-Object { $_.Extension -ine '.zip' } | ForEach-Object {
       Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $candidateStage $_.Name) -Force
     }
+  }
+  $selftestReadback=Join-Path $OutRoot 'selftest_readback'
+  if (Test-Path -LiteralPath $selftestReadback -PathType Container) {
+    Copy-Item -LiteralPath $selftestReadback -Destination (Join-Path $stage 'selftest') -Recurse -Force
   }
   if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
     $seriesStage=Join-Path $stage 'series'
@@ -493,6 +509,10 @@ function Export-ChatEvidence {
 
 if ($NativeProcessContractTest) {
   Invoke-NativeProcessContractTest
+  exit 0
+}
+if ($EvidenceExportContractTest) {
+  Invoke-EvidenceExportContractTest
   exit 0
 }
 
