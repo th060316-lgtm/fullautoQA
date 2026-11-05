@@ -145,7 +145,7 @@ class Session:
         if time.monotonic()-self.last_disk_guard<1:return
         self.last_disk_guard=time.monotonic()
         free=shutil.disk_usage(self.e.root).free
-        size=sum(p.stat().st_size for p in self.e.root.rglob('*') if p.is_file())
+        size=tree_size(self.e.root,tolerate_excluded_vanish=True)
         if free<self.p.get('disk_reserve_mb',512)*1024*1024 or size>self.p.get('evidence_limit_mb',8192)*1024*1024:raise OSError('DISK_GUARD_STOP')
     def monitor(self,p,case):
         metrics=process_metrics(p.pid) if os.name=='nt' else self.active_supervisor.metrics();metrics['harness']=process_metrics(os.getpid());metrics['video']=process_metrics(self.rec.p.pid) if self.rec and self.rec.p else {};metrics['log_size']=sum(x.stat().st_size for x in self.e.root.glob('*.log'));save_name=self.p.get('save',{}).get('file');metrics['save_size']=sum(x.stat().st_size for x in (self.e.root/'WORK').glob('*/'+save_name) if x.is_file()) if save_name else None;metrics.update({'timestamp':stamp(),'sample_time':time.monotonic(),'child_pids':child_pids(p.pid),'exit_code':p.poll()});self.metrics.append(metrics)
@@ -490,7 +490,7 @@ class Session:
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--root',default=str(Path(__file__).resolve().parents[1]));ap.add_argument('--profile',action='append');ap.add_argument('--prototype',choices=['logic','playable']);ap.add_argument('--seed',type=int,default=12345);ap.add_argument('--resume',action='store_true');ap.add_argument('--faults',action=argparse.BooleanOptionalAction,default=True);ap.add_argument('--soak-seconds',type=float);ap.add_argument('--baseline');args=ap.parse_args()
-    root=Path(args.root).resolve();settings=read_json(root/'acceptance_manifest.json') if (root/'acceptance_manifest.json').is_file() else {};results_dir=inside(root,settings.get('paths',{}).get('results','RESULTS'));run_id=time.strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:8];out=results_dir/run_id;e=Evidence(out,run_id);start=stamp();results=[];sessions=[];lock=results_dir/'active.lock';lock_owned=False;rec=None
+    root=Path(args.root);settings=read_json(root/'acceptance_manifest.json') if (root/'acceptance_manifest.json').is_file() else {};results_dir=inside(root,settings.get('paths',{}).get('results','RESULTS'));run_id=time.strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:8];out=results_dir/run_id;e=Evidence(out,run_id);start=stamp();results=[];sessions=[];lock=results_dir/'active.lock';lock_owned=False;rec=None
     run_mode='adhoc' if args.profile else 'target';target_manifest=None;target_entries={};target_contracts={};imported=None;prepared=None
     (out/'FULL_EVIDENCE').mkdir();(out/'WORK').mkdir()
     for kind in ['action','state','process']:(out/(kind+'.jsonl')).touch()
