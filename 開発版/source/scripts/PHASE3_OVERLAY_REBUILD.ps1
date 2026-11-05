@@ -76,7 +76,7 @@ try {
   }
   $work=Find-CandidateRoot $stage
 
-  $sourceCandidates=@($SourceRoot,(Join-Path $SourceRoot '開発版\source'),(Join-Path $SourceRoot 'source'))
+  $sourceCandidates=@($SourceRoot,(Join-Path $SourceRoot 'source'))
   $src=$sourceCandidates | Where-Object { Test-Path -LiteralPath (Join-Path $_ 'CORE') -PathType Container } | Select-Object -First 1
   if (-not $src) { throw 'CURRENT_SOURCE_ROOT_NOT_FOUND' }
 
