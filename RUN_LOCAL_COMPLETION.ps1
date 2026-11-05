@@ -1,7 +1,7 @@
 # FullAutoQA local final-completion runner.
 # Uses a temporary drive mapping so the user-selected download location does not become part of deep build paths.
 [CmdletBinding()]
-param()
+param([switch]$NativeProcessContractTest)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -229,8 +229,15 @@ function Invoke-NativeLogged {
   }
   if ($WorkingDirectory) { $params.WorkingDirectory=$WorkingDirectory }
   $process=Start-Process @params
+  # Windows PowerShell 5.1 can otherwise expose a null ExitCode when
+  # -NoNewWindow and/or redirected standard streams are used.
+  # Cache the process handle before waiting; PowerShell/PowerShell #5421 documents this workaround.
+  $cachedHandle=$process.Handle
   $process.WaitForExit()
   $code=$process.ExitCode
+  if ($null -eq $code) {
+    throw ('NATIVE_EXIT_CODE_UNAVAILABLE:pid=' + $process.Id)
+  }
   $lines=New-Object 'System.Collections.Generic.List[string]'
   if (Test-Path -LiteralPath $stdout -PathType Leaf) {
     foreach ($line in @(Get-Content -LiteralPath $stdout)) { $lines.Add($line) }
@@ -242,6 +249,45 @@ function Invoke-NativeLogged {
   foreach ($line in $lines) { Write-Host $line }
   Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
   return [pscustomobject]@{ExitCode=$code}
+}
+
+function Invoke-NativeProcessContractTest {
+  if ($env:OS -ne 'Windows_NT') { throw 'NATIVE_PROCESS_CONTRACT_TEST_REQUIRES_WINDOWS' }
+
+  $oldWorkRoot=$WorkRoot
+  $unicode=([string][char]0x65E5)+([string][char]0x672C)+([string][char]0x8A9E)
+  $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('fqa native '+$unicode+' space '+[Guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+  $child=Join-Path $testRoot 'child contract.ps1'
+  @(
+    'param([int]$Code)',
+    '[Console]::Out.WriteLine(("STDOUT:{0}" -f $Code))',
+    '[Console]::Error.WriteLine(("STDERR:{0}" -f $Code))',
+    'exit $Code'
+  ) | Set-Content -LiteralPath $child -Encoding ASCII
+
+  $WorkRoot=$testRoot
+  try {
+    $powershell=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    foreach ($expected in @(0,7)) {
+      $log=Join-Path $testRoot ('native_'+$expected+'.log')
+      $run=Invoke-NativeLogged -FilePath $powershell -Arguments @(
+        '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$child,'-Code',[string]$expected
+      ) -WorkingDirectory $testRoot -LogPath $log
+      if ([int]$run.ExitCode -ne $expected) {
+        throw ('NATIVE_PROCESS_CONTRACT_EXIT_MISMATCH:expected='+$expected+':actual='+$run.ExitCode)
+      }
+      $text=Get-Content -LiteralPath $log -Raw
+      if ($text -notmatch ('STDOUT:'+[regex]::Escape([string]$expected)) -or
+          $text -notmatch ('STDERR:'+[regex]::Escape([string]$expected))) {
+        throw ('NATIVE_PROCESS_CONTRACT_LOG_MISSING:'+ $expected)
+      }
+    }
+    Write-Host 'NATIVE_PROCESS_CONTRACT_TEST_PASS'
+  } finally {
+    $WorkRoot=$oldWorkRoot
+    Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue
+  }
 }
 
 function Export-ResultReadback {
@@ -381,6 +427,11 @@ function Export-ChatEvidence {
     candidate_sha256=if ($Summary.candidate) {$Summary.candidate.sha256} else {$null}
   }
   $chatIdentity | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $identity -Encoding UTF8
+}
+
+if ($NativeProcessContractTest) {
+  Invoke-NativeProcessContractTest
+  exit 0
 }
 
 try {
