@@ -209,7 +209,8 @@ def _preseal_integrity(results, root):
     return not problems, name
 
 
-def _signals(results, start_qa, fresh, environment_evidence, environment, root):
+def _signals(results, start_qa, fresh, environment_evidence, root, environment=None):
+    environment = environment or {}
     out = {}
     perf = _rows(results, ".performance_regression")
     if perf and all(r.get("status") in ("PASS", "FAIL") for r in perf):
@@ -294,8 +295,8 @@ def build_management_evidence(*, e, sessions, results, run_mode, prepared):
             env["start_qa_marker"] and (Path(e.root) / "reproduction.json").is_file(),
             fresh,
             env_name,
-            env,
             e.root,
+            environment=env,
         ),
     }
     if len(identities) == 1:
