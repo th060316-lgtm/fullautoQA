@@ -173,6 +173,41 @@ function Zip-DirectoryIfPresent([string]$Source,[string]$ZipPath) {
   [IO.Compression.ZipFile]::CreateFromDirectory($Source,$ZipPath,[IO.Compression.CompressionLevel]::Optimal,$false)
 }
 
+function ConvertTo-NativeArgument {
+  param([AllowEmptyString()][string]$Value)
+  if ($null -eq $Value -or $Value.Length -eq 0) { return '""' }
+  if ($Value -notmatch '[\s"]') { return $Value }
+
+  $builder=New-Object Text.StringBuilder
+  [void]$builder.Append('"')
+  $backslashes=0
+  foreach ($ch in $Value.ToCharArray()) {
+    if ($ch -eq '\') {
+      $backslashes++
+      continue
+    }
+    if ($ch -eq '"') {
+      if ($backslashes -gt 0) { [void]$builder.Append(('\' * ($backslashes * 2))) }
+      [void]$builder.Append('\"')
+      $backslashes=0
+      continue
+    }
+    if ($backslashes -gt 0) {
+      [void]$builder.Append(('\' * $backslashes))
+      $backslashes=0
+    }
+    [void]$builder.Append($ch)
+  }
+  if ($backslashes -gt 0) { [void]$builder.Append(('\' * ($backslashes * 2))) }
+  [void]$builder.Append('"')
+  return $builder.ToString()
+}
+
+function Join-NativeArguments {
+  param([string[]]$Values)
+  return (($Values | ForEach-Object { ConvertTo-NativeArgument ([string]$_) }) -join ' ')
+}
+
 function Invoke-NativeLogged {
   param(
     [string]$FilePath,
@@ -186,7 +221,7 @@ function Invoke-NativeLogged {
   $stderr=Join-Path $WorkRoot ('.native_'+$token+'.stderr.log')
   $params=@{
     FilePath=$FilePath
-    ArgumentList=$Arguments
+    ArgumentList=(Join-NativeArguments $Arguments)
     NoNewWindow=$true
     PassThru=$true
     RedirectStandardOutput=$stdout
