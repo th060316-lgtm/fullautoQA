@@ -9,7 +9,8 @@ from __future__ import annotations
 import ctypes
 import json
 import os
-import subprocess
+import ipaddress
+import socket
 from pathlib import Path
 
 from common import archive_eligible, inside, write_json
@@ -130,31 +131,34 @@ def _has_real_launch(results):
 def _network_adapter_snapshot():
     if os.name != "nt":
         return {"status": "NOT_MEASURED", "reason": "WINDOWS_REQUIRED"}
-    system_root = os.environ.get("SystemRoot")
-    if not system_root:
-        return {"status": "NOT_MEASURED", "reason": "SYSTEMROOT_UNAVAILABLE"}
-    shell = Path(system_root) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
-    if not shell.is_file():
-        return {"status": "NOT_MEASURED", "reason": "WINDOWS_POWERSHELL_UNAVAILABLE"}
-    command = "@(Get-NetAdapter -ErrorAction Stop | Where-Object {$_.Status -eq 'Up'}).Count"
     try:
-        result = subprocess.run(
-            [str(shell), "-NoLogo", "-NoProfile", "-Command", command],
-            capture_output=True,
-            timeout=15,
-            text=True,
-        )
-        if result.returncode != 0:
-            return {
-                "status": "NOT_MEASURED",
-                "reason": "GET_NET_ADAPTER_FAILED",
-                "exit_code": result.returncode,
-            }
-        lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-        if not lines:
-            return {"status": "NOT_MEASURED", "reason": "GET_NET_ADAPTER_EMPTY"}
-        count = int(lines[-1])
-        return {"status": "MEASURED", "up_adapter_count": count}
+        import psutil
+        stats = psutil.net_if_stats()
+        addrs = psutil.net_if_addrs()
+        up_external = []
+        for name, stat in stats.items():
+            if not stat.isup:
+                continue
+            usable = False
+            for addr in addrs.get(name, ()):
+                if addr.family not in (socket.AF_INET, socket.AF_INET6):
+                    continue
+                raw = str(addr.address).split("%", 1)[0]
+                try:
+                    ip = ipaddress.ip_address(raw)
+                except ValueError:
+                    continue
+                if not ip.is_loopback and not ip.is_unspecified:
+                    usable = True
+                    break
+            if usable:
+                up_external.append(str(name))
+        return {
+            "status": "MEASURED",
+            "up_adapter_count": len(up_external),
+            "up_adapters": sorted(up_external),
+            "method": "psutil_non_loopback_ip_interfaces",
+        }
     except Exception as ex:
         return {"status": "NOT_MEASURED", "reason": type(ex).__name__}
 
