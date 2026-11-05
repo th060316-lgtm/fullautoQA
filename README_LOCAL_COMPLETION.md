@@ -1,19 +1,27 @@
 # Local Final Completion
 
-GitHub Actions の artifact 容量を完成経路から外し、Windows実機で現在の凍結Sourceから Candidate を再構築し、その同一bytesで Source regression → START_QA selftest → PoliticsTrasport → codegeas → PoliticsTrasport を実行するための入口です。
+This entrypoint runs the current frozen Source through Candidate rebuild, Source regression, START_QA selftest, and fresh PoliticsTrasport -> codegeas -> PoliticsTrasport on a standard Windows user session.
 
-## 実行
+## Run
 
-1. GitHub の main 一式をWindowsへ取得・展開する。部分取得ではなく、開発版/complete_v033/blocks、開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip、開発版/source、開発版/acceptance_targets を含める。
-2. 管理者として実行しない。通常のWindowsユーザーセッションを使う。
-3. 完全offline条件も同時に確認する場合は、実行前に外部ネットワークを切断する。このrunner自身はネットワークを要求しないが、「インターネットへ到達不能だった」ことを自動で断定はしない。
-4. リポジトリ直下の RUN_LOCAL_COMPLETION.cmd を1回実行する。
-5. 成功時は LOCAL_FINAL_ACCEPTANCE_<RunTag> が残る。少なくとも LOCAL_COMPLETION_SUMMARY.json、ABA_EVIDENCE/SERIES_COMPARISON.json、3個の RESULT_FOR_CHATGPT.zip、SELFTEST_RESULTS、candidate_build/PHASE3_CANDIDATE_IDENTITY.json を保存する。
+1. Use a complete FullAutoQA download that contains the preserved donor blocks, or apply the lightweight download update pack to a previous complete download.
+2. Do not run as administrator.
+3. To validate offline operation at the same time, disconnect external network access before starting.
+4. Run RUN_LOCAL_COMPLETION.cmd once.
 
-## 成功条件
+The runner creates a temporary logical drive for its own repository/work paths and removes it when the run ends. The download folder may remain where the user placed it; no manual relocation is required. It does not permanently change PATH or Registry values.
 
-runnerは以下を順番固定で実行し、途中FAILなら後工程へ進みません。
+## Evidence
 
-donor JOIN → current Source再構築 → Candidate build/Size/SHA確認 → bundled Source regression → fresh START_QA.cmd -SelfTest → fresh A→B→A → 3 Result ZIP確認 → PATH readback。
+The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory contains the summary and logs. Large/deep transient trees stay inside the temporary work area. The runner exports compact evidence before cleanup:
 
-技術系列PASSは Human test、Product Acceptance、Stable、Release の自動PASSを意味しません。失敗した場合は LOCAL_FINAL_ACCEPTANCE_* を削除せず、そのまま技術デバッグ入力として使用してください。
+- LOCAL_COMPLETION_SUMMARY.json
+- Candidate build files under candidate_build/
+- SELFTEST_RESULTS.zip when selftest results exist
+- ABA_EVIDENCE.zip when series evidence exists
+- three RunN_RESULT_FOR_CHATGPT.zip files after a complete A-B-A series
+- step logs
+
+A technical series PASS does not automatically promote Human test, Product Acceptance, Stable, or Release.
+
+If the run fails, keep the visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory and return it for diagnosis.
