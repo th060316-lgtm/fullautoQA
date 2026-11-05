@@ -240,6 +240,15 @@ function Export-ResultReadback {
     }
   } finally { $archive.Dispose() }
 }
+function Persist-SeriesEvidence {
+  param([string]$Source)
+  if (-not $Source -or -not (Test-Path -LiteralPath $Source -PathType Container)) { return $Source }
+  $destination=Join-Path $OutRoot 'series_full'
+  if ([IO.Path]::GetFullPath($Source) -eq [IO.Path]::GetFullPath($destination)) { return $Source }
+  if (Test-Path -LiteralPath $destination) { throw 'SERIES_EVIDENCE_DESTINATION_EXISTS' }
+  Move-Item -LiteralPath $Source -Destination $destination
+  return $destination
+}
 function Export-TransientEvidence {
   if (-not $OutRoot) { return }
 
@@ -254,15 +263,8 @@ function Export-TransientEvidence {
     }
   }
 
-  if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
-    Zip-DirectoryIfPresent $SeriesOut (Join-Path $OutRoot 'ABA_EVIDENCE.zip')
-    $resultZips=@(Get-ChildItem -LiteralPath $SeriesOut -Recurse -Filter 'RESULT_FOR_CHATGPT.zip' -File | Sort-Object FullName)
-    $i=0
-    foreach ($item in $resultZips) {
-      $i++
-      Copy-Item -LiteralPath $item.FullName -Destination (Join-Path $OutRoot ('Run'+$i+'_RESULT_FOR_CHATGPT.zip')) -Force
-    }
-  }
+  # Full A-B-A evidence is moved once into OutRoot/series_full so it survives
+  # workspace cleanup without duplicating the large Result ZIPs.
 }
 
 function Export-ChatEvidence {
@@ -469,6 +471,9 @@ try {
   $seriesArgs=@('-B','-E','-s',$seriesScript,'--candidate',$candidate,'--expected-sha',$candidateSha,'--output',$SeriesOut)
   $seriesRun=Invoke-NativeLogged -FilePath $controllerPython -Arguments $seriesArgs -WorkingDirectory $ControllerRoot -LogPath (Join-Path $OutRoot 'ABA_SERIES.log')
   $seriesCode=$seriesRun.ExitCode
+  if (Test-Path -LiteralPath $SeriesOut -PathType Container) {
+    $SeriesOut=Persist-SeriesEvidence -Source $SeriesOut
+  }
   Export-TransientEvidence
   if ($seriesCode -ne 0) { throw ('ABA_SERIES_FAILED:' + $seriesCode) }
 
