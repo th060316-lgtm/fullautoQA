@@ -93,26 +93,20 @@ def _measurements(sessions, root):
         }
 
     root = Path(root)
-    try:
-        out["disk_bytes"] = {
-            "value": tree_size(root, tolerate_excluded_vanish=True),
-            "unit": "bytes",
-            "source": "run_directory",
-            "method": "recursive file size before sealing; transient excluded paths may vanish",
-            "evidence": [],
-        }
-    except OSError:
-        pass
-    try:
-        out["evidence_bytes"] = {
-            "value": tree_size(root, eligible_only=True, tolerate_excluded_vanish=True),
-            "unit": "bytes",
-            "source": "run_directory",
-            "method": "archive-eligible file size before sealing",
-            "evidence": [],
-        }
-    except OSError:
-        pass
+    out["disk_bytes"] = {
+        "value": tree_size(root, tolerate_excluded_vanish=True),
+        "unit": "bytes",
+        "source": "run_directory",
+        "method": "recursive file size before sealing; transient excluded paths may vanish",
+        "evidence": [],
+    }
+    out["evidence_bytes"] = {
+        "value": tree_size(root, eligible_only=True, tolerate_excluded_vanish=True),
+        "unit": "bytes",
+        "source": "run_directory",
+        "method": "archive-eligible file size before sealing",
+        "evidence": [],
+    }
     return out
 
 
