@@ -112,8 +112,8 @@ class Evidence:
                 excluded.append({'file':rel.as_posix(),'size':info.st_size,'sha256':digest(p),'reason':'TRANSIENT_WORK_NOT_EVIDENCE'})
             except FileNotFoundError:
                 excluded.append({'file':rel.as_posix(),'size':None,'sha256':None,'reason':'TRANSIENT_EXCLUDED_FILE_VANISHED'})
-            except OSError as ex:
-                excluded.append({'file':rel.as_posix(),'size':None,'sha256':None,'reason':'TRANSIENT_EXCLUDED_READ_FAILED','error':type(ex).__name__})
+            except OSError:
+                raise
         write_json(self.root/'excluded_work_inventory.json',excluded)
         out=[]
         for p in sorted(self.root.rglob('*')):
