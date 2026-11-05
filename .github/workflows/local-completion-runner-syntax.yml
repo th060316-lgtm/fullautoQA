@@ -38,3 +38,8 @@ jobs:
         run: |
           & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1') -NativeProcessContractTest
           if($LASTEXITCODE -ne 0){ throw ('NATIVE_PROCESS_CONTRACT_TEST_FAILED:'+$LASTEXITCODE) }
+      - name: Run stable evidence-export contract test on Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1') -EvidenceExportContractTest
+          if($LASTEXITCODE -ne 0){ throw ('EVIDENCE_EXPORT_CONTRACT_TEST_FAILED:'+$LASTEXITCODE) }
