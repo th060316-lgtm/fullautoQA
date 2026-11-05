@@ -19,8 +19,9 @@ Rules that this module enforces
 * Fixture / self-test / synthetic evidence can never be presented as
   real-game acceptance.
 * No numeric threshold is invented.  When no threshold is configured the
-  observed value is preserved verbatim and the verdict is reported as
-  unavailable (INCONCLUSIVE) rather than as a PASS or a FAIL.
+  observed value is preserved verbatim and the quality verdict stays
+  ``INCONCLUSIVE``.  Measurement coverage is judged separately, so absence of
+  an invented limit does not become an extra completion requirement.
 * Every value keeps its provenance.
 """
 from __future__ import annotations
