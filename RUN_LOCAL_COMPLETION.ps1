@@ -16,7 +16,7 @@ $Summary = [ordered]@{
   schema_version = 1
   run_tag = $RunTag
   status = 'RUNNING'
-  frozen_source_commit = '2c8d4eed3a45736e1f59fdf29b2804a8b05fdf77'
+  source_tree_fingerprint = $null
   purpose = 'Local Windows Candidate rebuild, selftest, Source regression and fresh A-B-A acceptance without GitHub Actions artifact transfer'
   repository_root = $RepoRoot
   started_utc = [DateTime]::UtcNow.ToString('o')
@@ -86,6 +86,38 @@ function Get-NetworkSnapshot {
   }
 }
 
+function Find-RepositoryFile([string]$Root,[string]$Name,[string[]]$RequiredSiblings=@()) {
+  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+  $prefix=$rootFull+[IO.Path]::DirectorySeparatorChar
+  $matches=New-Object 'System.Collections.Generic.List[System.IO.FileInfo]'
+  foreach ($item in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File -Filter $Name -ErrorAction Stop)) {
+    $relative=$item.FullName.Substring($prefix.Length)
+    $top=$relative.Split([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)[0]
+    if ($top -like 'LOCAL_FINAL_ACCEPTANCE_*' -or $top -eq '.git') { continue }
+    $ok=$true
+    foreach ($sibling in $RequiredSiblings) {
+      if (-not (Test-Path -LiteralPath (Join-Path $item.Directory.FullName $sibling))) { $ok=$false; break }
+    }
+    if ($ok) { $matches.Add($item) }
+  }
+  if ($matches.Count -ne 1) { throw ('REPOSITORY_FILE_DISCOVERY_FAILED:'+ $Name +':'+ $matches.Count) }
+  return $matches[0].FullName
+}
+
+function Get-TreeFingerprint([string]$Root) {
+  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+  $prefix=$rootFull+[IO.Path]::DirectorySeparatorChar
+  $rows=New-Object 'System.Collections.Generic.List[string]'
+  foreach ($file in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File | Sort-Object FullName)) {
+    $relative=$file.FullName.Substring($prefix.Length).Replace([IO.Path]::DirectorySeparatorChar,'/')
+    $rows.Add(($relative + [char]9 + $file.Length + [char]9 + (Get-SHA256 $file.FullName)))
+  }
+  $bytes=[Text.Encoding]::UTF8.GetBytes(($rows -join [Environment]::NewLine))
+  $alg=[Security.Cryptography.SHA256]::Create()
+  try { return ([BitConverter]::ToString($alg.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() }
+  finally { $alg.Dispose() }
+}
+
 $PathBefore = $null
 $SelftestRoot = $null
 $ControllerRoot = $null
@@ -103,8 +135,8 @@ try {
   Write-Summary
 
   Write-Host '=== 1/6 Reconstruct preserved v0.3.3 donor ==='
-  $complete = Join-Path $RepoRoot '開発版\complete_v033'
-  $join = Join-Path $complete 'JOIN_COMPLETE.ps1'
+  $join = Find-RepositoryFile -Root $RepoRoot -Name 'JOIN_COMPLETE.ps1' -RequiredSiblings @('manifest.json','blocks')
+  $complete = Split-Path -Parent $join
   & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $join 2>&1 |
     Tee-Object -FilePath (Join-Path $OutRoot 'DONOR_JOIN.log')
   if ($LASTEXITCODE -ne 0) { throw ('DONOR_JOIN_FAILED:' + $LASTEXITCODE) }
@@ -119,13 +151,18 @@ try {
 
   Write-Host '=== 2/6 Reconstruct current Source and build Candidate ==='
   $sourceDestination = Join-Path $OutRoot '_prepared_source'
-  $prepare = Join-Path $RepoRoot '開発版\source\scripts\PREPARE_SOURCE.ps1'
+  $prepare = Find-RepositoryFile -Root $RepoRoot -Name 'PREPARE_SOURCE.ps1' -RequiredSiblings @('PHASE3_OVERLAY_REBUILD.ps1')
+  $checkedOutSourceRoot = Split-Path -Parent (Split-Path -Parent $prepare)
+  if (-not (Test-Path -LiteralPath (Join-Path $checkedOutSourceRoot 'CORE') -PathType Container)) { throw 'CHECKED_OUT_SOURCE_ROOT_INVALID' }
+  $Summary.source_tree_fingerprint = Get-TreeFingerprint $checkedOutSourceRoot
+  Write-Summary
   $sourceRoot = & $prepare -RepositoryRoot $RepoRoot -Destination $sourceDestination
   if (-not $sourceRoot -or -not (Test-Path -LiteralPath (Join-Path $sourceRoot 'CORE') -PathType Container)) {
     throw 'PREPARED_SOURCE_ROOT_INVALID'
   }
 
-  $acceptanceSource = Join-Path $RepoRoot '開発版\acceptance_targets'
+  $plan = Find-RepositoryFile -Root $RepoRoot -Name 'FINAL_SERIES_PLAN.json' -RequiredSiblings @('run_series.py','RUN_FINAL_ACCEPTANCE.cmd')
+  $acceptanceSource = Split-Path -Parent $plan
   $acceptanceDest = Join-Path $sourceRoot 'ACCEPTANCE'
   if (Test-Path -LiteralPath $acceptanceDest) { Remove-Item -LiteralPath $acceptanceDest -Recurse -Force }
   Copy-Item -LiteralPath $acceptanceSource -Destination $acceptanceDest -Recurse -Force
@@ -136,7 +173,7 @@ try {
   $buildArgs = @(
     '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$rebuild,
     '-DonorArchive',$donor,'-SourceRoot',$sourceRoot,'-OutputDir',$buildOut,
-    '-SourceBaseline',$Summary.frozen_source_commit
+    '-SourceBaseline',$Summary.source_tree_fingerprint
   )
   & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" @buildArgs 2>&1 |
     Tee-Object -FilePath (Join-Path $OutRoot 'CANDIDATE_BUILD.log')
