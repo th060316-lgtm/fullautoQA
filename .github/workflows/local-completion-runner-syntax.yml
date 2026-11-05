@@ -33,3 +33,8 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1'),[ref]$tokens,[ref]$errors) | Out-Null
           if($errors.Count){ throw ($errors | Out-String) }
           Write-Host 'RUN_LOCAL_COMPLETION.ps1 parse PASS'
+      - name: Run native-process contract test on Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1') -NativeProcessContractTest
+          if($LASTEXITCODE -ne 0){ throw ('NATIVE_PROCESS_CONTRACT_TEST_FAILED:'+$LASTEXITCODE) }
