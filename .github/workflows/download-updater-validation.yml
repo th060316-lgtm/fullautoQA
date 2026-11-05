@@ -1,0 +1,79 @@
+name: Lightweight updater validation
+
+on:
+  push:
+    branches:
+      - 'download/local-final-acceptance'
+    paths:
+      - 'APPLY_UPDATE.ps1'
+      - 'APPLY_UPDATE.cmd'
+      - 'RUN_LOCAL_COMPLETION.ps1'
+      - 'DOWNLOAD_BRANCH_INFO.md'
+      - '.github/workflows/download-updater-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse updater with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $tokens=$null
+          $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'APPLY_UPDATE.ps1'),[ref]$tokens,[ref]$errors) | Out-Null
+          if($errors.Count){ throw ($errors | Out-String) }
+      - name: Verify managed-tree replacement and donor preservation
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $package=[IO.Path]::GetFullPath($PWD)
+          $target=Join-Path $env:RUNNER_TEMP 'old full download with spaces'
+          New-Item -ItemType Directory -Path $target -Force | Out-Null
+          Get-ChildItem -LiteralPath $package -Force | Where-Object { $_.Name -ne '.git' } | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $target -Recurse -Force
+          }
+
+          $prepare=Get-ChildItem -LiteralPath $target -Recurse -File -Filter 'PREPARE_SOURCE.ps1' | Where-Object {
+            Test-Path -LiteralPath (Join-Path $_.Directory.FullName 'PHASE3_OVERLAY_REBUILD.ps1')
+          }
+          if(@($prepare).Count -ne 1){ throw 'TEST_SOURCE_MARKER_DISCOVERY_FAILED' }
+          $sourceRoot=Split-Path -Parent (Split-Path -Parent $prepare.FullName)
+
+          $plan=Get-ChildItem -LiteralPath $target -Recurse -File -Filter 'FINAL_SERIES_PLAN.json' | Where-Object {
+            (Test-Path -LiteralPath (Join-Path $_.Directory.FullName 'run_series.py')) -and
+            (Test-Path -LiteralPath (Join-Path $_.Directory.FullName 'RUN_FINAL_ACCEPTANCE.cmd'))
+          }
+          if(@($plan).Count -ne 1){ throw 'TEST_ACCEPTANCE_MARKER_DISCOVERY_FAILED' }
+          $acceptanceRoot=$plan.Directory.FullName
+
+          $transfer=Get-ChildItem -LiteralPath $target -Recurse -File -Filter 'TRANSFER_MANIFEST.json'
+          if(@($transfer).Count -ne 1){ throw 'TEST_TRANSFER_MARKER_DISCOVERY_FAILED' }
+          $transferRoot=$transfer.Directory.FullName
+
+          foreach($root in @($sourceRoot,$acceptanceRoot,$transferRoot)){
+            Set-Content -LiteralPath (Join-Path $root 'STALE_SHOULD_BE_REMOVED.tmp') -Value 'stale' -Encoding ASCII
+          }
+
+          $join=Get-ChildItem -LiteralPath $target -Recurse -File -Filter 'JOIN_COMPLETE.ps1' | Where-Object {
+            Test-Path -LiteralPath (Join-Path $_.Directory.FullName 'manifest.json')
+          }
+          if(@($join).Count -ne 1){ throw 'TEST_DONOR_MARKER_DISCOVERY_FAILED' }
+          $blocks=Join-Path $join.Directory.FullName 'blocks'
+          New-Item -ItemType Directory -Path $blocks -Force | Out-Null
+          $sentinel=Join-Path $blocks 'PRESERVE_ME.bin'
+          Set-Content -LiteralPath $sentinel -Value 'keep' -Encoding ASCII
+
+          & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $package 'APPLY_UPDATE.ps1') -TargetRoot $target
+          if($LASTEXITCODE -ne 0){ throw ('UPDATER_EXIT_'+$LASTEXITCODE) }
+
+          foreach($name in @(
+            (Join-Path $sourceRoot 'STALE_SHOULD_BE_REMOVED.tmp'),
+            (Join-Path $acceptanceRoot 'STALE_SHOULD_BE_REMOVED.tmp'),
+            (Join-Path $transferRoot 'STALE_SHOULD_BE_REMOVED.tmp')
+          )){ if(Test-Path -LiteralPath $name){ throw ('STALE_FILE_SURVIVED:'+ $name) } }
+          if(-not (Test-Path -LiteralPath $sentinel -PathType Leaf)){ throw 'DONOR_BLOCK_SENTINEL_REMOVED' }
+          Write-Host 'LIGHTWEIGHT_UPDATER_VALIDATION_PASS'
