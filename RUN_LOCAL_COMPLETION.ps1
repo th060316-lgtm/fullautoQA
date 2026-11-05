@@ -238,6 +238,16 @@ function Export-ResultReadback {
         [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$dest,$true)
       }
     }
+    foreach ($entry in $archive.Entries) {
+      $name=$entry.FullName.Replace('\','/')
+      if ($name.Contains('/') -or -not $name.EndsWith('.json',[StringComparison]::OrdinalIgnoreCase)) { continue }
+      if ($name -eq 'reproduction.json' -or
+          $name -like '*_behavioral_regression.json' -or
+          $name -like '*_performance_regression.json' -or
+          $name -like '*_resources.json') {
+        [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,(Join-Path $Destination $name),$true)
+      }
+    }
   } finally { $archive.Dispose() }
 }
 function Persist-SeriesEvidence {
