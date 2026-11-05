@@ -10,6 +10,7 @@ sys.path.insert(0,str(ROOT/'scripts'))
 
 from common import Evidence,validate_result_zip
 from target_intake import validate_profile_structure, tool_ids_from_profile, summarize_discovered
+import phase3_run_evidence
 from phase3_run_evidence import build_management_evidence, build_sales_evidence
 from management_evaluator import evaluate_management
 from sales_evaluator import evaluate_sales
@@ -90,6 +91,46 @@ class Phase3IntegratedTests(unittest.TestCase):
             self.assertNotEqual(report.reason_code,'MANAGEMENT_EVALUATION_NOT_PERFORMED')
             self.assertTrue((root/'phase3_environment.json').is_file())
             self.assertTrue((root/'phase3_preseal_integrity.json').is_file())
+
+    def test_network_observation_has_no_optional_python_module_dependency(self):
+        source=(ROOT/'CORE/phase3_run_evidence.py').read_text(encoding='utf-8')
+        self.assertNotIn('import psutil',source)
+        fake_os=SimpleNamespace(name='nt',environ={'SystemRoot':r'C:\\Windows'})
+        measured=SimpleNamespace(
+            returncode=0,
+            stdout='[{"name":"Loopback","addresses":["127.0.0.1"]},{"name":"Ethernet","addresses":["192.0.2.10","fe80::1"]}]',
+            stderr=''
+        )
+        with patch.object(phase3_run_evidence,'os',fake_os), \
+             patch.object(phase3_run_evidence.Path,'is_file',return_value=True), \
+             patch.object(phase3_run_evidence.subprocess,'run',return_value=measured) as run:
+            data=phase3_run_evidence._network_adapter_snapshot()
+        self.assertEqual(data['status'],'MEASURED')
+        self.assertEqual(data['up_adapter_count'],1)
+        self.assertEqual(data['up_adapters'],['Ethernet'])
+        self.assertEqual(data['method'],'windows_powershell_up_adapters_with_nonloopback_ip')
+        self.assertIn('powershell.exe',str(run.call_args.args[0][0]).lower())
+
+        disconnected=SimpleNamespace(returncode=0,stdout='[]',stderr='')
+        with patch.object(phase3_run_evidence,'os',fake_os), \
+             patch.object(phase3_run_evidence.Path,'is_file',return_value=True), \
+             patch.object(phase3_run_evidence.subprocess,'run',return_value=disconnected):
+            data=phase3_run_evidence._network_adapter_snapshot()
+        self.assertEqual(data['status'],'MEASURED')
+        self.assertEqual(data['up_adapter_count'],0)
+
+        failed=SimpleNamespace(returncode=1,stdout='',stderr='query failed')
+        with patch.object(phase3_run_evidence,'os',fake_os), \
+             patch.object(phase3_run_evidence.Path,'is_file',return_value=True), \
+             patch.object(phase3_run_evidence.subprocess,'run',return_value=failed):
+            data=phase3_run_evidence._network_adapter_snapshot()
+        self.assertEqual(data['status'],'NOT_MEASURED')
+        self.assertEqual(data['reason'],'WINDOWS_NETWORK_QUERY_FAILED')
+
+    def test_phase3_measurements_use_shared_transient_safe_tree_scan(self):
+        source=(ROOT/'CORE/phase3_run_evidence.py').read_text(encoding='utf-8')
+        self.assertIn('tree_size(root, tolerate_excluded_vanish=True)',source)
+        self.assertIn('tree_size(root, eligible_only=True, tolerate_excluded_vanish=True)',source)
 
     def test_management_controller_and_offline_signals_require_observation(self):
         with tempfile.TemporaryDirectory() as td:
