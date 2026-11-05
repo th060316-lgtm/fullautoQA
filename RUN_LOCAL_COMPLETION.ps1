@@ -1,5 +1,5 @@
 # FullAutoQA local final-completion runner.
-# Removes GitHub Actions artifact storage from the completion path.
+# Uses a temporary drive mapping so the user-selected download location does not become part of deep build paths.
 [CmdletBinding()]
 param()
 
@@ -7,18 +7,31 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$RepoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
+$PhysicalRepoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
 $RunTag = ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '_' + [Guid]::NewGuid().ToString('N').Substring(0,8))
-$OutRoot = Join-Path $RepoRoot ('LOCAL_FINAL_ACCEPTANCE_' + $RunTag)
-New-Item -ItemType Directory -Path $OutRoot -Force | Out-Null
-$SummaryPath = Join-Path $OutRoot 'LOCAL_COMPLETION_SUMMARY.json'
+$SubstExe = Join-Path ([Environment]::GetFolderPath('System')) 'subst.exe'
+$MappedDrive = $null
+$RepoRoot = $PhysicalRepoRoot
+$WorkRoot = $null
+$OutRoot = $null
+$SummaryPath = $null
+$ExitCode = 1
+$PathBefore = $null
+$SelftestRoot = $null
+$ControllerRoot = $null
+$SeriesOut = $null
+$BuildOut = $null
+
 $Summary = [ordered]@{
-  schema_version = 1
+  schema_version = 2
   run_tag = $RunTag
-  status = 'RUNNING'
+  status = 'STARTING'
   source_tree_fingerprint = $null
   purpose = 'Local Windows Candidate rebuild, selftest, Source regression and fresh A-B-A acceptance without GitHub Actions artifact transfer'
-  repository_root = $RepoRoot
+  physical_repository_root = $PhysicalRepoRoot
+  logical_repository_root = $null
+  workspace_drive = $null
+  workspace_root = $null
   started_utc = [DateTime]::UtcNow.ToString('o')
   non_admin_session = $null
   network_snapshot = $null
@@ -31,17 +44,13 @@ $Summary = [ordered]@{
   aba_series = 'NOT_RUN'
   aba_result_zip_count = 0
   persistent_path_status = 'NOT_MEASURED'
+  workspace_cleanup = 'NOT_RUN'
   offline_internet_status = 'USER_MUST_RUN_WITH_EXTERNAL_NETWORK_DISCONNECTED'
   human_test = 'NOT_RUN'
   product_acceptance = 'HOLD'
   stable = 'HOLD'
-  evidence_root = $OutRoot
+  evidence_root = $null
   error = $null
-}
-
-function Write-Summary {
-  $Summary.updated_utc = [DateTime]::UtcNow.ToString('o')
-  $Summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $SummaryPath -Encoding UTF8
 }
 
 function Get-SHA256([string]$Path) {
@@ -49,6 +58,12 @@ function Get-SHA256([string]$Path) {
   $hash = [Security.Cryptography.SHA256]::Create()
   try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
   finally { $hash.Dispose(); $stream.Dispose() }
+}
+
+function Write-Summary {
+  if (-not $SummaryPath) { return }
+  $Summary.updated_utc = [DateTime]::UtcNow.ToString('o')
+  $Summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $SummaryPath -Encoding UTF8
 }
 
 function Get-PathSnapshot {
@@ -86,6 +101,28 @@ function Get-NetworkSnapshot {
   }
 }
 
+function New-RepoDrive([string]$Root) {
+  if (-not (Test-Path -LiteralPath $SubstExe -PathType Leaf)) { throw 'SUBST_TOOL_MISSING' }
+  foreach ($code in 90..68) {
+    $letter=[char]$code
+    $name=[string]$letter
+    if (Get-PSDrive -Name $name -PSProvider FileSystem -ErrorAction SilentlyContinue) { continue }
+    $drive=($name + ':')
+    & $SubstExe $drive $Root | Out-Null
+    if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath ($drive + '\') -PathType Container)) {
+      return $drive
+    }
+    & $SubstExe $drive /D 2>$null | Out-Null
+  }
+  throw 'NO_TEMPORARY_WORK_DRIVE_AVAILABLE'
+}
+
+function Remove-RepoDrive([string]$Drive) {
+  if (-not $Drive) { return $true }
+  & $SubstExe $Drive /D 2>$null | Out-Null
+  return ($LASTEXITCODE -eq 0)
+}
+
 function Find-RepositoryFile([string]$Root,[string]$Name,[string[]]$RequiredSiblings=@()) {
   $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
   $prefix=$rootFull+[IO.Path]::DirectorySeparatorChar
@@ -93,7 +130,7 @@ function Find-RepositoryFile([string]$Root,[string]$Name,[string[]]$RequiredSibl
   foreach ($item in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File -Filter $Name -ErrorAction Stop)) {
     $relative=$item.FullName.Substring($prefix.Length)
     $top=$relative.Split([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)[0]
-    if ($top -like 'LOCAL_FINAL_ACCEPTANCE_*' -or $top -eq '.git') { continue }
+    if ($top -like 'LOCAL_FINAL_ACCEPTANCE_*' -or $top -like '.fqa_work_*' -or $top -eq '.git') { continue }
     $ok=$true
     foreach ($sibling in $RequiredSiblings) {
       if (-not (Test-Path -LiteralPath (Join-Path $item.Directory.FullName $sibling))) { $ok=$false; break }
@@ -118,9 +155,44 @@ function Get-TreeFingerprint([string]$Root) {
   finally { $alg.Dispose() }
 }
 
-$PathBefore = $null
-$SelftestRoot = $null
-$ControllerRoot = $null
+function Copy-TopLevelFiles([string]$Source,[string]$Destination) {
+  if (-not (Test-Path -LiteralPath $Source -PathType Container)) { return }
+  New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+  Get-ChildItem -LiteralPath $Source -File -Force | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $Destination $_.Name) -Force
+  }
+}
+
+function Zip-DirectoryIfPresent([string]$Source,[string]$ZipPath) {
+  if (-not (Test-Path -LiteralPath $Source -PathType Container)) { return }
+  if (Test-Path -LiteralPath $ZipPath) { Remove-Item -LiteralPath $ZipPath -Force }
+  [IO.Compression.ZipFile]::CreateFromDirectory($Source,$ZipPath,[IO.Compression.CompressionLevel]::Optimal,$false)
+}
+
+function Export-TransientEvidence {
+  if (-not $OutRoot) { return }
+
+  if ($BuildOut -and (Test-Path -LiteralPath $BuildOut -PathType Container)) {
+    Copy-TopLevelFiles $BuildOut (Join-Path $OutRoot 'candidate_build')
+  }
+
+  if ($SelftestRoot) {
+    $selfResults=Join-Path $SelftestRoot 'RESULTS'
+    if (Test-Path -LiteralPath $selfResults -PathType Container) {
+      Zip-DirectoryIfPresent $selfResults (Join-Path $OutRoot 'SELFTEST_RESULTS.zip')
+    }
+  }
+
+  if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
+    Zip-DirectoryIfPresent $SeriesOut (Join-Path $OutRoot 'ABA_EVIDENCE.zip')
+    $resultZips=@(Get-ChildItem -LiteralPath $SeriesOut -Recurse -Filter 'RESULT_FOR_CHATGPT.zip' -File | Sort-Object FullName)
+    $i=0
+    foreach ($item in $resultZips) {
+      $i++
+      Copy-Item -LiteralPath $item.FullName -Destination (Join-Path $OutRoot ('Run'+$i+'_RESULT_FOR_CHATGPT.zip')) -Force
+    }
+  }
+}
 
 try {
   if ($env:OS -ne 'Windows_NT') { throw 'LOCAL_COMPLETION_REQUIRES_WINDOWS' }
@@ -129,6 +201,19 @@ try {
   $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
   $Summary.non_admin_session = -not $isAdmin
   if ($isAdmin) { throw 'RUN_FROM_A_STANDARD_NON_ADMIN_WINDOWS_SESSION' }
+
+  $MappedDrive = New-RepoDrive $PhysicalRepoRoot
+  $RepoRoot = ($MappedDrive + '\')
+  $WorkRoot = Join-Path $RepoRoot ('.fqa_work_' + $RunTag)
+  $OutRoot = Join-Path $RepoRoot ('LOCAL_FINAL_ACCEPTANCE_' + $RunTag)
+  New-Item -ItemType Directory -Path $WorkRoot -Force | Out-Null
+  New-Item -ItemType Directory -Path $OutRoot -Force | Out-Null
+  $SummaryPath = Join-Path $OutRoot 'LOCAL_COMPLETION_SUMMARY.json'
+  $Summary.logical_repository_root = $RepoRoot
+  $Summary.workspace_drive = $MappedDrive
+  $Summary.workspace_root = $WorkRoot
+  $Summary.evidence_root = $OutRoot
+  $Summary.status = 'RUNNING'
 
   $Summary.network_snapshot = Get-NetworkSnapshot
   $PathBefore = Get-PathSnapshot
@@ -150,7 +235,7 @@ try {
   Write-Summary
 
   Write-Host '=== 2/6 Reconstruct current Source and build Candidate ==='
-  $sourceDestination = Join-Path $OutRoot '_prepared_source'
+  $sourceDestination = Join-Path $WorkRoot 'prepared'
   $prepare = Find-RepositoryFile -Root $RepoRoot -Name 'PREPARE_SOURCE.ps1' -RequiredSiblings @('PHASE3_OVERLAY_REBUILD.ps1')
   $checkedOutSourceRoot = Split-Path -Parent (Split-Path -Parent $prepare)
   if (-not (Test-Path -LiteralPath (Join-Path $checkedOutSourceRoot 'CORE') -PathType Container)) { throw 'CHECKED_OUT_SOURCE_ROOT_INVALID' }
@@ -167,12 +252,12 @@ try {
   if (Test-Path -LiteralPath $acceptanceDest) { Remove-Item -LiteralPath $acceptanceDest -Recurse -Force }
   Copy-Item -LiteralPath $acceptanceSource -Destination $acceptanceDest -Recurse -Force
 
-  $buildOut = Join-Path $OutRoot 'candidate_build'
-  New-Item -ItemType Directory -Path $buildOut -Force | Out-Null
+  $BuildOut = Join-Path $WorkRoot 'build'
+  New-Item -ItemType Directory -Path $BuildOut -Force | Out-Null
   $rebuild = Join-Path $sourceRoot 'scripts\PHASE3_OVERLAY_REBUILD.ps1'
   $buildArgs = @(
     '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$rebuild,
-    '-DonorArchive',$donor,'-SourceRoot',$sourceRoot,'-OutputDir',$buildOut,
+    '-DonorArchive',$donor,'-SourceRoot',$sourceRoot,'-OutputDir',$BuildOut,
     '-SourceBaseline',$Summary.source_tree_fingerprint
   )
   & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" @buildArgs 2>&1 |
@@ -180,21 +265,26 @@ try {
   if ($LASTEXITCODE -ne 0) { throw ('CANDIDATE_BUILD_FAILED:' + $LASTEXITCODE) }
   $Summary.candidate_build='PASS'
 
-  $identityPath = Join-Path $buildOut 'PHASE3_CANDIDATE_IDENTITY.json'
+  $identityPath = Join-Path $BuildOut 'PHASE3_CANDIDATE_IDENTITY.json'
   $identity = Get-Content -LiteralPath $identityPath -Raw -Encoding UTF8 | ConvertFrom-Json
-  $candidate = Join-Path $buildOut ([string]$identity.candidate_file)
+  $candidate = Join-Path $BuildOut ([string]$identity.candidate_file)
   if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { throw 'CANDIDATE_FILE_MISSING' }
   $candidateSize=(Get-Item -LiteralPath $candidate).Length
   $candidateSha=Get-SHA256 $candidate
   if ($candidateSize -ne [long]$identity.candidate_size -or $candidateSha -ne ([string]$identity.candidate_sha256).ToLowerInvariant()) {
     throw 'CANDIDATE_IDENTITY_MISMATCH'
   }
-  $Summary.candidate=[ordered]@{file=$candidate;size=$candidateSize;sha256=$candidateSha;identity_file=$identityPath}
+  $Summary.candidate=[ordered]@{
+    file=[IO.Path]::GetFileName($candidate)
+    size=$candidateSize
+    sha256=$candidateSha
+  }
   $Summary.candidate_integrity='PASS'
+  Copy-TopLevelFiles $BuildOut (Join-Path $OutRoot 'candidate_build')
   Write-Summary
 
   Write-Host '=== 3/6 Fresh Candidate Source regression ==='
-  $SelftestRoot = Join-Path $OutRoot '_fresh_selftest'
+  $SelftestRoot = Join-Path $WorkRoot 'selftest'
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   $bundledPython = Join-Path $SelftestRoot 'RUNTIME\python\python.exe'
   $ffmpeg = @(Get-ChildItem -LiteralPath (Join-Path $SelftestRoot 'RUNTIME') -Recurse -Filter 'ffmpeg.exe' -File)
@@ -217,34 +307,32 @@ try {
     & cmd.exe /d /c 'START_QA.cmd -SelfTest' 2>&1 | Tee-Object -FilePath (Join-Path $OutRoot 'START_QA_SELFTEST.log')
     $selfCode=$LASTEXITCODE
   } finally { Pop-Location }
+  Export-TransientEvidence
   if ($selfCode -ne 0) { throw ('WINDOWS_SELFTEST_FAILED:' + $selfCode) }
   $Summary.windows_selftest='PASS'
   Write-Summary
 
-  $selfResults = Join-Path $SelftestRoot 'RESULTS'
-  if (Test-Path -LiteralPath $selfResults) {
-    Copy-Item -LiteralPath $selfResults -Destination (Join-Path $OutRoot 'SELFTEST_RESULTS') -Recurse -Force
-  }
   Remove-Item -LiteralPath $SelftestRoot -Recurse -Force
   $SelftestRoot=$null
 
   Write-Host '=== 5/6 Fresh PoliticsTrasport -> codegeas -> PoliticsTrasport ==='
-  $ControllerRoot = Join-Path $OutRoot '_controller'
+  $ControllerRoot = Join-Path $WorkRoot 'controller'
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$ControllerRoot)
   $controllerPython = Join-Path $ControllerRoot 'RUNTIME\python\python.exe'
   $seriesScript = Join-Path $ControllerRoot 'ACCEPTANCE\run_series.py'
-  $seriesOut = Join-Path $OutRoot 'ABA_EVIDENCE'
-  & $controllerPython -B -E -s $seriesScript --candidate $candidate --expected-sha $candidateSha --output $seriesOut 2>&1 |
+  $SeriesOut = Join-Path $WorkRoot 'series'
+  & $controllerPython -B -E -s $seriesScript --candidate $candidate --expected-sha $candidateSha --output $SeriesOut 2>&1 |
     Tee-Object -FilePath (Join-Path $OutRoot 'ABA_SERIES.log')
   $seriesCode=$LASTEXITCODE
+  Export-TransientEvidence
   if ($seriesCode -ne 0) { throw ('ABA_SERIES_FAILED:' + $seriesCode) }
 
-  $comparisonPath=Join-Path $seriesOut 'SERIES_COMPARISON.json'
+  $comparisonPath=Join-Path $SeriesOut 'SERIES_COMPARISON.json'
   $comparison=Get-Content -LiteralPath $comparisonPath -Raw -Encoding UTF8 | ConvertFrom-Json
   if ($comparison.technical_series_status -ne 'PASS' -or [int]$comparison.final_runs_completed -ne 3) {
     throw 'ABA_SERIES_COMPARISON_NONPASS'
   }
-  $resultZips=@(Get-ChildItem -LiteralPath $seriesOut -Recurse -Filter 'RESULT_FOR_CHATGPT.zip' -File)
+  $resultZips=@(Get-ChildItem -LiteralPath $SeriesOut -Recurse -Filter 'RESULT_FOR_CHATGPT.zip' -File)
   if ($resultZips.Count -ne 3) { throw ('ABA_RESULT_ZIP_COUNT:' + $resultZips.Count) }
   $Summary.aba_series='PASS'
   $Summary.aba_result_zip_count=$resultZips.Count
@@ -255,33 +343,60 @@ try {
   $Summary.persistent_path_status = if ((ConvertTo-Json $PathBefore -Depth 8 -Compress) -eq (ConvertTo-Json $PathAfter -Depth 8 -Compress)) {'UNCHANGED'} else {'CHANGED_REQUIRES_REVIEW'}
   $Summary.status='TECHNICAL_LOCAL_ACCEPTANCE_PASS'
   $Summary.completed_utc=[DateTime]::UtcNow.ToString('o')
+  Export-TransientEvidence
   Write-Summary
-
-  if ($ControllerRoot -and (Test-Path -LiteralPath $ControllerRoot)) {
-    Remove-Item -LiteralPath $ControllerRoot -Recurse -Force
-    $ControllerRoot=$null
-  }
+  $ExitCode=0
 
   Write-Host ''
   Write-Host 'LOCAL TECHNICAL ACCEPTANCE PASS'
   Write-Host ('Candidate SHA256: ' + $candidateSha)
   Write-Host ('Evidence root: ' + $OutRoot)
-  Write-Host 'Keep LOCAL_COMPLETION_SUMMARY.json, ABA_EVIDENCE, SELFTEST_RESULTS and the Candidate identity/archive.'
   Write-Host 'Offline internet use and Human/Product acceptance remain separate claims; do not mark them PASS unless actually performed.'
-  exit 0
 }
 catch {
   $Summary.status='FAIL'
   $Summary.error=$_.Exception.Message
   $Summary.failed_utc=[DateTime]::UtcNow.ToString('o')
   try {
+    Export-TransientEvidence
     if ($PathBefore) {
       $PathAfter=Get-PathSnapshot
       $Summary.persistent_path_status = if ((ConvertTo-Json $PathBefore -Depth 8 -Compress) -eq (ConvertTo-Json $PathAfter -Depth 8 -Compress)) {'UNCHANGED'} else {'CHANGED_REQUIRES_REVIEW'}
     }
-  } catch {}
+  } catch {
+    $Summary.evidence_export_error=$_.Exception.Message
+  }
   Write-Summary
   [Console]::Error.WriteLine('LOCAL_COMPLETION_FAILED: ' + $_.Exception.Message)
-  [Console]::Error.WriteLine('Preserve evidence at: ' + $OutRoot)
-  exit 1
+  if ($OutRoot) { [Console]::Error.WriteLine('Preserve evidence at: ' + $OutRoot) }
+  $ExitCode=1
 }
+finally {
+  try {
+    if ($ControllerRoot -and (Test-Path -LiteralPath $ControllerRoot)) {
+      Remove-Item -LiteralPath $ControllerRoot -Recurse -Force -ErrorAction Stop
+    }
+    if ($SelftestRoot -and (Test-Path -LiteralPath $SelftestRoot)) {
+      Remove-Item -LiteralPath $SelftestRoot -Recurse -Force -ErrorAction Stop
+    }
+    if ($WorkRoot -and (Test-Path -LiteralPath $WorkRoot)) {
+      Remove-Item -LiteralPath $WorkRoot -Recurse -Force -ErrorAction Stop
+    }
+    $Summary.workspace_cleanup='WORKSPACE_REMOVED'
+  } catch {
+    $Summary.workspace_cleanup=('WORKSPACE_RETAINED:' + $_.Exception.Message)
+  }
+
+  if ($SummaryPath) {
+    try { Write-Summary } catch {}
+  }
+
+  if ($MappedDrive) {
+    $removed=Remove-RepoDrive $MappedDrive
+    if (-not $removed) {
+      [Console]::Error.WriteLine('WARNING: temporary drive mapping cleanup failed for ' + $MappedDrive)
+    }
+  }
+}
+
+exit $ExitCode
