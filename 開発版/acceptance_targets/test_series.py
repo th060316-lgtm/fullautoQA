@@ -1,6 +1,6 @@
 import copy,json,os,sys,tempfile,unittest,zipfile
 from pathlib import Path
-from run_series import OPERATION_LOG,compare_records,extract,origin_record,run_logged
+from run_series import OPERATION_LOG,compare_records,extract,origin_record,run_logged,summarize_execution_environment
 
 class SeriesIntegrityTests(unittest.TestCase):
     def setUp(self):
@@ -53,5 +53,30 @@ class SeriesIntegrityTests(unittest.TestCase):
             self.assertEqual(log.read_text(encoding='utf-8').strip(),'1')
             self.assertEqual(os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER'),parent)
             self.assertTrue(OPERATION_LOG[before]['automated_controller'])
+
+    def test_series_environment_requires_all_runs_for_offline_and_nonadmin(self):
+        plan={'series':['A','B','A']}
+        obs={'admin_status':'STANDARD_USER',
+             'network_observation':{'status':'MEASURED','up_adapter_count':0},
+             'automated_controller_marker':True}
+        records=[{'environment_observation':copy.deepcopy(obs)} for _ in range(3)]
+        data=summarize_execution_environment(records,plan,{'os':'nt'})
+        self.assertEqual(data['local_windows_offline'],'NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED')
+        self.assertEqual(data['non_admin_series'],'STANDARD_USER_ALL_RUNS')
+        self.assertEqual(data['controller_only_series'],'AUTOMATED_CONTROLLER_ALL_RUNS')
+        records[1]['environment_observation']['network_observation']['up_adapter_count']=1
+        data=summarize_execution_environment(records,plan,{'os':'nt'})
+        self.assertEqual(data['local_windows_offline'],'NOT_VERIFIED')
+
+    def test_partial_series_never_claims_environment_completion(self):
+        plan={'series':['A','B','A']}
+        records=[{'environment_observation':{
+            'admin_status':'STANDARD_USER',
+            'network_observation':{'status':'MEASURED','up_adapter_count':0},
+            'automated_controller_marker':True}}]
+        data=summarize_execution_environment(records,plan,{'os':'nt'})
+        self.assertEqual(data['local_windows_offline'],'NOT_VERIFIED')
+        self.assertEqual(data['non_admin_series'],'NOT_VERIFIED')
+        self.assertEqual(data['controller_only_series'],'NOT_VERIFIED')
 
 if __name__=='__main__':unittest.main()
