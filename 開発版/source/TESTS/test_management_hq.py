@@ -360,6 +360,62 @@ class ManagementCompleteEvidenceTest(unittest.TestCase):
         self.assertEqual(report.readback['unavailable_required'], [])
         self.assertEqual(report.readback['status'], 'PASS')
 
+class ManagementCompletionSemanticsTest(unittest.TestCase):
+    def test_recorded_measurements_do_not_need_invented_absolute_limits(self):
+        import tempfile
+        extras = {'target_identity': {'demo': {'generation': 3, 'fingerprint': 'abc'}}}
+        with tempfile.TemporaryDirectory() as tmp:
+            write_bundle(tmp, complete_bundle())
+            report = evaluate_management(context(tmp, extras=extras))
+        self.assertEqual(report.readback['measurement_availability']['status'], 'PASS')
+        self.assertEqual(report.readback['measurement_quality']['status'], 'INCONCLUSIVE')
+        self.assertEqual(report.status, 'PASS')
+        cpu = next(row for row in report.readback['gate_status'] if row['name'] == 'management.cpu')
+        self.assertEqual(cpu['status'], 'INCONCLUSIVE')
+        self.assertFalse(cpu['required'])
+
+    def test_missing_required_measurement_still_blocks(self):
+        import tempfile
+        extras = {'target_identity': {'demo': {'generation': 3, 'fingerprint': 'abc'}}}
+        bundle = complete_bundle()
+        bundle['measurements'].pop('ram_mb')
+        with tempfile.TemporaryDirectory() as tmp:
+            write_bundle(tmp, bundle)
+            report = evaluate_management(context(tmp, extras=extras))
+        self.assertEqual(report.readback['measurement_availability']['status'], 'NOT_RUN')
+        self.assertNotEqual(report.status, 'PASS')
+        coverage = next(row for row in report.readback['gate_status']
+                        if row['name'] == 'management.measurement_coverage')
+        self.assertTrue(coverage['required'])
+        self.assertEqual(coverage['status'], 'NOT_RUN')
+
+    def test_absent_performance_baseline_stays_visible_but_does_not_invent_failure(self):
+        import tempfile
+        extras = {'target_identity': {'demo': {'generation': 3, 'fingerprint': 'abc'}}}
+        bundle = complete_bundle()
+        bundle.pop('performance_regression')
+        with tempfile.TemporaryDirectory() as tmp:
+            write_bundle(tmp, bundle)
+            report = evaluate_management(context(tmp, extras=extras))
+        perf = next(row for row in report.readback['gate_status']
+                    if row['name'] == 'management.performance_regression')
+        self.assertEqual(perf['status'], 'NOT_RUN')
+        self.assertFalse(perf['required'])
+        self.assertEqual(report.status, 'PASS')
+
+    def test_recorded_performance_regression_is_enforced(self):
+        import tempfile
+        extras = {'target_identity': {'demo': {'generation': 3, 'fingerprint': 'abc'}}}
+        with tempfile.TemporaryDirectory() as tmp:
+            write_bundle(tmp, complete_bundle(performance_regression=True))
+            report = evaluate_management(context(tmp, extras=extras))
+        self.assertEqual(report.status, 'FAIL')
+        perf = next(row for row in report.readback['gate_status']
+                    if row['name'] == 'management.performance_regression')
+        self.assertTrue(perf['required'])
+        self.assertEqual(perf['status'], 'FAIL')
+
+
 class NonFiniteThresholdTest(unittest.TestCase):
     def test_nonfinite_measurements_and_bounds_never_pass(self):
         from hq_evidence import compare_threshold
