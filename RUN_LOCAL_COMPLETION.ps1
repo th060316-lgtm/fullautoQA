@@ -353,9 +353,21 @@ try {
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   $bundledPython = Join-Path $SelftestRoot 'RUNTIME\python\python.exe'
   if (-not (Test-Path -LiteralPath $bundledPython -PathType Leaf)) { throw 'BUNDLED_PYTHON_NOT_FOUND' }
-  & $bundledPython -B -E -s -m unittest discover -s (Join-Path $SelftestRoot 'TESTS') -v 2>&1 |
-    Tee-Object -FilePath (Join-Path $OutRoot 'BUNDLED_SOURCE_TESTS.log')
-  $sourceTestCode=$LASTEXITCODE
+  $sourceLog=Join-Path $OutRoot 'BUNDLED_SOURCE_TESTS.log'
+  $sourceStdout=Join-Path $WorkRoot 'source_tests.stdout.log'
+  $sourceStderr=Join-Path $WorkRoot 'source_tests.stderr.log'
+  $sourceArgs=@('-B','-E','-s','-m','unittest','discover','-s',(Join-Path $SelftestRoot 'TESTS'),'-v')
+  $sourceProc=Start-Process -FilePath $bundledPython -ArgumentList $sourceArgs -NoNewWindow -Wait -PassThru -RedirectStandardOutput $sourceStdout -RedirectStandardError $sourceStderr
+  $sourceTestCode=$sourceProc.ExitCode
+  $sourceLines=New-Object 'System.Collections.Generic.List[string]'
+  if (Test-Path -LiteralPath $sourceStdout -PathType Leaf) {
+    foreach ($line in @(Get-Content -LiteralPath $sourceStdout)) { $sourceLines.Add($line) }
+  }
+  if (Test-Path -LiteralPath $sourceStderr -PathType Leaf) {
+    foreach ($line in @(Get-Content -LiteralPath $sourceStderr)) { $sourceLines.Add($line) }
+  }
+  $sourceLines | Set-Content -LiteralPath $sourceLog -Encoding UTF8
+  foreach ($line in $sourceLines) { Write-Host $line }
   if ($sourceTestCode -ne 0) { throw ('BUNDLED_SOURCE_REGRESSION_FAILED:' + $sourceTestCode) }
   $Summary.source_regression='PASS'
   Write-Summary
