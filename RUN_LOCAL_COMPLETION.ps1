@@ -160,9 +160,17 @@ try {
   $SelftestRoot = Join-Path $OutRoot '_fresh_selftest'
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   $bundledPython = Join-Path $SelftestRoot 'RUNTIME\python\python.exe'
-  & $bundledPython -B -E -s -m unittest discover -s (Join-Path $SelftestRoot 'TESTS') -v 2>&1 |
-    Tee-Object -FilePath (Join-Path $OutRoot 'BUNDLED_SOURCE_TESTS.log')
-  if ($LASTEXITCODE -ne 0) { throw ('BUNDLED_SOURCE_REGRESSION_FAILED:' + $LASTEXITCODE) }
+  $ffmpeg = @(Get-ChildItem -LiteralPath (Join-Path $SelftestRoot 'RUNTIME') -Recurse -Filter 'ffmpeg.exe' -File)
+  $ffmpegDirs = @($ffmpeg | ForEach-Object { $_.DirectoryName } | Select-Object -Unique)
+  if ($ffmpegDirs.Count -eq 0) { throw 'BUNDLED_FFMPEG_NOT_FOUND' }
+  $savedPath = $env:PATH
+  try {
+    $env:PATH = (($ffmpegDirs -join ';') + ';' + $env:PATH)
+    & $bundledPython -B -E -s -m unittest discover -s (Join-Path $SelftestRoot 'TESTS') -v 2>&1 |
+      Tee-Object -FilePath (Join-Path $OutRoot 'BUNDLED_SOURCE_TESTS.log')
+    $sourceTestCode=$LASTEXITCODE
+  } finally { $env:PATH=$savedPath }
+  if ($sourceTestCode -ne 0) { throw ('BUNDLED_SOURCE_REGRESSION_FAILED:' + $sourceTestCode) }
   $Summary.source_regression='PASS'
   Write-Summary
 
