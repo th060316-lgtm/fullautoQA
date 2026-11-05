@@ -23,7 +23,7 @@ $SeriesOut = $null
 $BuildOut = $null
 
 $Summary = [ordered]@{
-  schema_version = 2
+  schema_version = 3
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
@@ -50,6 +50,7 @@ $Summary = [ordered]@{
   product_acceptance = 'HOLD'
   stable = 'HOLD'
   evidence_root = $null
+  chatgpt_evidence_file = 'CHATGPT_EVIDENCE.zip'
   error = $null
 }
 
@@ -155,10 +156,11 @@ function Get-TreeFingerprint([string]$Root) {
   finally { $alg.Dispose() }
 }
 
-function Copy-TopLevelFiles([string]$Source,[string]$Destination) {
+function Copy-TopLevelFiles([string]$Source,[string]$Destination,[switch]$SkipArchives) {
   if (-not (Test-Path -LiteralPath $Source -PathType Container)) { return }
   New-Item -ItemType Directory -Path $Destination -Force | Out-Null
   Get-ChildItem -LiteralPath $Source -File -Force | ForEach-Object {
+    if ($SkipArchives -and $_.Extension -ieq '.zip') { return }
     Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $Destination $_.Name) -Force
   }
 }
@@ -173,7 +175,7 @@ function Export-TransientEvidence {
   if (-not $OutRoot) { return }
 
   if ($BuildOut -and (Test-Path -LiteralPath $BuildOut -PathType Container)) {
-    Copy-TopLevelFiles $BuildOut (Join-Path $OutRoot 'candidate_build')
+    Copy-TopLevelFiles $BuildOut (Join-Path $OutRoot 'candidate_build') -SkipArchives
   }
 
   if ($SelftestRoot) {
@@ -192,6 +194,64 @@ function Export-TransientEvidence {
       Copy-Item -LiteralPath $item.FullName -Destination (Join-Path $OutRoot ('Run'+$i+'_RESULT_FOR_CHATGPT.zip')) -Force
     }
   }
+}
+
+function Export-ChatEvidence {
+  if (-not $OutRoot -or -not (Test-Path -LiteralPath $OutRoot -PathType Container)) { return }
+
+  $stage=Join-Path $OutRoot '.chat_evidence_stage'
+  $zip=Join-Path $OutRoot 'CHATGPT_EVIDENCE.zip'
+  $identity=Join-Path $OutRoot 'CHATGPT_EVIDENCE_IDENTITY.json'
+  if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+  New-Item -ItemType Directory -Path $stage -Force | Out-Null
+
+  foreach ($name in @(
+    'LOCAL_COMPLETION_SUMMARY.json',
+    'DONOR_JOIN.log',
+    'CANDIDATE_BUILD.log',
+    'BUNDLED_SOURCE_TESTS.log',
+    'START_QA_SELFTEST.log',
+    'ABA_SERIES.log'
+  )) {
+    $source=Join-Path $OutRoot $name
+    if (Test-Path -LiteralPath $source -PathType Leaf) {
+      Copy-Item -LiteralPath $source -Destination (Join-Path $stage $name) -Force
+    }
+  }
+
+  $candidateMetadata=Join-Path $OutRoot 'candidate_build'
+  if (Test-Path -LiteralPath $candidateMetadata -PathType Container) {
+    $candidateStage=Join-Path $stage 'candidate_build'
+    New-Item -ItemType Directory -Path $candidateStage -Force | Out-Null
+    Get-ChildItem -LiteralPath $candidateMetadata -File -Force | Where-Object { $_.Extension -ine '.zip' } | ForEach-Object {
+      Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $candidateStage $_.Name) -Force
+    }
+  }
+
+  if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
+    $seriesStage=Join-Path $stage 'series'
+    New-Item -ItemType Directory -Path $seriesStage -Force | Out-Null
+    foreach ($name in @('SERIES_COMPARISON.json','PERSISTENT_ENVIRONMENT_READBACK.json','OPERATION_LOG.json')) {
+      $source=Join-Path $SeriesOut $name
+      if (Test-Path -LiteralPath $source -PathType Leaf) {
+        Copy-Item -LiteralPath $source -Destination (Join-Path $seriesStage $name) -Force
+      }
+    }
+  }
+
+  if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
+  [IO.Compression.ZipFile]::CreateFromDirectory($stage,$zip,[IO.Compression.CompressionLevel]::Optimal,$false)
+  Remove-Item -LiteralPath $stage -Recurse -Force
+
+  $chatIdentity=[ordered]@{
+    file=[IO.Path]::GetFileName($zip)
+    size=(Get-Item -LiteralPath $zip).Length
+    sha256=Get-SHA256 $zip
+    candidate_file=if ($Summary.candidate) {$Summary.candidate.file} else {$null}
+    candidate_size=if ($Summary.candidate) {$Summary.candidate.size} else {$null}
+    candidate_sha256=if ($Summary.candidate) {$Summary.candidate.sha256} else {$null}
+  }
+  $chatIdentity | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $identity -Encoding UTF8
 }
 
 try {
@@ -280,23 +340,22 @@ try {
     sha256=$candidateSha
   }
   $Summary.candidate_integrity='PASS'
-  Copy-TopLevelFiles $BuildOut (Join-Path $OutRoot 'candidate_build')
+  $candidateEvidenceDir=Join-Path $OutRoot 'candidate_build'
+  New-Item -ItemType Directory -Path $candidateEvidenceDir -Force | Out-Null
+  Copy-TopLevelFiles $BuildOut $candidateEvidenceDir -SkipArchives
+  $persistedCandidate=Join-Path $candidateEvidenceDir ([IO.Path]::GetFileName($candidate))
+  Move-Item -LiteralPath $candidate -Destination $persistedCandidate -Force
+  $candidate=$persistedCandidate
   Write-Summary
 
   Write-Host '=== 3/6 Fresh Candidate Source regression ==='
   $SelftestRoot = Join-Path $WorkRoot 'selftest'
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   $bundledPython = Join-Path $SelftestRoot 'RUNTIME\python\python.exe'
-  $ffmpeg = @(Get-ChildItem -LiteralPath (Join-Path $SelftestRoot 'RUNTIME') -Recurse -Filter 'ffmpeg.exe' -File)
-  $ffmpegDirs = @($ffmpeg | ForEach-Object { $_.DirectoryName } | Select-Object -Unique)
-  if ($ffmpegDirs.Count -eq 0) { throw 'BUNDLED_FFMPEG_NOT_FOUND' }
-  $savedPath = $env:PATH
-  try {
-    $env:PATH = (($ffmpegDirs -join ';') + ';' + $env:PATH)
-    & $bundledPython -B -E -s -m unittest discover -s (Join-Path $SelftestRoot 'TESTS') -v 2>&1 |
-      Tee-Object -FilePath (Join-Path $OutRoot 'BUNDLED_SOURCE_TESTS.log')
-    $sourceTestCode=$LASTEXITCODE
-  } finally { $env:PATH=$savedPath }
+  if (-not (Test-Path -LiteralPath $bundledPython -PathType Leaf)) { throw 'BUNDLED_PYTHON_NOT_FOUND' }
+  & $bundledPython -B -E -s -m unittest discover -s (Join-Path $SelftestRoot 'TESTS') -v 2>&1 |
+    Tee-Object -FilePath (Join-Path $OutRoot 'BUNDLED_SOURCE_TESTS.log')
+  $sourceTestCode=$LASTEXITCODE
   if ($sourceTestCode -ne 0) { throw ('BUNDLED_SOURCE_REGRESSION_FAILED:' + $sourceTestCode) }
   $Summary.source_regression='PASS'
   Write-Summary
@@ -388,7 +447,12 @@ finally {
   }
 
   if ($SummaryPath) {
-    try { Write-Summary } catch {}
+    try {
+      Write-Summary
+      Export-ChatEvidence
+    } catch {
+      [Console]::Error.WriteLine('WARNING: compact evidence export failed: ' + $_.Exception.Message)
+    }
   }
 
   if ($MappedDrive) {
