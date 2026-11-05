@@ -1,21 +1,30 @@
 # FullAutoQA lightweight local final-acceptance update
 
-Authoritative Source/main snapshot:
+Authoritative Source/main base:
 `dcad269b21c81eb901d1965280264ce98b564a2c`
 
 Local runner tactical candidate:
-`PR #23 / 298d124da38400c5ee08cd655da42a08386c8b88`
+`PR #23 / 285f46c88c25c9d3a35c54a89a047d37fbf3a633`
 
 This branch is the transport surface for the open PR #23 real-machine tactical acceptance. It intentionally omits the large preserved donor block payload.
 
-## Update behavior
+## Current PR #23 real-machine corrections
 
-`APPLY_UPDATE.cmd` updates an existing complete FullAutoQA download. It discovers the packaged Source, acceptance bundle and transfer tree from structural marker files, removes only the corresponding destination trees, recreates them from this package, and verifies copied bytes.
+The previous real-machine cycle passed donor reconstruction, Candidate build/integrity and Source regression, then reached fresh START_QA selftest and launched Godot. The returned evidence exposed three connected Windows runtime/evidence-boundary defects plus one observation dependency:
 
-The preserved donor block payload is outside those managed trees and is retained. The runner change in PR #23 fixes native child-process exit-code capture under Windows PowerShell 5.1 and adds a contract test; it does not alter donor bytes, Source Required coverage, or the A-B-A contract.
+- preserve the short logical repository spelling through CORE while proving containment through resolved filesystem identity;
+- tolerate disappearance only for transient archive-ineligible WORK files during size/inventory scans, while genuine I/O and certified-evidence failures remain fatal;
+- preserve certified selftest Result ZIP/readback and build diagnostic selftest archives without descending into volatile WORK/video_frames;
+- remove the undeclared psutil dependency from Windows network observation; failed observation remains NOT_MEASURED.
 
-After `UPDATE PASS`, run `RUN_LOCAL_COMPLETION.cmd` from the updated complete download. Keep the large Candidate and per-run Result archives locally; upload `CHATGPT_EVIDENCE.zip` for review.
+These changes were independently reviewed by external Grok and then reworked/strengthened by the internal Production/Management/Sales review. The external patch was not applied verbatim.
 
-If the same run is intended to establish the offline condition, disconnect external network interfaces before starting the local runner. The runner only claims the locally observed network state actually recorded by the final runs.
+## Validation state
 
-PR #23 remains open until the tactical real-machine acceptance objective is evaluated from returned evidence.
+GitHub-hosted jobs for the current head are presently failing at runner startup before workflow steps execute; job step data is absent and log retrieval returns BlobNotFound. Therefore those hosted results are not represented as Source test failures or PASS. The meaningful next validation is the Windows real-machine route using this transport package.
+
+`APPLY_UPDATE.cmd` itself is unchanged from the previously Windows-validated updater. It replaces only the managed Source/acceptance/transfer trees and runner files while preserving the donor block payload.
+
+After `UPDATE PASS`, run `RUN_LOCAL_COMPLETION.cmd`. Keep large Candidate/selftest/full-series archives locally and return `CHATGPT_EVIDENCE.zip`; its compact readback now includes selftest certified-result metadata as well as final-series readback.
+
+Human/Product/Stable remain separate Issue #1 gates and are not certified by this update.
