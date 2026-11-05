@@ -1,6 +1,6 @@
-import copy,json,tempfile,unittest,zipfile
+import copy,json,os,sys,tempfile,unittest,zipfile
 from pathlib import Path
-from run_series import compare_records,extract,origin_record
+from run_series import OPERATION_LOG,compare_records,extract,origin_record,run_logged
 
 class SeriesIntegrityTests(unittest.TestCase):
     def setUp(self):
@@ -39,5 +39,19 @@ class SeriesIntegrityTests(unittest.TestCase):
     def test_origin_names_are_normalized_without_inventing_identity(self):
         value=origin_record({'origin':{'repository':'r','commit':'c','source_tree_sha':'t','source_path':'game'}})
         self.assertEqual(value,{'repository':'r','commit':'c','source_tree':'t','selected_path':'game'})
+
+    def test_controller_marker_is_scoped_to_child_environment(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);log=root/'child.log'
+            env=os.environ.copy();env['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
+            parent=os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER')
+            before=len(OPERATION_LOG)
+            code=run_logged(
+                [sys.executable,'-c',"import os;print(os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER',''))"],
+                root,log,timeout=30,env=env)
+            self.assertEqual(code,0)
+            self.assertEqual(log.read_text(encoding='utf-8').strip(),'1')
+            self.assertEqual(os.environ.get('FULLAUTOQA_AUTOMATED_CONTROLLER'),parent)
+            self.assertTrue(OPERATION_LOG[before]['automated_controller'])
 
 if __name__=='__main__':unittest.main()
