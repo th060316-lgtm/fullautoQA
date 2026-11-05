@@ -110,6 +110,7 @@ class ManagementEvidenceAbsenceTest(unittest.TestCase):
         self.assertIn('management.target_generation_integrity', names)
         self.assertIn('management.performance_regression', names)
         self.assertIn('management.evidence_kind', names)
+        self.assertIn('management.measurement_coverage', names)
 
     def test_absent_measurement_is_not_zero(self):
         import tempfile
@@ -220,7 +221,7 @@ class ManagementThresholdTest(unittest.TestCase):
         self.assertEqual(cpu['reason_code'], MANAGEMENT_THRESHOLD_NOT_CONFIGURED)
         self.assertIsNone(cpu['threshold'])
         self.assertEqual(cpu['value'], 17.5)
-        self.assertNotEqual(report.status, 'PASS')
+        self.assertEqual(report.readback['measurement_quality']['status'], 'INCONCLUSIVE')
 
     def test_configured_threshold_can_pass_and_fail(self):
         import tempfile
@@ -434,13 +435,14 @@ class NonFiniteThresholdTest(unittest.TestCase):
 class ManagementSeparationTest(unittest.TestCase):
     def test_evaluator_completed_without_conflating_unjudged_quality(self):
         import tempfile
+        extras = {'target_identity': {'demo': {'generation': 3, 'fingerprint': 'abc'}}}
         with tempfile.TemporaryDirectory() as tmp:
             write_bundle(tmp, complete_bundle())
-            report = evaluate_management(context(tmp))
+            report = evaluate_management(context(tmp, extras=extras))
         self.assertEqual(report.readback['evaluator_execution'], 'COMPLETED')
         self.assertEqual(report.readback['measurement_availability']['status'], 'PASS')
         self.assertEqual(report.readback['measurement_quality']['status'], 'INCONCLUSIVE')
-        self.assertNotEqual(report.status, 'PASS')
+        self.assertEqual(report.status, 'PASS')
 
     def test_missing_and_nonfinite_measurement_not_available(self):
         import tempfile
