@@ -84,11 +84,12 @@ def compare_records(records,plan,frozen,candidate_sha):
             'independent_hq_final_verdict':'PENDING','human_test':'NOT_RUN',
             'product_acceptance':'HOLD','stable':'HOLD','qa_complete':False}
 
-def run_logged(argv,cwd,log,timeout=1800):
+def run_logged(argv,cwd,log,timeout=1800,env=None):
     started=time.monotonic();row={'argv':[str(x) for x in argv],'cwd':str(cwd),'log':str(log),'timeout_seconds':timeout}
+    row['automated_controller']=bool(env and env.get('FULLAUTOQA_AUTOMATED_CONTROLLER')=='1')
     OPERATION_LOG.append(row)
     with Path(log).open('wb') as stream:
-        process=subprocess.Popen([str(x) for x in argv],cwd=cwd,stdout=stream,stderr=subprocess.STDOUT)
+        process=subprocess.Popen([str(x) for x in argv],cwd=cwd,stdout=stream,stderr=subprocess.STDOUT,env=env)
         job=None
         try:
             if os.name=='nt':
@@ -154,7 +155,8 @@ def main():
             target=target_record(fresh)
             if target!=frozen[label]:raise ValueError('TARGET_CHANGED_AFTER_FREEZE')
             shutil.copy2(fresh/'TARGET_PREPARATION.json',slot/'TARGET_PREPARATION.json')
-            code=run_logged(['cmd.exe','/d','/c','START_QA.cmd'],fresh,slot/'START_QA.log')
+            run_env=os.environ.copy();run_env['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
+            code=run_logged(['cmd.exe','/d','/c','START_QA.cmd'],fresh,slot/'START_QA.log',env=run_env)
             result=authoritative_result(fresh,set())
             validate_result_zip(result,require_manifest=True,expected_run_id=result.parent.name)
             with zipfile.ZipFile(result) as z:
