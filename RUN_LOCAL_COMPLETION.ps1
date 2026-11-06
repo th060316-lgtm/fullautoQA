@@ -1,5 +1,6 @@
 # FullAutoQA local final-completion runner.
-# Uses a temporary drive mapping so the user-selected download location does not become part of deep build paths.
+# Repository input, transient workspace, and preserved evidence are separate roots.
+# Temporary drive mappings keep operational paths short without requiring fixed drive letters.
 [CmdletBinding()]
 param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest,[switch]$RepositoryDiscoveryContractTest)
 
@@ -11,7 +12,9 @@ $PhysicalRepoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
 $RunTag = ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '_' + [Guid]::NewGuid().ToString('N').Substring(0,8))
 $SubstExe = Join-Path ([Environment]::GetFolderPath('System')) 'subst.exe'
 $MappedDrive = $null
+$WorkDrive = $null
 $RepoRoot = $PhysicalRepoRoot
+$PhysicalWorkRoot = $null
 $WorkRoot = $null
 $OutRoot = $null
 $PhysicalOutRoot = $null
@@ -28,9 +31,12 @@ $Summary = [ordered]@{
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
+  prepared_source_fingerprint = $null
   purpose = 'Local Windows Candidate rebuild, selftest, Source regression and fresh A-B-A acceptance without GitHub Actions artifact transfer'
   physical_repository_root = $PhysicalRepoRoot
   logical_repository_root = $null
+  repository_drive = $null
+  physical_workspace_root = $null
   workspace_drive = $null
   workspace_root = $null
   started_utc = [DateTime]::UtcNow.ToString('o')
@@ -61,6 +67,21 @@ function Get-SHA256([string]$Path) {
   $hash = [Security.Cryptography.SHA256]::Create()
   try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
   finally { $hash.Dispose(); $stream.Dispose() }
+}
+
+function Resolve-RepositoryRelativePath([string]$Root,[string]$Relative) {
+  if ([string]::IsNullOrWhiteSpace($Relative)) { throw 'DECLARED_REPOSITORY_PATH_EMPTY' }
+  $normalized=$Relative.Replace('/',[IO.Path]::DirectorySeparatorChar)
+  if ([IO.Path]::IsPathRooted($normalized) -or $normalized -match '(^|[\\/])\.\.([\\/]|$)') {
+    throw ('DECLARED_REPOSITORY_PATH_INVALID:'+ $Relative)
+  }
+  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+  $candidate=[IO.Path]::GetFullPath((Join-Path $rootFull $normalized))
+  if (-not ($candidate.Equals($rootFull,[StringComparison]::OrdinalIgnoreCase) -or
+            $candidate.StartsWith($rootFull+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase))) {
+    throw ('DECLARED_REPOSITORY_PATH_ESCAPE:'+ $Relative)
+  }
+  return $candidate
 }
 
 function Write-Summary {
@@ -582,14 +603,26 @@ try {
 
   $MappedDrive = New-RepoDrive $PhysicalRepoRoot
   $RepoRoot = ($MappedDrive + '\')
-  $WorkRoot = Join-Path $RepoRoot ('.fqa_work_' + $RunTag)
-  $OutRoot = Join-Path $RepoRoot ('LOCAL_FINAL_ACCEPTANCE_' + $RunTag)
-  $PhysicalOutRoot = Join-Path $PhysicalRepoRoot ('LOCAL_FINAL_ACCEPTANCE_' + $RunTag)
-  New-Item -ItemType Directory -Path $WorkRoot -Force | Out-Null
-  New-Item -ItemType Directory -Path $OutRoot -Force | Out-Null
+
+  # Never place transient work or preserved evidence inside the repository input tree.
+  # Map the work directory itself to a drive root so deep runtime paths do not inherit
+  # the repository path or a .fqa_work_<RunTag> segment.
+  $PhysicalWorkRoot = Join-Path ([IO.Path]::GetTempPath()) ('FullAutoQA_Work_' + $RunTag)
+  if (Test-Path -LiteralPath $PhysicalWorkRoot) { throw 'WORKSPACE_ROOT_ALREADY_EXISTS' }
+  New-Item -ItemType Directory -Path $PhysicalWorkRoot -Force | Out-Null
+  $WorkDrive = New-RepoDrive $PhysicalWorkRoot
+  $WorkRoot = ($WorkDrive + '\')
+
+  $repoParent = Split-Path -Parent $PhysicalRepoRoot
+  $PhysicalOutRoot = Join-Path $repoParent ('LOCAL_FINAL_ACCEPTANCE_' + $RunTag)
+  if (Test-Path -LiteralPath $PhysicalOutRoot) { throw 'EVIDENCE_ROOT_ALREADY_EXISTS' }
+  New-Item -ItemType Directory -Path $PhysicalOutRoot -Force | Out-Null
+  $OutRoot = $PhysicalOutRoot
   $SummaryPath = Join-Path $OutRoot 'LOCAL_COMPLETION_SUMMARY.json'
   $Summary.logical_repository_root = $RepoRoot
-  $Summary.workspace_drive = $MappedDrive
+  $Summary.repository_drive = $MappedDrive
+  $Summary.physical_workspace_root = $PhysicalWorkRoot
+  $Summary.workspace_drive = $WorkDrive
   $Summary.workspace_root = $WorkRoot
   $Summary.evidence_root = $PhysicalOutRoot
   $Summary.logical_evidence_root = $OutRoot
@@ -599,9 +632,21 @@ try {
   $PathBefore = Get-PathSnapshot
   Write-Summary
 
+  $transferManifestPath=Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
+  if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
+  $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+
   Write-Host '=== 1/6 Reconstruct preserved v0.3.3 donor ==='
-  $join = Find-RepositoryFile -Root $RepoRoot -Name 'JOIN_COMPLETE.ps1' -RequiredSiblings @('manifest.json','blocks')
-  $complete = Split-Path -Parent $join
+  if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {
+    throw 'DONOR_DECLARATION_MISSING'
+  }
+  $complete = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative ([string]$transfer.latest_complete_candidate.path)
+  $join = Join-Path $complete 'JOIN_COMPLETE.ps1'
+  if (-not (Test-Path -LiteralPath $join -PathType Leaf) -or
+      -not (Test-Path -LiteralPath (Join-Path $complete 'manifest.json') -PathType Leaf) -or
+      -not (Test-Path -LiteralPath (Join-Path $complete 'blocks') -PathType Container)) {
+    throw 'DECLARED_DONOR_INPUT_INVALID'
+  }
   $donorRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$join) -WorkingDirectory $complete -LogPath (Join-Path $OutRoot 'DONOR_JOIN.log')
   $donorCode=$donorRun.ExitCode
   if ($donorCode -ne 0) { throw ('DONOR_JOIN_FAILED:' + $donorCode) }
@@ -616,17 +661,34 @@ try {
 
   Write-Host '=== 2/6 Reconstruct current Source and build Candidate ==='
   $sourceDestination = Join-Path $WorkRoot 'prepared'
-  $prepare = Find-RepositoryFile -Root $RepoRoot -Name 'PREPARE_SOURCE.ps1' -RequiredSiblings @('PHASE3_OVERLAY_REBUILD.ps1')
+  $prepare = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/source/scripts/PREPARE_SOURCE.ps1'
+  $rebuildDeclared = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/source/scripts/PHASE3_OVERLAY_REBUILD.ps1'
+  if (-not (Test-Path -LiteralPath $prepare -PathType Leaf) -or -not (Test-Path -LiteralPath $rebuildDeclared -PathType Leaf)) {
+    throw 'DECLARED_SOURCE_BUILD_INPUT_INVALID'
+  }
   $checkedOutSourceRoot = Split-Path -Parent (Split-Path -Parent $prepare)
   if (-not (Test-Path -LiteralPath (Join-Path $checkedOutSourceRoot 'CORE') -PathType Container)) { throw 'CHECKED_OUT_SOURCE_ROOT_INVALID' }
   $Summary.source_tree_fingerprint = Get-TreeFingerprint $checkedOutSourceRoot
   Write-Summary
-  $sourceRoot = & $prepare -RepositoryRoot $RepoRoot -Destination $sourceDestination
+
+  if (-not $transfer.recovery_source -or [string]::IsNullOrWhiteSpace([string]$transfer.recovery_source.path) -or
+      [string]::IsNullOrWhiteSpace([string]$transfer.recovery_source.sha256)) {
+    throw 'RECOVERY_SOURCE_DECLARATION_MISSING'
+  }
+  $recoverySource = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative ([string]$transfer.recovery_source.path)
+  $sourceRoot = & $prepare -RepositoryRoot $RepoRoot -Destination $sourceDestination -RecoveryArchive $recoverySource -ExpectedRecoverySha256 ([string]$transfer.recovery_source.sha256)
   if (-not $sourceRoot -or -not (Test-Path -LiteralPath (Join-Path $sourceRoot 'CORE') -PathType Container)) {
     throw 'PREPARED_SOURCE_ROOT_INVALID'
   }
+  $Summary.prepared_source_fingerprint = Get-TreeFingerprint $sourceRoot
+  Write-Summary
 
-  $plan = Find-RepositoryFile -Root $RepoRoot -Name 'FINAL_SERIES_PLAN.json' -RequiredSiblings @('run_series.py','RUN_FINAL_ACCEPTANCE.cmd')
+  $plan = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/acceptance_targets/FINAL_SERIES_PLAN.json'
+  if (-not (Test-Path -LiteralPath $plan -PathType Leaf) -or
+      -not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $plan) 'run_series.py') -PathType Leaf) -or
+      -not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $plan) 'RUN_FINAL_ACCEPTANCE.cmd') -PathType Leaf)) {
+    throw 'DECLARED_FINAL_SERIES_INPUT_INVALID'
+  }
   $acceptanceSource = Split-Path -Parent $plan
   $acceptanceDest = Join-Path $sourceRoot 'ACCEPTANCE'
   if (Test-Path -LiteralPath $acceptanceDest) { Remove-Item -LiteralPath $acceptanceDest -Recurse -Force }
@@ -638,7 +700,7 @@ try {
   $buildArgs = @(
     '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$rebuild,
     '-DonorArchive',$donor,'-SourceRoot',$sourceRoot,'-OutputDir',$BuildOut,
-    '-SourceBaseline',$Summary.source_tree_fingerprint
+    '-SourceBaseline',$Summary.prepared_source_fingerprint
   )
   $buildRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments $buildArgs -WorkingDirectory $sourceRoot -LogPath (Join-Path $OutRoot 'CANDIDATE_BUILD.log')
   $buildCode=$buildRun.ExitCode
@@ -770,12 +832,24 @@ finally {
     if ($SelftestRoot -and (Test-Path -LiteralPath $SelftestRoot)) {
       Remove-Item -LiteralPath $SelftestRoot -Recurse -Force -ErrorAction Stop
     }
-    if ($WorkRoot -and (Test-Path -LiteralPath $WorkRoot)) {
-      Remove-Item -LiteralPath $WorkRoot -Recurse -Force -ErrorAction Stop
-    }
-    $Summary.workspace_cleanup='WORKSPACE_REMOVED'
+    $Summary.workspace_cleanup='WORKSPACE_PENDING_DRIVE_RELEASE'
   } catch {
-    $Summary.workspace_cleanup=('WORKSPACE_RETAINED:' + $_.Exception.Message)
+    $Summary.workspace_cleanup=('WORKSPACE_CHILD_CLEANUP_FAILED:' + $_.Exception.Message)
+  }
+
+  if ($WorkDrive) {
+    $workDriveRemoved=Remove-RepoDrive $WorkDrive
+    if (-not $workDriveRemoved) {
+      [Console]::Error.WriteLine('WARNING: temporary work drive mapping cleanup failed for ' + $WorkDrive)
+    }
+  }
+  if ($PhysicalWorkRoot -and (Test-Path -LiteralPath $PhysicalWorkRoot)) {
+    try {
+      Remove-Item -LiteralPath $PhysicalWorkRoot -Recurse -Force -ErrorAction Stop
+      $Summary.workspace_cleanup='WORKSPACE_REMOVED'
+    } catch {
+      $Summary.workspace_cleanup=('WORKSPACE_RETAINED:' + $_.Exception.Message)
+    }
   }
 
   if ($SummaryPath) {
@@ -790,7 +864,7 @@ finally {
   if ($MappedDrive) {
     $removed=Remove-RepoDrive $MappedDrive
     if (-not $removed) {
-      [Console]::Error.WriteLine('WARNING: temporary drive mapping cleanup failed for ' + $MappedDrive)
+      [Console]::Error.WriteLine('WARNING: temporary repository drive mapping cleanup failed for ' + $MappedDrive)
     }
   }
 }
