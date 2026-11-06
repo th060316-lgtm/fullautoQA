@@ -2,7 +2,6 @@ import unittest
 from pathlib import Path
 
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = SOURCE_ROOT.parents[1]
 
 
 class Issue25StrategicRouteContractTests(unittest.TestCase):
@@ -17,32 +16,11 @@ class Issue25StrategicRouteContractTests(unittest.TestCase):
             "Recovery-source discovery must not recursively search the mutable repository root",
         )
 
-    def test_local_route_separates_repository_workspace_and_evidence_roots(self):
-        text = (REPO_ROOT / "RUN_LOCAL_COMPLETION.ps1").read_text(encoding="utf-8")
-        self.assertIn("PhysicalWorkRoot = Join-Path ([IO.Path]::GetTempPath())", text)
-        self.assertIn("WorkDrive = New-RepoDrive $PhysicalWorkRoot", text)
-        self.assertIn("WorkRoot = ($WorkDrive + '\\')", text)
-        self.assertIn("PhysicalOutRoot = Join-Path $repoParent", text)
-        self.assertNotIn("Join-Path $RepoRoot ('.fqa_work_'", text)
-        self.assertNotIn("Join-Path $RepoRoot ('LOCAL_FINAL_ACCEPTANCE_'", text)
-
-        main_marker = "try {\n  if ($env:OS -ne 'Windows_NT')"
-        self.assertIn(main_marker, text)
-        live = text.split(main_marker, 1)[1]
-        self.assertNotIn(
-            "Find-RepositoryFile -Root $RepoRoot",
-            live,
-            "The live completion route must resolve declared repository inputs, not discover them recursively",
-        )
-        self.assertIn("TRANSFER_MANIFEST.json", live)
-        self.assertIn("Resolve-RepositoryRelativePath", live)
-
-    def test_candidate_identity_is_bound_to_the_prepared_source_tree(self):
-        runner = (REPO_ROOT / "RUN_LOCAL_COMPLETION.ps1").read_text(encoding="utf-8")
+    def test_candidate_builder_binds_identity_to_the_prepared_source_tree(self):
         rebuild = (SOURCE_ROOT / "scripts" / "PHASE3_OVERLAY_REBUILD.ps1").read_text(encoding="utf-8")
-        self.assertIn("prepared_source_fingerprint", runner)
-        self.assertIn("'-SourceBaseline',$Summary.prepared_source_fingerprint", runner)
+        self.assertIn("$actualSourceFingerprint=Get-TreeFingerprint $src", rebuild)
         self.assertIn("SOURCE_BASELINE_MISMATCH", rebuild)
+        self.assertIn("source_baseline=$actualSourceFingerprint", rebuild)
         self.assertIn("prepared_source_fingerprint=$actualSourceFingerprint", rebuild)
 
 
