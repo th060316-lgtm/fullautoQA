@@ -27,15 +27,20 @@ foreach($file in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File)) {
     sha256=Get-SHA256 $file.FullName
   })
 }
-$ordered=@($records | Sort-Object -Property @{Expression={$_.path};Ascending=$true} -Culture '' -CaseSensitive)
-# Sort-Object still uses host comparison rules in some legacy versions. Re-sort
-# the canonical row strings with the CLR ordinal comparer before hashing.
+$byPath=@{}
+$paths=New-Object 'System.Collections.Generic.List[string]'
+foreach($record in $records) {
+  $byPath[[string]$record.path]=$record
+  $paths.Add([string]$record.path)
+}
+$pathArray=$paths.ToArray()
+[Array]::Sort($pathArray,[StringComparer]::Ordinal)
 $rows=New-Object 'System.Collections.Generic.List[string]'
-foreach($record in $ordered) {
-  $rows.Add(([string]$record.path + [char]9 + [string]$record.size + [char]9 + [string]$record.sha256))
+foreach($path in $pathArray) {
+  $record=$byPath[$path]
+  $rows.Add(($path + [char]9 + [string]$record.size + [char]9 + [string]$record.sha256))
 }
 $array=$rows.ToArray()
-[Array]::Sort($array,[StringComparer]::Ordinal)
 $payload=[string]::Join([char]10,$array)
 $bytes=[Text.Encoding]::UTF8.GetBytes($payload)
 $alg=[Security.Cryptography.SHA256]::Create()
@@ -49,8 +54,9 @@ if (-not [string]::IsNullOrWhiteSpace($ManifestOut)) {
     root=$rootFull
     fingerprint=$fingerprint
     file_count=$array.Length
-    files=@($records | Sort-Object path | ForEach-Object {
-      [ordered]@{path=$_.path;size=$_.size;sha256=$_.sha256}
+    files=@($pathArray | ForEach-Object {
+      $record=$byPath[$_]
+      [ordered]@{path=$record.path;size=$record.size;sha256=$record.sha256}
     })
   }
   $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ManifestOut -Encoding UTF8
