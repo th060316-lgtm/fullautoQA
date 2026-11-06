@@ -38,7 +38,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Execute the exact rollback entrypoint on a fresh destination
-        shell: powershell
+        shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
           $script=(Resolve-Path './開発版/rollback/RESTORE_PREDECESSOR.ps1').Path
