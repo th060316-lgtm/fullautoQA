@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "CORE"))
 
 from adapters import Adapter
 from common import Evidence
+from ocr_backend import OculixOCR
 from windows_runner import Session
 
 
@@ -28,6 +29,30 @@ class Desktop:
 
     def perform(self, item):
         return None
+
+
+class OcrDisplayBoundaryTests(unittest.TestCase):
+    def test_oculix_support_requires_native_window_capability(self):
+        tools = Mock()
+        tools.is_available.return_value = True
+
+        native = Mock()
+        native.state.return_value = {
+            "exists": True,
+            "rect": [0, 0, 100, 100],
+            "native_window": True,
+        }
+        virtual = Mock()
+        virtual.state.return_value = {
+            "exists": True,
+            "rect": [0, 0, 100, 100],
+            "native_window": False,
+            "backend": "RFB software display",
+        }
+
+        with patch("ocr_backend.os.name", "nt"):
+            self.assertTrue(OculixOCR.supported(tools, native))
+            self.assertFalse(OculixOCR.supported(tools, virtual))
 
 
 class OcrAdapterContractTests(unittest.TestCase):
