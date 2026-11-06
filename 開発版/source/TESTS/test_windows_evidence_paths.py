@@ -18,7 +18,9 @@ class WindowsEvidencePathTests(unittest.TestCase):
         file=self.root/'sub'/'bridge.json';file.parent.mkdir();file.write_text('{}')
         # Model the inconsistent spelling check; actual filesystem identity must win.
         with patch.object(Path,'is_relative_to',return_value=False):
-            self.assertEqual(inside(self.root,'sub/bridge.json'),file.resolve())
+            result=inside(self.root,'sub/bridge.json')
+            self.assertTrue(result.samefile(file))
+            self.assertEqual(result.name,file.name)
 
     def test_identity_fallback_still_rejects_escape(self):
         with patch.object(Path,'is_relative_to',return_value=False):
