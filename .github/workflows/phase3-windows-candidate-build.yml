@@ -112,6 +112,8 @@ jobs:
           $preparedFingerprint = Get-TreeFingerprint $sourceRoot
           if ([string]::IsNullOrWhiteSpace($preparedFingerprint)) { throw 'PREPARED_SOURCE_FINGERPRINT_FAILED' }
           "PREPARED_SOURCE_FINGERPRINT=$preparedFingerprint" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          python -B "$sourceRoot/scripts/source_tree_immutability.py" snapshot --root "$sourceRoot" --output "$env:BUILD_OUT/SOURCE_TREE_BEFORE.json"
+          if ($LASTEXITCODE -ne 0) { throw "SOURCE_TREE_SNAPSHOT_FAILED:$LASTEXITCODE" }
 
       - name: Compile and run complete Source regression before donor JOIN
         id: source_tests
@@ -122,6 +124,11 @@ jobs:
           python -B -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v 2>&1 | Tee-Object -FilePath "$env:BUILD_OUT/SOURCE_TESTS.log"
           if ($LASTEXITCODE -ne 0) { throw "SOURCE_REGRESSION_FAILED:$LASTEXITCODE" }
           Get-ChildItem -LiteralPath "$env:SOURCE_ROOT" -Directory -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force
+          python -B "$env:SOURCE_ROOT/scripts/source_tree_immutability.py" compare --root "$env:SOURCE_ROOT" --before "$env:BUILD_OUT/SOURCE_TREE_BEFORE.json" --output "$env:BUILD_OUT/SOURCE_TREE_MUTATION.json"
+          if ($LASTEXITCODE -ne 0) {
+            Get-Content -LiteralPath "$env:BUILD_OUT/SOURCE_TREE_MUTATION.json"
+            throw "SOURCE_REGRESSION_MUTATED_INPUT"
+          }
 
       - name: Parse Windows PowerShell scripts before expensive build
         id: parse
