@@ -47,14 +47,65 @@ def selftest(root,e,t,required_tools=()):
 
     if not (available('java') and available('oculix')):
         results.append(e.result('tool.oculix.linkage','NOT_RUN','TOOL_NOT_PREPARED',gate=gate('java','oculix')))
-        results.append(e.result('tool.oculix.visual','NOT_RUN','NO_VALIDATED_OCULIX_VISUAL_SCRIPT',gate='OPTIONAL'))
+        results.append(e.result('tool.oculix.visual','NOT_RUN','TOOL_NOT_PREPARED',gate='OPTIONAL'))
     else:
+        link_ok=False
         try:
             source=out/'OculixProbe.java';source.write_text('class OculixProbe { public static void main(String[] args) throws Exception { var u = new java.io.File(args[0]).toURI().toURL(); try(var c = new java.net.URLClassLoader(new java.net.URL[]{u})) { System.out.println(Class.forName("org.sikuli.ide.Sikulix", false, c).getName()); } } }',encoding='utf-8')
             r=subprocess.run([t.get('java'),str(source),t.get('oculix')],capture_output=True,timeout=30,cwd=out);(out/'oculix_probe.log').write_bytes(r.stdout+r.stderr)
-            results.append(e.result('tool.oculix.linkage','PASS' if r.returncode==0 and b'org.sikuli.ide.Sikulix' in r.stdout else 'HARNESS_ERROR','JAVA_JAR_CLASS_LINKED' if r.returncode==0 else 'OCULIX_LINK_FAILED',['oculix_probe.log'],gate=gate('java','oculix')))
-            results.append(e.result('tool.oculix.visual','NOT_RUN','NO_VALIDATED_OCULIX_VISUAL_SCRIPT',gate='OPTIONAL'))
-        except Exception as ex:results.append(e.result('tool.oculix.linkage','HARNESS_ERROR','OCULIX_LINK_FAILED',detail=repr(ex),gate=gate('java','oculix')))
+            link_ok=r.returncode==0 and b'org.sikuli.ide.Sikulix' in r.stdout
+            results.append(e.result('tool.oculix.linkage','PASS' if link_ok else 'HARNESS_ERROR','JAVA_JAR_CLASS_LINKED' if link_ok else 'OCULIX_LINK_FAILED',['oculix_probe.log'],gate=gate('java','oculix')))
+        except Exception as ex:
+            results.append(e.result('tool.oculix.linkage','HARNESS_ERROR','OCULIX_LINK_FAILED',detail=repr(ex),gate=gate('java','oculix')))
+
+        if not link_ok:
+            results.append(e.result('tool.oculix.visual','HARNESS_ERROR','OCULIX_LINK_FAILED',['oculix_probe.log'],gate='OPTIONAL'))
+        else:
+            p2=None;d2=None;stdout2=None;stderr2=None
+            try:
+                state2=out/'oculix_visual_input_state.json'
+                stdout2=(out/'oculix_visual_input_stdout.log').open('wb')
+                stderr2=(out/'oculix_visual_input_stderr.log').open('wb')
+                p2=subprocess.Popen([t.get('python'),'-B','-E','-s',str(root/'CORE/harness_probe.py'),str(state2)],stdout=stdout2,stderr=stderr2,cwd=root)
+                d2=Desktop();d2.find(child_pids(p2.pid),15);d2.focus();time.sleep(.5)
+                rect=d2.state().get('rect') or []
+                if len(rect)!=4:raise OSError('OCULIX_TARGET_RECT_UNAVAILABLE')
+                x,y,right,bottom=[int(v) for v in rect];w=right-x;h=bottom-y
+                if w<=0 or h<=0:raise OSError('OCULIX_TARGET_RECT_INVALID')
+                d2.capture(out/'oculix_visual_target.bmp')
+                visual=out/'OculixVisualProbe.java'
+                visual.write_text(
+                    'class OculixVisualProbe { public static void main(String[] args) throws Exception { '
+                    'var u=new java.io.File(args[0]).toURI().toURL(); '
+                    'try(var c=new java.net.URLClassLoader(new java.net.URL[]{u}, ClassLoader.getSystemClassLoader())) { '
+                    'Thread.currentThread().setContextClassLoader(c); '
+                    'var k=Class.forName("org.sikuli.script.Region", true, c); '
+                    'var ctor=k.getConstructor(int.class,int.class,int.class,int.class); '
+                    'var region=ctor.newInstance(Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4])); '
+                    'var text=k.getMethod("text").invoke(region); '
+                    'System.out.println("OCR_TEXT_BEGIN");System.out.println(text==null?"":text.toString());System.out.println("OCR_TEXT_END"); '
+                    '} } }',
+                    encoding='utf-8'
+                )
+                r=subprocess.run([t.get('java'),str(visual),t.get('oculix'),str(x),str(y),str(w),str(h)],capture_output=True,timeout=45,cwd=out)
+                (out/'oculix_visual.log').write_bytes(r.stdout+r.stderr)
+                text=(r.stdout or b'').decode('utf-8',errors='replace')
+                normalized=' '.join(text.upper().split())
+                ok=r.returncode==0 and 'HARNESS' in normalized and 'TEST' in normalized
+                write_json(out/'oculix_visual_assertion.json',{'rect':[x,y,right,bottom],'ocr_text':text,'required_tokens':['HARNESS','TEST'],'matched':ok})
+                results.append(e.result('tool.oculix.visual','PASS' if ok else 'HARNESS_ERROR','OCULIX_OCR_TEXT_OBSERVED' if ok else 'OCULIX_OCR_QUALIFICATION_FAILED',['oculix_visual.log','oculix_visual_assertion.json','oculix_visual_target.bmp'],gate='OPTIONAL'))
+            except Exception as ex:
+                write_json(out/'oculix_visual_error.json',{'error':repr(ex)})
+                results.append(e.result('tool.oculix.visual','HARNESS_ERROR','OCULIX_OCR_QUALIFICATION_FAILED',['oculix_visual_error.json'],detail=repr(ex),gate='OPTIONAL'))
+            finally:
+                if d2:
+                    try:d2.release()
+                    except Exception:pass
+                if p2 and p2.poll() is None:
+                    try:subprocess.run([str(Path(os.environ['SystemRoot'])/'System32/taskkill.exe'),'/PID',str(p2.pid),'/T','/F'],capture_output=True,timeout=10)
+                    except Exception:p2.kill()
+                if stdout2:stdout2.close()
+                if stderr2:stderr2.close()
 
     if not available('c'):
         results.append(e.result('tool.c.compile_execute','NOT_RUN','TOOL_NOT_PREPARED',gate=gate('c')))
