@@ -378,9 +378,11 @@ function Invoke-RepositoryDiscoveryContractTest {
     if ($source -match 'Get-ChildItem\s+-LiteralPath\s+\$rootFull\s+-Recurse\s+-File\s+-Filter') {
       throw 'REPOSITORY_DISCOVERY_RECURSIVE_PREFILTER_REGRESSION'
     }
-    $mainMatch=[regex]::Match($source,"(?m)^try \{\r?\n  if \(`$env:OS -ne 'Windows_NT'\)")
-    if (-not $mainMatch.Success) { throw 'STRATEGIC_ROUTE_MAIN_BLOCK_NOT_FOUND' }
-    $live=$source.Substring($mainMatch.Index)
+    $normalizedSource=$source.Replace("`r`n","`n")
+    $mainNeedle="try {`n  if (`$env:OS -ne 'Windows_NT')"
+    $mainIndex=$normalizedSource.IndexOf($mainNeedle,[StringComparison]::Ordinal)
+    if ($mainIndex -lt 0) { throw 'STRATEGIC_ROUTE_MAIN_BLOCK_NOT_FOUND' }
+    $live=$normalizedSource.Substring($mainIndex)
     if ($live.Contains("Join-Path `$RepoRoot ('.fqa_work_'") -or
         $live.Contains("Join-Path `$RepoRoot ('LOCAL_FINAL_ACCEPTANCE_'")) {
       throw 'STRATEGIC_ROUTE_REPOSITORY_OUTPUT_REGRESSION'
