@@ -1,25 +1,54 @@
-# FullAutoQA lightweight local final-acceptance update
+# FullAutoQA lightweight real-machine finalization update
 
-Authoritative main base:
-`dcad269b21c81eb901d1965280264ce98b564a2c`
+Authoritative main:
+`17f6f9ba21adcdfbbc689e312072cb9841ac8461`
 
-Open tactical PR:
-`PR #23`
+Strategic route:
+- Issue #1 = Definition of Done / acceptance checklist / historical evidence authority.
+- Issue #25 = current completion-route strategy authority.
+- PR #28 merged the one-pass real-machine finalization route.
 
-## 2026-11-06 repository-discovery correction
+## Purpose
 
-A new real-machine run stopped at stage 1/6 while preserving the previous failed run. The error path belonged to the earlier `.fqa_work_20261105T133102Z_d018dc3c/.../WORK/.../shader_cache` tree, not to the new donor reconstruction.
+This branch is a lightweight overlay for a **previous complete FullAutoQA download that already contains the preserved donor blocks**. It avoids re-downloading the large preserved donor payload while replacing the managed current trees from authoritative main.
 
-Root cause in the local runner: `Find-RepositoryFile` used repository-wide `Get-ChildItem -Recurse` and only filtered `.fqa_work_*` / `LOCAL_FINAL_ACCEPTANCE_*` after enumeration. PowerShell therefore entered the preserved old WORK tree before the exclusion could run and failed on a vanished Godot shader-cache path.
+Managed trees:
+- `開発版/source`
+- `開発版/acceptance_targets`
+- `開発版/transfer`
+- `開発版/rollback`
 
-The runner now performs directory-by-directory discovery and prunes `.fqa_work_*`, `LOCAL_FINAL_ACCEPTANCE_*`, `.git`, and reparse directories before recursion. Previous failure evidence is preserved and must not need manual deletion for the next run.
+It also updates:
+- `RUN_LOCAL_COMPLETION.ps1`
+- `RUN_LOCAL_COMPLETION.cmd`
+- `README_LOCAL_COMPLETION.md`
 
-A repository-discovery contract mode also verifies that authoritative markers win while duplicate markers inside preserved work/evidence trees are ignored. The previous case-insensitive filename matching behavior is retained.
+The updater verifies copied file hashes and exact managed-tree file sets. It does **not** delete the preserved donor block payload outside those managed trees.
 
-The production fix does not change donor bytes, target repositories, Required gates, Evidence semantics, Candidate identity rules, or the frozen A->B->A contract.
+## Real-machine route
 
-`APPLY_UPDATE.ps1` and `APPLY_UPDATE.cmd` are intentionally unchanged from the previously Windows-validated updater. Their package-root traversal is not the observed target-repository failure path; changing the accepted updater without executable CI evidence would add risk at this stage.
+After `UPDATE PASS`:
 
-GitHub-hosted jobs are still terminating before workflow steps execute (`steps=null`), so the new runner payload remains a real-machine acceptance candidate rather than a CI-validated PASS.
+1. Disconnect external network access.
+2. Use a normal non-admin Windows account/session.
+3. Run `RUN_LOCAL_COMPLETION.cmd` once.
+4. Do not manually stop after an individual sub-result unless the machine itself becomes unsafe/unusable.
+5. Preserve the generated sibling `LOCAL_FINAL_ACCEPTANCE_<RunTag>` directory whether PASS or FAIL.
 
-After `UPDATE PASS`, run `RUN_LOCAL_COMPLETION.cmd` from the updated complete local tree. Keep prior `LOCAL_FINAL_ACCEPTANCE_*` and `.fqa_work_*` evidence; the corrected runner is required to coexist with them.
+The normal CMD entrypoint requires offline evidence and executes:
+
+1. preserved v0.3.3 donor reconstruction
+2. current Source reconstruction + Candidate build
+3. fresh Candidate bundled Source regression
+4. fresh Candidate START_QA selftest
+5. fresh PoliticsTrasport → codegeas → PoliticsTrasport
+6. fresh preserved-predecessor rollback restore + START_QA selftest
+7. final local environment readback and combined gate decision
+
+A technical local PASS requires Candidate/selftest/A-B-A/rollback PASS, standard-user execution, unchanged persistent user/machine PATH, and no up non-loopback IP interfaces observed at start, during all three Final runs, and at end.
+
+## Scope limits
+
+- A technical PASS is not automatically Human/Product/Stable/Release PASS.
+- The current standard-user runner does not claim a complete Registry-write audit.
+- Previous local evidence remains historical evidence; changed Candidate bytes require new Final evidence.
