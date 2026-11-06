@@ -152,7 +152,7 @@ function Find-RepositoryFile([string]$Root,[string]$Name,[string[]]$RequiredSibl
         $pending.Push($item.FullName)
         continue
       }
-      if ($item.Name -cne $Name) { continue }
+      if ($item.Name -ne $Name) { continue }
       $ok=$true
       foreach ($sibling in $RequiredSiblings) {
         if (-not (Test-Path -LiteralPath (Join-Path $item.Directory.FullName $sibling))) { $ok=$false; break }
