@@ -1,13 +1,13 @@
 # Local Final Completion
 
-This entrypoint runs the current Source through Candidate rebuild, Source regression, fresh START_QA selftest, fresh PoliticsTrasport -> codegeas -> PoliticsTrasport, preserved-predecessor rollback qualification, and final environment readback on a standard Windows user session. GitHub-hosted checks are preflight only; this local run is the primary technical acceptance evidence.
+This entrypoint first validates the complete real-machine handoff, then runs the current Source through Candidate rebuild, Source regression, fresh START_QA selftest, fresh PoliticsTrasport -> codegeas -> PoliticsTrasport, preserved-predecessor rollback qualification, and final environment readback on a standard Windows user session. GitHub-hosted checks are preflight only; this local run is the primary technical acceptance evidence.
 
 ## Run
 
 1. Use a complete FullAutoQA download that contains the preserved donor blocks, or apply the lightweight download update pack to a previous complete download.
 2. Do not run as administrator.
 3. Disconnect external network access before starting. The standard CMD entrypoint now requires offline evidence; it does not treat an online run as final acceptance.
-4. Run RUN_LOCAL_COMPLETION.cmd once. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.
+4. Run RUN_LOCAL_COMPLETION.cmd once. Stage 0 validates the transfer manifest, preserved donor block set, recovery archive SHA-256, Source/build scripts, Final-series files, rollback entrypoint, and runner files before technical QA begins. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.
 
 The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. It does not permanently change PATH or Registry values.
 
