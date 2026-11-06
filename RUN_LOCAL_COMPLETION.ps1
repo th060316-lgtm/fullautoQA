@@ -1,7 +1,7 @@
 # FullAutoQA local final-completion runner.
 # Uses a temporary drive mapping so the user-selected download location does not become part of deep build paths.
 [CmdletBinding()]
-param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest)
+param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest,[switch]$RepositoryDiscoveryContractTest)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -126,20 +126,41 @@ function Remove-RepoDrive([string]$Drive) {
   return ($LASTEXITCODE -eq 0)
 }
 
+function Test-RepositoryDiscoveryExcludedDirectory([System.IO.DirectoryInfo]$Directory) {
+  if ($Directory.Name -eq '.git' -or
+      $Directory.Name -like '.fqa_work_*' -or
+      $Directory.Name -like 'LOCAL_FINAL_ACCEPTANCE_*') {
+    return $true
+  }
+  return (($Directory.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
+}
+
 function Find-RepositoryFile([string]$Root,[string]$Name,[string[]]$RequiredSiblings=@()) {
   $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
-  $prefix=$rootFull+[IO.Path]::DirectorySeparatorChar
   $matches=New-Object 'System.Collections.Generic.List[System.IO.FileInfo]'
-  foreach ($item in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File -Filter $Name -ErrorAction Stop)) {
-    $relative=$item.FullName.Substring($prefix.Length)
-    $top=$relative.Split([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)[0]
-    if ($top -like 'LOCAL_FINAL_ACCEPTANCE_*' -or $top -like '.fqa_work_*' -or $top -eq '.git') { continue }
-    $ok=$true
-    foreach ($sibling in $RequiredSiblings) {
-      if (-not (Test-Path -LiteralPath (Join-Path $item.Directory.FullName $sibling))) { $ok=$false; break }
+  $pending=New-Object 'System.Collections.Generic.Stack[string]'
+  $pending.Push($rootFull)
+
+  while ($pending.Count -gt 0) {
+    $current=$pending.Pop()
+    foreach ($item in @(Get-ChildItem -LiteralPath $current -Force -ErrorAction Stop)) {
+      if ($item.PSIsContainer) {
+        # Never enter previous/current local work/evidence trees. They are
+        # preserved evidence, not repository inputs. Also do not follow
+        # reparse directories outside the repository discovery boundary.
+        if (Test-RepositoryDiscoveryExcludedDirectory $item) { continue }
+        $pending.Push($item.FullName)
+        continue
+      }
+      if ($item.Name -cne $Name) { continue }
+      $ok=$true
+      foreach ($sibling in $RequiredSiblings) {
+        if (-not (Test-Path -LiteralPath (Join-Path $item.Directory.FullName $sibling))) { $ok=$false; break }
+      }
+      if ($ok) { $matches.Add($item) }
     }
-    if ($ok) { $matches.Add($item) }
   }
+
   if ($matches.Count -ne 1) { throw ('REPOSITORY_FILE_DISCOVERY_FAILED:'+ $Name +':'+ $matches.Count) }
   return $matches[0].FullName
 }
@@ -308,6 +329,37 @@ function Invoke-NativeProcessContractTest {
   } finally {
     $WorkRoot=$oldWorkRoot
     Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Invoke-RepositoryDiscoveryContractTest {
+  $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('fqa repository discovery ' + [Guid]::NewGuid().ToString('N'))
+  try {
+    $valid=Join-Path $testRoot 'authoritative\complete'
+    $oldWork=Join-Path $testRoot '.fqa_work_old\selftest_fresh\RESULTS\old\WORK\fixture\shader_cache'
+    $oldEvidence=Join-Path $testRoot 'LOCAL_FINAL_ACCEPTANCE_old\nested'
+    New-Item -ItemType Directory -Path $valid -Force | Out-Null
+    New-Item -ItemType Directory -Path $oldWork -Force | Out-Null
+    New-Item -ItemType Directory -Path $oldEvidence -Force | Out-Null
+
+    foreach ($dir in @($valid,$oldWork,$oldEvidence)) {
+      Set-Content -LiteralPath (Join-Path $dir 'JOIN_COMPLETE.ps1') -Value '# contract' -Encoding ASCII
+      Set-Content -LiteralPath (Join-Path $dir 'manifest.json') -Value '{}' -Encoding ASCII
+      New-Item -ItemType Directory -Path (Join-Path $dir 'blocks') -Force | Out-Null
+    }
+
+    $found=Find-RepositoryFile -Root $testRoot -Name 'JOIN_COMPLETE.ps1' -RequiredSiblings @('manifest.json','blocks')
+    if ([IO.Path]::GetFullPath($found) -ne [IO.Path]::GetFullPath((Join-Path $valid 'JOIN_COMPLETE.ps1'))) {
+      throw ('REPOSITORY_DISCOVERY_SELECTED_TRANSIENT_TREE:' + $found)
+    }
+
+    $source=Get-Content -LiteralPath $PSCommandPath -Raw
+    if ($source -match 'Get-ChildItem\s+-LiteralPath\s+\$rootFull\s+-Recurse\s+-File\s+-Filter') {
+      throw 'REPOSITORY_DISCOVERY_RECURSIVE_PREFILTER_REGRESSION'
+    }
+    Write-Host 'REPOSITORY_DISCOVERY_CONTRACT_TEST_PASS'
+  } finally {
+    if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue }
   }
 }
 
@@ -513,6 +565,10 @@ if ($NativeProcessContractTest) {
 }
 if ($EvidenceExportContractTest) {
   Invoke-EvidenceExportContractTest
+  exit 0
+}
+if ($RepositoryDiscoveryContractTest) {
+  Invoke-RepositoryDiscoveryContractTest
   exit 0
 }
 
