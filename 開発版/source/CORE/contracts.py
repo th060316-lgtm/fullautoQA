@@ -3,6 +3,7 @@ from collections import Counter
 from common import write_json,overall
 from campaigns import soak_scenario
 from plans import scenario_by_id,fault_plan
+from observations import profile_requests_observation
 
 def validate_profile_references(p):
     scenarios=p.get('scenarios',[]);goals=p.get('goals',[]);tests=p.get('tests',[])
@@ -25,6 +26,8 @@ def profile_plan(p,options=None,imported=False):
     def add(case,gate='REQUIRED'):rows.append({'test_case':case,'gate':gate})
     def scenario(s, policy_demonstration=True):
         base=game+'.'+s['id'];add(base+'.launch');add(base+('.goal' if s.get('goal') else '.execution'))
+        if profile_requests_observation(p,'ocr'):add(base+'.ocr')
+        if profile_requests_observation(p,'audio'):add(base+'.audio')
         if policy_demonstration and s.get('agent')=='Goal' and s.get('goal') and (s.get('require_goal_agent') is True or p.get('require_goal_agent') is True or 'Goal' in (options.get('required_agents') or [])):
             add(base+'.goal_agent')
         if s.get('save_load'):
