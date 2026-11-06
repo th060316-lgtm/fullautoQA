@@ -18,6 +18,19 @@ function Get-SHA256([string]$Path) {
   try { return ([BitConverter]::ToString($h.ComputeHash($s))).Replace('-','').ToLowerInvariant() }
   finally { $h.Dispose(); $s.Dispose() }
 }
+function Get-TreeFingerprint([string]$Root) {
+  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+  $prefix=$rootFull+[IO.Path]::DirectorySeparatorChar
+  $rows=New-Object 'System.Collections.Generic.List[string]'
+  foreach ($file in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File | Sort-Object FullName)) {
+    $relative=$file.FullName.Substring($prefix.Length).Replace([IO.Path]::DirectorySeparatorChar,'/')
+    $rows.Add(($relative + [char]9 + $file.Length + [char]9 + (Get-SHA256 $file.FullName)))
+  }
+  $bytes=[Text.Encoding]::UTF8.GetBytes(($rows -join [Environment]::NewLine))
+  $alg=[Security.Cryptography.SHA256]::Create()
+  try { return ([BitConverter]::ToString($alg.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() }
+  finally { $alg.Dispose() }
+}
 function Copy-Tree([string]$Src,[string]$Dst) {
   if (-not (Test-Path -LiteralPath $Src -PathType Container)) { throw ('SOURCE_TREE_MISSING:'+ $Src) }
   New-Item -ItemType Directory -Path $Dst -Force | Out-Null
@@ -79,6 +92,10 @@ try {
   $sourceCandidates=@($SourceRoot,(Join-Path $SourceRoot 'source'))
   $src=$sourceCandidates | Where-Object { Test-Path -LiteralPath (Join-Path $_ 'CORE') -PathType Container } | Select-Object -First 1
   if (-not $src) { throw 'CURRENT_SOURCE_ROOT_NOT_FOUND' }
+  $actualSourceFingerprint=Get-TreeFingerprint $src
+  if ($SourceBaseline -and $actualSourceFingerprint -ne $SourceBaseline.ToLowerInvariant()) {
+    throw ('SOURCE_BASELINE_MISMATCH:'+ $actualSourceFingerprint)
+  }
 
   $preserved=Join-Path $OutputDir 'DONOR_RUNTIME_PAYLOAD_INVENTORY.json'
   $donorPython=Join-Path $work 'RUNTIME\python\python.exe'
@@ -137,7 +154,7 @@ try {
   [IO.File]::Move($tmpZip,$output)
   $id=[ordered]@{
     phase=3; candidate_file=[IO.Path]::GetFileName($output); candidate_size=$size; candidate_sha256=$sha;
-    source_baseline=$(if ($SourceBaseline) {$SourceBaseline} else {$null});
+    source_baseline=$actualSourceFingerprint; prepared_source_fingerprint=$actualSourceFingerprint;
     donor_sha256=$donorSha; donor_mutated=$false; runtime_payload_preserved=$true;
     runtime_payload_inventory_file=[IO.Path]::GetFileName($preserved);
     runtime_payload_inventory_sha256=(Get-SHA256 $preserved);
