@@ -10,10 +10,11 @@ import ctypes
 import json
 import os
 import ipaddress
-import socket
+import subprocess
 from pathlib import Path
 
-from common import archive_eligible, inside, write_json
+from common import archive_eligible, inside, read_json, tree_size, write_json
+from audience_summary import build_audience_summary, render_audience_summary
 
 
 def _identity_snapshot(prepared):
@@ -93,27 +94,20 @@ def _measurements(sessions, root):
         }
 
     root = Path(root)
-    try:
-        out["disk_bytes"] = {
-            "value": sum(p.stat().st_size for p in root.rglob("*") if p.is_file()),
-            "unit": "bytes",
-            "source": "run_directory",
-            "method": "recursive file size before sealing",
-            "evidence": [],
-        }
-        out["evidence_bytes"] = {
-            "value": sum(
-                p.stat().st_size
-                for p in root.rglob("*")
-                if p.is_file() and archive_eligible(p.relative_to(root))
-            ),
-            "unit": "bytes",
-            "source": "run_directory",
-            "method": "archive-eligible file size before sealing",
-            "evidence": [],
-        }
-    except OSError:
-        pass
+    out["disk_bytes"] = {
+        "value": tree_size(root, tolerate_excluded_vanish=True),
+        "unit": "bytes",
+        "source": "run_directory",
+        "method": "recursive file size before sealing; transient excluded paths may vanish",
+        "evidence": [],
+    }
+    out["evidence_bytes"] = {
+        "value": tree_size(root, eligible_only=True, tolerate_excluded_vanish=True),
+        "unit": "bytes",
+        "source": "run_directory",
+        "method": "archive-eligible file size before sealing",
+        "evidence": [],
+    }
     return out
 
 
@@ -131,33 +125,68 @@ def _has_real_launch(results):
 def _network_adapter_snapshot():
     if os.name != "nt":
         return {"status": "NOT_MEASURED", "reason": "WINDOWS_REQUIRED"}
+    system_root = os.environ.get("SystemRoot") or os.environ.get("WINDIR")
+    if not system_root:
+        return {"status": "NOT_MEASURED", "reason": "SYSTEM_ROOT_UNAVAILABLE"}
+    powershell = Path(system_root) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    if not powershell.is_file():
+        return {"status": "NOT_MEASURED", "reason": "WINDOWS_POWERSHELL_UNAVAILABLE"}
+    script = r"""
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+$ErrorActionPreference='Stop'
+$rows=@()
+foreach($adapter in @(Get-NetAdapter -IncludeHidden -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' })) {
+  $addresses=@(Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue | ForEach-Object { [string]$_.IPAddress })
+  $rows += [pscustomobject]@{name=[string]$adapter.Name;addresses=$addresses}
+}
+if($rows.Count -eq 0){[Console]::Out.WriteLine('[]')}else{$rows | ConvertTo-Json -Compress -Depth 4}
+"""
     try:
-        import psutil
-        stats = psutil.net_if_stats()
-        addrs = psutil.net_if_addrs()
+        proc = subprocess.run(
+            [str(powershell), "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=15,
+            check=False,
+        )
+        if proc.returncode != 0:
+            return {
+                "status": "NOT_MEASURED",
+                "reason": "WINDOWS_NETWORK_QUERY_FAILED",
+                "exit_code": proc.returncode,
+            }
+        raw = (proc.stdout or "").strip()
+        rows = json.loads(raw or "[]")
+        if isinstance(rows, dict):
+            rows = [rows]
+        if not isinstance(rows, list):
+            raise ValueError("WINDOWS_NETWORK_QUERY_SCHEMA")
         up_external = []
-        for name, stat in stats.items():
-            if not stat.isup:
+        for row in rows:
+            if not isinstance(row, dict):
                 continue
+            addresses = row.get("addresses") or []
+            if isinstance(addresses, str):
+                addresses = [addresses]
             usable = False
-            for addr in addrs.get(name, ()):
-                if addr.family not in (socket.AF_INET, socket.AF_INET6):
-                    continue
-                raw = str(addr.address).split("%", 1)[0]
+            for raw_address in addresses:
+                raw_address = str(raw_address).split("%", 1)[0]
                 try:
-                    ip = ipaddress.ip_address(raw)
+                    ip = ipaddress.ip_address(raw_address)
                 except ValueError:
                     continue
                 if not ip.is_loopback and not ip.is_unspecified:
                     usable = True
                     break
             if usable:
-                up_external.append(str(name))
+                up_external.append(str(row.get("name") or "unnamed"))
         return {
             "status": "MEASURED",
             "up_adapter_count": len(up_external),
             "up_adapters": sorted(up_external),
-            "method": "psutil_non_loopback_ip_interfaces",
+            "method": "windows_powershell_up_adapters_with_nonloopback_ip",
         }
     except Exception as ex:
         return {"status": "NOT_MEASURED", "reason": type(ex).__name__}
@@ -371,7 +400,24 @@ def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
     management = build_management_evidence(
         e=e, sessions=sessions, results=results, run_mode=run_mode, prepared=prepared
     )
+
+    packet_path = Path(e.root) / "player_review_packet.json"
+    if packet_path.is_file():
+        audience = build_audience_summary(read_json(packet_path), "player_review_packet.json")
+    else:
+        audience = build_audience_summary({}, "player_review_packet.json")
+    write_json(Path(e.root) / "audience_summary.json", audience)
+    (Path(e.root) / "AUDIENCE_SUMMARY.txt").write_text(
+        render_audience_summary(audience), encoding="utf-8"
+    )
+
     sales = build_sales_evidence(e=e, sessions=sessions, results=results, run_mode=run_mode)
+    sales["audience_summary"] = audience
+    sales["audience_summary_evidence"] = [
+        "audience_summary.json",
+        "AUDIENCE_SUMMARY.txt",
+    ] if audience.get("status") == "GENERATED" else ["audience_summary.json"]
+
     write_json(Path(e.root) / "management_evidence.json", management)
     write_json(Path(e.root) / "sales_evidence.json", sales)
     return [
@@ -379,4 +425,6 @@ def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
         "phase3_preseal_integrity.json",
         "management_evidence.json",
         "sales_evidence.json",
+        "audience_summary.json",
+        "AUDIENCE_SUMMARY.txt",
     ]

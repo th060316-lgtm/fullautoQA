@@ -1,0 +1,61 @@
+name: Rollback predecessor qualification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '開発版/complete_v033/**'
+      - '開発版/transfer/TRANSFER_MANIFEST.json'
+      - '開発版/rollback/RESTORE_PREDECESSOR.ps1'
+      - '.github/workflows/rollback-predecessor-qualification.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '開発版/complete_v033/**'
+      - '開発版/transfer/TRANSFER_MANIFEST.json'
+      - '開発版/rollback/RESTORE_PREDECESSOR.ps1'
+      - '.github/workflows/rollback-predecessor-qualification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rollback-predecessor-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  qualify-v033-predecessor:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            開発版/complete_v033
+            開発版/rollback
+          sparse-checkout-cone-mode: true
+
+      - name: Execute the exact rollback entrypoint on a fresh destination
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=(Resolve-Path './開発版/rollback/RESTORE_PREDECESSOR.ps1').Path
+          $predecessor=(Resolve-Path './開発版/complete_v033').Path
+          $destination=Join-Path $PWD '_rollback_fresh'
+          $evidence=Join-Path $PWD '_rollback_evidence'
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -RepositoryRoot $PWD -PredecessorSet $predecessor -Destination $destination -EvidenceDirectory $evidence -SelfTest
+          if ($LASTEXITCODE -ne 0) { throw "ROLLBACK_ENTRYPOINT_FAILED:$LASTEXITCODE" }
+          $proof=Get-Content -LiteralPath (Join-Path $evidence 'ROLLBACK_PREDECESSOR_QUALIFICATION.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($proof.byte_identity -ne 'PASS') { throw 'ROLLBACK_BYTE_IDENTITY_NOT_PASS' }
+          if ($proof.runnable_rollback_status -ne 'PASS') { throw 'ROLLBACK_RUNNABLE_NOT_PASS' }
+          if ($proof.product_acceptance -ne 'NOT_CLAIMED' -or $proof.stable_certification -ne 'NOT_CLAIMED') { throw 'ROLLBACK_SCOPE_OVERCLAIM' }
+          Write-Host "ROLLBACK_QUALIFICATION_PASS version=$($proof.predecessor_version) sha256=$($proof.archive_sha256)"
+
+      - name: Upload rollback qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rollback-Predecessor-Qualification-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: _rollback_evidence/**
+          retention-days: 90

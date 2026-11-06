@@ -9,11 +9,11 @@ This entrypoint runs the current frozen Source through Candidate rebuild, Source
 3. To validate offline operation at the same time, disconnect external network access before starting.
 4. Run RUN_LOCAL_COMPLETION.cmd once.
 
-The runner creates a temporary logical drive for its own repository/work paths and removes it when the run ends. The download folder may remain where the user placed it; no manual relocation is required. It does not permanently change PATH or Registry values.
+The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. It does not permanently change PATH or Registry values.
 
 ## Evidence
 
-The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory contains the summary and logs. Large/deep transient trees stay inside the temporary work area. The runner exports compact evidence before cleanup:
+The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory beside the repository contains the summary and logs. Large/deep transient trees stay in the separate temporary work area and are never repository inputs. The runner exports compact evidence before cleanup:
 
 - LOCAL_COMPLETION_SUMMARY.json
 - Candidate build files under candidate_build/

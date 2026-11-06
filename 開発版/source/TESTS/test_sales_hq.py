@@ -44,6 +44,25 @@ def complete_bundle(**overrides):
     bundle = {
         'evidence_kind': 'real_human',
         'reviewer': {'kind': 'human', 'id': 'reviewer-1'},
+        'audience_summary': {
+            'schema_version': 1,
+            'status': 'GENERATED',
+            'entries': [{
+                'target_index': 0,
+                'what_game': 'The player moves and reaches an objective.',
+                'product_description': 'A game centered on movement and reaching an objective.',
+                'evidence': ['player_review_packet.json'],
+            }],
+            'evidence': ['player_review_packet.json'],
+            'description_contract': {
+                'basis': ['actions', 'goals', 'scenarios'],
+                'excluded_metadata': ['game_id', 'game_name', 'title', 'ip', 'license', 'price', 'free'],
+                'brand_price_independent': True,
+                'quality_claimed': False,
+                'human_readability_claimed': False,
+            },
+        },
+        'audience_summary_evidence': ['audience_summary.json', 'AUDIENCE_SUMMARY.txt'],
         'sessions': [{
             'session_id': 's1',
             'cold_start': True,
@@ -124,6 +143,34 @@ class SalesRobustnessTest(unittest.TestCase):
             report = evaluate_sales(context(tmp, extras={'sales_evidence': complete_bundle()}))
         self.assertEqual(report.status, 'PASS')
         self.assertTrue(report.readback['human_test_performed'])
+
+
+class SalesAudienceSummaryTest(unittest.TestCase):
+    def test_missing_audience_summary_keeps_product_communication_gates_not_run(self):
+        bundle = complete_bundle()
+        bundle.pop('audience_summary')
+        bundle.pop('audience_summary_evidence')
+        report = evaluate(bundle)
+        self.assertEqual(gate(report.readback, 'sales.product_description_independent')['status'], 'NOT_RUN')
+        self.assertEqual(gate(report.readback, 'sales.what_game_summary')['status'], 'NOT_RUN')
+        self.assertEqual(gate(report.readback, 'sales.nontechnical_report')['status'], 'NOT_RUN')
+        self.assertNotEqual(report.status, 'PASS')
+
+    def test_valid_summary_passes_structural_description_and_what_game_gates(self):
+        report = evaluate(complete_bundle())
+        self.assertEqual(gate(report.readback, 'sales.product_description_independent')['status'], 'PASS')
+        self.assertEqual(gate(report.readback, 'sales.what_game_summary')['status'], 'PASS')
+        self.assertEqual(gate(report.readback, 'sales.nontechnical_report')['status'], 'PASS')
+        self.assertEqual(report.readback['audience_summary']['status'], 'GENERATED')
+
+    def test_nontechnical_report_waits_for_readability_review(self):
+        bundle = complete_bundle()
+        bundle['sessions'][0]['phases'].pop('communication_readability')
+        report = evaluate(bundle)
+        self.assertEqual(gate(report.readback, 'sales.product_description_independent')['status'], 'PASS')
+        self.assertEqual(gate(report.readback, 'sales.what_game_summary')['status'], 'PASS')
+        self.assertEqual(gate(report.readback, 'sales.nontechnical_report')['status'], 'NOT_RUN')
+        self.assertNotEqual(report.status, 'PASS')
 
 
 class SalesHumanVersusProxyTest(unittest.TestCase):

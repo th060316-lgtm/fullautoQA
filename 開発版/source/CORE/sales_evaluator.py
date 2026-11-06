@@ -52,6 +52,9 @@ SALES_STABLE_HOLD = 'SALES_STABLE_HOLD'
 SALES_RELEASE_APPROVAL_HOLD = 'SALES_RELEASE_APPROVAL_HOLD'
 SALES_QA_REVIEW_COMPLETE = 'SALES_QA_REVIEW_COMPLETE'
 SALES_QA_REVIEW_INCOMPLETE = 'SALES_QA_REVIEW_INCOMPLETE'
+SALES_AUDIENCE_SUMMARY_ABSENT = 'SALES_AUDIENCE_SUMMARY_ABSENT'
+SALES_AUDIENCE_DESCRIPTION_INVALID = 'SALES_AUDIENCE_DESCRIPTION_INVALID'
+SALES_READABILITY_REVIEW_REQUIRED = 'SALES_READABILITY_REVIEW_REQUIRED'
 
 SALES_EVIDENCE_FILES = (
     'sales_evidence.json',
@@ -524,11 +527,13 @@ def evaluate_sales(context):
 
     # -- the four review phases ---------------------------------------------- #
     phase_records = {}
+    phase_rows = {}
     for name, aliases in PHASES:
         gate = 'sales.' + name
         threshold = table.get(name)
         row, record = _evaluate_phase(gate, name, cold_session, threshold)
         rows.append(row)
+        phase_rows[name] = row
         phase_records[name] = record
         if row['status'] == 'NOT_RUN':
             risks.append({'code': row.get('reason_code'), 'severity': 'ERROR',
@@ -536,6 +541,90 @@ def evaluate_sales(context):
         elif row['status'] == 'FAIL':
             risks.append({'code': row.get('reason_code'), 'severity': 'ERROR',
                           'detail': row.get('detail')})
+
+    # -- evidence-backed audience/product communication ----------------------- #
+    audience = bundle.get('audience_summary') if isinstance(bundle, dict) else None
+    audience = audience if isinstance(audience, dict) else {}
+    audience_entries = audience.get('entries') if isinstance(audience.get('entries'), list) else []
+    audience_evidence = bundle.get('audience_summary_evidence') if isinstance(bundle, dict) else []
+    if isinstance(audience_evidence, str):
+        audience_evidence = [audience_evidence]
+    elif not isinstance(audience_evidence, (list, tuple)):
+        audience_evidence = []
+    audience_evidence = [str(x) for x in audience_evidence if str(x)]
+    contract = audience.get('description_contract') if isinstance(audience.get('description_contract'), dict) else {}
+    generated = audience.get('status') == 'GENERATED' and bool(audience_entries)
+    descriptions = [
+        str(entry.get('product_description') or '').strip()
+        for entry in audience_entries if isinstance(entry, dict)
+    ]
+    what_game = [
+        str(entry.get('what_game') or '').strip()
+        for entry in audience_entries if isinstance(entry, dict)
+    ]
+
+    if generated and audience_evidence and descriptions and all(descriptions) and contract.get('brand_price_independent') is True:
+        product_description_row = _row(
+            'sales.product_description_independent', 'PASS', None,
+            evidence=audience_evidence,
+            detail='mechanics-only product description was generated without game/IP/price/free metadata'
+        )
+    else:
+        product_description_row = _row(
+            'sales.product_description_independent', 'NOT_RUN',
+            SALES_AUDIENCE_DESCRIPTION_INVALID if audience else SALES_AUDIENCE_SUMMARY_ABSENT,
+            evidence=audience_evidence,
+            detail='no valid name/IP/price-blind mechanics description was available'
+        )
+    rows.append(product_description_row)
+
+    if generated and audience_evidence and what_game and all(what_game):
+        what_game_row = _row(
+            'sales.what_game_summary', 'PASS', None, evidence=audience_evidence,
+            detail='what-the-player-does summary was derived from packaged mechanics evidence'
+        )
+    else:
+        what_game_row = _row(
+            'sales.what_game_summary', 'NOT_RUN',
+            SALES_AUDIENCE_SUMMARY_ABSENT, evidence=audience_evidence,
+            detail='no evidence-backed what-game summary was available'
+        )
+    rows.append(what_game_row)
+
+    communication_row = phase_rows.get('communication_readability') or {}
+    if not (generated and audience_evidence):
+        nontechnical_row = _row(
+            'sales.nontechnical_report', 'NOT_RUN', SALES_AUDIENCE_SUMMARY_ABSENT,
+            evidence=audience_evidence,
+            detail='the audience report was not generated from evidence'
+        )
+    elif communication_row.get('status') == 'PASS':
+        nontechnical_row = _row(
+            'sales.nontechnical_report', 'PASS', None,
+            evidence=audience_evidence + list(communication_row.get('evidence') or []),
+            detail='the generated audience report also passed the independent communication/readability review'
+        )
+    elif communication_row.get('status') == 'FAIL':
+        nontechnical_row = _row(
+            'sales.nontechnical_report', 'FAIL', communication_row.get('reason_code') or SALES_PHASE_FAILED,
+            evidence=audience_evidence + list(communication_row.get('evidence') or []),
+            detail='the generated audience report did not pass the communication/readability review'
+        )
+    else:
+        nontechnical_row = _row(
+            'sales.nontechnical_report', 'NOT_RUN', SALES_READABILITY_REVIEW_REQUIRED,
+            evidence=audience_evidence,
+            detail='the audience report exists, but nontechnical readability has not been accepted'
+        )
+    rows.append(nontechnical_row)
+
+    for audience_row in (product_description_row, what_game_row, nontechnical_row):
+        if audience_row['status'] in ('NOT_RUN', 'FAIL'):
+            risks.append({
+                'code': audience_row.get('reason_code'),
+                'severity': 'ERROR',
+                'detail': audience_row.get('detail'),
+            })
 
     # -- human test ---------------------------------------------------------- #
     reviewer_kind, reviewer_id, reviewer_source = _reviewer_kind(bundle)
@@ -609,6 +698,7 @@ def evaluate_sales(context):
                       'provenance': jsonable(_provenance_of(session))}
                      for session in sessions],
         'phases': phase_records,
+        'audience_summary': jsonable(audience),
         'certifications': _certifications(rows),
         'claims': _claims(bundle),
         'unresolved_gates': unresolved,

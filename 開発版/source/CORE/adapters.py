@@ -1,13 +1,27 @@
 import importlib.util,json,time,struct,math
 from pathlib import Path
-from common import inside,read_json
+from common import inside,read_json,write_json
+from ocr_backend import OculixOCR
+from observations import profile_requests_observation
 
 class Adapter:
     """Default black-box/optional file bridge adapter; physical actions use the selected real display/input backend."""
-    version='1.1'
-    def __init__(self,profile,context):self.profile=profile;self.context=context;self.desktop=context['desktop'];self.previous=None
+    version='1.2'
+    def __init__(self,profile,context):
+        self.profile=profile;self.context=context;self.desktop=context['desktop'];self.previous=None;self._ocr=None
+    def _ocr_requested(self):
+        return profile_requests_observation(self.profile,'ocr')
+    def _ocr_supported(self):
+        return self._ocr_requested() and OculixOCR.supported(self.context.get('tools'),self.desktop)
+    def _ocr_backend(self):
+        if self._ocr is None:
+            interval=float(self.profile.get('ocr_interval_seconds',5.0))
+            if not math.isfinite(interval) or not 0<=interval<=60:raise ValueError('OCR_INTERVAL_INVALID')
+            evidence=getattr(self.context.get('evidence'),'root',self.context.get('work'))
+            self._ocr=OculixOCR(self.context.get('tools'),self.desktop,evidence,interval_seconds=interval)
+        return self._ocr
     def capabilities(self):
-        result={'internal_state':bool(self.profile.get('bridge')),'ocr':False,'image_recognition':False,'window_automation':True,'save':bool(self.profile.get('save')),'replay':True,'audio':False,'gamepad':False,'adapter':True}
+        result={'internal_state':bool(self.profile.get('bridge')),'ocr':self._ocr_supported(),'image_recognition':False,'window_automation':True,'save':bool(self.profile.get('save')),'replay':True,'audio':False,'gamepad':False,'adapter':True}
         capabilities=getattr(self.desktop,'capabilities',None)
         if self.profile.get('display',{}).get('kind')=='browser' and callable(capabilities):
             result['browser']=capabilities()
@@ -34,7 +48,18 @@ class Adapter:
                         if isinstance(ex,ValueError) and str(ex).startswith('PATH_ESCAPE:'):raise
                         raise OSError('OBSERVATION_BRIDGE_UNAVAILABLE:'+self.profile['bridge']) from ex
                     time.sleep(min(.005,max(0,deadline-time.monotonic())))
-        return {'observation_status':status,'internal_state':s,'numeric_state':{k:v for k,v in s.items() if isinstance(v,(int,float))},'scene':s.get('scene'),'menu':s.get('menu'),'object':s.get('objects'),'grid':s.get('grid'),'position':s.get('position'),'timer':s.get('timer'),'ocr':None,'audio':None,'window':self.desktop.state()}
+        ocr=None;external=None
+        if self._ocr_supported():
+            try:
+                ocr=self._ocr_backend().read()
+            except Exception as ex:
+                name='ocr_adapter_error_'+str(time.monotonic_ns())+'.json'
+                evidence=getattr(self.context.get('evidence'),'root',self.context.get('work'))
+                write_json(Path(evidence)/name,{'error':repr(ex)})
+                ocr={'status':'HARNESS_ERROR','reason_code':'OCR_OBSERVATION_FAILED','text':'','evidence':[name],'method':'oculix_region_text','claim_scope':'visible_window_text_only'}
+            if ocr.get('status')=='PASS':
+                external={'values':{'ocr_text':ocr.get('text','')},'provenance':{'method':ocr.get('method'),'claim_scope':ocr.get('claim_scope'),'evidence':list(ocr.get('evidence') or [])}}
+        return {'observation_status':status,'internal_state':s,'numeric_state':{k:v for k,v in s.items() if isinstance(v,(int,float))},'scene':s.get('scene'),'menu':s.get('menu'),'object':s.get('objects'),'grid':s.get('grid'),'position':s.get('position'),'timer':s.get('timer'),'ocr':ocr,'external_observations':external,'audio':None,'window':self.desktop.state()}
     def act(self,name):
         action=self.profile['actions'][name]
         self.desktop.focus()
@@ -45,7 +70,8 @@ class Adapter:
             if target is None:raise OSError('VISUAL_TARGET_NOT_FOUND')
             self.desktop.perform({'kind':'click','x':target[0],'y':target[1]})
         for item in action.get('inputs',[]):self.desktop.perform(item)
-    def close(self):pass
+    def close(self):
+        if self._ocr is not None:self._ocr.close()
 
 def load_adapter(root,profile,context):
     if not profile.get('adapter'):return Adapter(profile,context)
