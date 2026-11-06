@@ -15,7 +15,13 @@ from windows_runner import Session
 
 class Desktop:
     def state(self):
-        return {"exists": True, "focused": True, "rect": [10, 20, 210, 120]}
+        return {
+            "exists": True,
+            "focused": True,
+            "rect": [10, 20, 210, 120],
+            "backend": "Windows native window",
+            "native_window": True,
+        }
 
     def focus(self):
         return None
