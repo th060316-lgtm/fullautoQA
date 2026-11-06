@@ -2,7 +2,7 @@
 # Repository input, transient workspace, and preserved evidence are separate roots.
 # Temporary drive mappings keep operational paths short without requiring fixed drive letters.
 [CmdletBinding()]
-param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest,[switch]$RepositoryDiscoveryContractTest)
+param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest,[switch]$RepositoryDiscoveryContractTest,[switch]$RequireOffline)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -27,7 +27,7 @@ $SeriesOut = $null
 $BuildOut = $null
 
 $Summary = [ordered]@{
-  schema_version = 4
+  schema_version = 5
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
@@ -42,6 +42,7 @@ $Summary = [ordered]@{
   started_utc = [DateTime]::UtcNow.ToString('o')
   non_admin_session = $null
   network_snapshot = $null
+  network_snapshot_end = $null
   candidate = $null
   donor_join = 'NOT_RUN'
   candidate_build = 'NOT_RUN'
@@ -50,9 +51,11 @@ $Summary = [ordered]@{
   windows_selftest = 'NOT_RUN'
   aba_series = 'NOT_RUN'
   aba_result_zip_count = 0
+  rollback_predecessor = 'NOT_RUN'
+  rollback_result_zip_count = 0
   persistent_path_status = 'NOT_MEASURED'
   workspace_cleanup = 'NOT_RUN'
-  offline_internet_status = 'USER_MUST_RUN_WITH_EXTERNAL_NETWORK_DISCONNECTED'
+  offline_internet_status = $(if ($RequireOffline) {'REQUIRED_NOT_YET_VERIFIED'} else {'USER_MUST_RUN_WITH_EXTERNAL_NETWORK_DISCONNECTED'})
   human_test = 'NOT_RUN'
   product_acceptance = 'HOLD'
   stable = 'HOLD'
@@ -114,11 +117,35 @@ function Get-PathSnapshot {
 
 function Get-NetworkSnapshot {
   try {
-    $rows = @(Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' } | Select-Object Name,InterfaceDescription,Status,LinkSpeed)
+    $active=New-Object 'System.Collections.Generic.List[object]'
+    foreach ($adapter in @(Get-NetAdapter -IncludeHidden -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' })) {
+      $addresses=@(Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue | ForEach-Object { [string]$_.IPAddress })
+      $usable=$false
+      foreach ($raw in $addresses) {
+        $candidate=([string]$raw).Split('%')[0]
+        $ip=$null
+        if ([Net.IPAddress]::TryParse($candidate,[ref]$ip)) {
+          if (-not [Net.IPAddress]::IsLoopback($ip) -and
+              -not $ip.Equals([Net.IPAddress]::Any) -and
+              -not $ip.Equals([Net.IPAddress]::IPv6Any)) {
+            $usable=$true
+            break
+          }
+        }
+      }
+      if ($usable) {
+        $active.Add([ordered]@{
+          name=[string]$adapter.Name
+          interface_description=[string]$adapter.InterfaceDescription
+          addresses=$addresses
+        })
+      }
+    }
     return [ordered]@{
-      status='OBSERVED_ONLY_NOT_INTERNET_PROOF'
-      up_adapter_count=$rows.Count
-      up_adapters=$rows
+      status='MEASURED'
+      up_adapter_count=$active.Count
+      up_adapters=@($active)
+      method='windows_powershell_up_adapters_with_nonloopback_ip'
     }
   } catch {
     return [ordered]@{status='NOT_MEASURED';reason=$_.Exception.Message}
@@ -540,7 +567,8 @@ function Export-ChatEvidence {
     'CANDIDATE_BUILD.log',
     'BUNDLED_SOURCE_TESTS.log',
     'START_QA_SELFTEST.log',
-    'ABA_SERIES.log'
+    'ABA_SERIES.log',
+    'ROLLBACK_PREDECESSOR.log'
   )) {
     $source=Join-Path $OutRoot $name
     if (Test-Path -LiteralPath $source -PathType Leaf) {
@@ -558,6 +586,14 @@ function Export-ChatEvidence {
   $selftestReadback=Join-Path $OutRoot 'selftest_readback'
   if (Test-Path -LiteralPath $selftestReadback -PathType Container) {
     Copy-Item -LiteralPath $selftestReadback -Destination (Join-Path $stage 'selftest') -Recurse -Force
+  }
+  $rollbackEvidence=Join-Path $OutRoot 'rollback_predecessor'
+  if (Test-Path -LiteralPath $rollbackEvidence -PathType Container) {
+    Copy-Item -LiteralPath $rollbackEvidence -Destination (Join-Path $stage 'rollback_predecessor') -Recurse -Force
+  }
+  $rollbackReadback=Join-Path $OutRoot 'rollback_readback'
+  if (Test-Path -LiteralPath $rollbackReadback -PathType Container) {
+    Copy-Item -LiteralPath $rollbackReadback -Destination (Join-Path $stage 'rollback_readback') -Recurse -Force
   }
   if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {
     $seriesStage=Join-Path $stage 'series'
@@ -658,7 +694,7 @@ try {
   if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
   $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
-  Write-Host '=== 1/6 Reconstruct preserved v0.3.3 donor ==='
+  Write-Host '=== 1/7 Reconstruct preserved v0.3.3 donor ==='
   if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {
     throw 'DONOR_DECLARATION_MISSING'
   }
@@ -681,7 +717,7 @@ try {
   $Summary.donor_join='PASS'
   Write-Summary
 
-  Write-Host '=== 2/6 Reconstruct current Source and build Candidate ==='
+  Write-Host '=== 2/7 Reconstruct current Source and build Candidate ==='
   $sourceDestination = Join-Path $WorkRoot 'prepared'
   $prepare = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/source/scripts/PREPARE_SOURCE.ps1'
   $rebuildDeclared = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/source/scripts/PHASE3_OVERLAY_REBUILD.ps1'
@@ -752,7 +788,7 @@ try {
   $candidate=$persistedCandidate
   Write-Summary
 
-  Write-Host '=== 3/6 Fresh Candidate Source regression ==='
+  Write-Host '=== 3/7 Fresh Candidate Source regression ==='
   $SelftestRoot = Join-Path $WorkRoot 'selftest'
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   $bundledPython = Join-Path $SelftestRoot 'RUNTIME\python\python.exe'
@@ -769,7 +805,7 @@ try {
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   Set-Content -LiteralPath (Join-Path $SelftestRoot 'PHASE3_FRESH_EXTRACTION.marker') -Value ([Guid]::NewGuid().ToString('N')) -Encoding ASCII
 
-  Write-Host '=== 4/6 Fresh Candidate START_QA selftest ==='
+  Write-Host '=== 4/7 Fresh Candidate START_QA selftest ==='
   $selfRun=Invoke-NativeLogged -FilePath (Join-Path $env:SystemRoot 'System32\cmd.exe') -Arguments @('/d','/c','START_QA.cmd','-SelfTest') -WorkingDirectory $SelftestRoot -LogPath (Join-Path $OutRoot 'START_QA_SELFTEST.log')
   $selfCode=$selfRun.ExitCode
   Export-TransientEvidence
@@ -780,7 +816,7 @@ try {
   Remove-Item -LiteralPath $SelftestRoot -Recurse -Force
   $SelftestRoot=$null
 
-  Write-Host '=== 5/6 Fresh PoliticsTrasport -> codegeas -> PoliticsTrasport ==='
+  Write-Host '=== 5/7 Fresh PoliticsTrasport -> codegeas -> PoliticsTrasport ==='
   $ControllerRoot = Join-Path $WorkRoot 'controller'
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$ControllerRoot)
   $controllerPython = Join-Path $ControllerRoot 'RUNTIME\python\python.exe'
@@ -813,12 +849,81 @@ try {
   }
   Write-Summary
 
-  Write-Host '=== 6/6 Local environment readback ==='
+  Write-Host '=== 6/7 Fresh preserved predecessor rollback qualification ==='
+  $rollbackScript = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/rollback/RESTORE_PREDECESSOR.ps1'
+  if (-not (Test-Path -LiteralPath $rollbackScript -PathType Leaf)) {
+    throw 'ROLLBACK_ENTRYPOINT_MISSING'
+  }
+  $rollbackDestination = Join-Path $WorkRoot 'rollback_predecessor'
+  $rollbackEvidence = Join-Path $OutRoot 'rollback_predecessor'
+  $rollbackArgs=@(
+    '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$rollbackScript,
+    '-RepositoryRoot',$RepoRoot,
+    '-Destination',$rollbackDestination,
+    '-EvidenceDirectory',$rollbackEvidence,
+    '-SelfTest'
+  )
+  $rollbackRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments $rollbackArgs -WorkingDirectory $RepoRoot -LogPath (Join-Path $OutRoot 'ROLLBACK_PREDECESSOR.log')
+  $rollbackCode=$rollbackRun.ExitCode
+
+  $rollbackResults=Join-Path $rollbackDestination 'RESULTS'
+  if (Test-Path -LiteralPath $rollbackResults -PathType Container) {
+    $rollbackReadback=Join-Path $OutRoot 'rollback_readback'
+    New-Item -ItemType Directory -Path $rollbackReadback -Force | Out-Null
+    foreach ($zip in @(Get-ChildItem -LiteralPath $rollbackResults -Recurse -File -Filter 'RESULT_FOR_CHATGPT.zip' -ErrorAction Stop | Sort-Object LastWriteTimeUtc)) {
+      $dest=Join-Path $OutRoot ('ROLLBACK_' + $zip.Directory.Name + '_RESULT_FOR_CHATGPT.zip')
+      Copy-Item -LiteralPath $zip.FullName -Destination $dest -Force
+      Export-ResultReadback -ResultZip $zip.FullName -Destination (Join-Path $rollbackReadback $zip.Directory.Name)
+      $Summary.rollback_result_zip_count++
+    }
+  }
+
+  $rollbackProofPath=Join-Path $rollbackEvidence 'ROLLBACK_PREDECESSOR_QUALIFICATION.json'
+  if (Test-Path -LiteralPath $rollbackProofPath -PathType Leaf) {
+    $rollbackProof=Get-Content -LiteralPath $rollbackProofPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($rollbackCode -eq 0 -and
+        $rollbackProof.byte_identity -eq 'PASS' -and
+        $rollbackProof.runnable_rollback_status -eq 'PASS') {
+      $Summary.rollback_predecessor='PASS'
+    } else {
+      $Summary.rollback_predecessor='FAIL'
+    }
+  } else {
+    $Summary.rollback_predecessor='FAIL'
+  }
+  Write-Summary
+
+  Write-Host '=== 7/7 Local environment readback ==='
+  $Summary.network_snapshot_end=Get-NetworkSnapshot
   $PathAfter=Get-PathSnapshot
   $Summary.persistent_path_status = if ((ConvertTo-Json $PathBefore -Depth 8 -Compress) -eq (ConvertTo-Json $PathAfter -Depth 8 -Compress)) {'UNCHANGED'} else {'CHANGED_REQUIRES_REVIEW'}
-  $Summary.status='TECHNICAL_LOCAL_ACCEPTANCE_PASS'
+
+  if ($RequireOffline) {
+    $offlineStart=($Summary.network_snapshot.status -eq 'MEASURED' -and [int]$Summary.network_snapshot.up_adapter_count -eq 0)
+    $offlineEnd=($Summary.network_snapshot_end.status -eq 'MEASURED' -and [int]$Summary.network_snapshot_end.up_adapter_count -eq 0)
+    $offlineSeries=($Summary.offline_internet_status -eq 'NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_ALL_FINAL_RUNS')
+    if ($offlineStart -and $offlineEnd -and $offlineSeries) {
+      $Summary.offline_internet_status='PASS_NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_START_SERIES_END'
+    } else {
+      $Summary.offline_internet_status='FAIL_OR_NOT_MEASURED'
+    }
+  }
+
   $Summary.completed_utc=[DateTime]::UtcNow.ToString('o')
   Export-TransientEvidence
+  Write-Summary
+
+  $finalFailures=New-Object 'System.Collections.Generic.List[string]'
+  if ($Summary.rollback_predecessor -ne 'PASS') { $finalFailures.Add('ROLLBACK_PREDECESSOR_NONPASS') }
+  if ($Summary.persistent_path_status -ne 'UNCHANGED') { $finalFailures.Add('PERSISTENT_PATH_CHANGED_OR_NOT_MEASURED') }
+  if ($RequireOffline -and $Summary.offline_internet_status -ne 'PASS_NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_START_SERIES_END') {
+    $finalFailures.Add('OFFLINE_REQUIREMENT_NONPASS')
+  }
+  if ($finalFailures.Count -gt 0) {
+    throw ('FINAL_LOCAL_GATE_NONPASS:' + ($finalFailures -join ','))
+  }
+
+  $Summary.status='TECHNICAL_LOCAL_ACCEPTANCE_PASS'
   Write-Summary
   $ExitCode=0
 
@@ -826,7 +931,7 @@ try {
   Write-Host 'LOCAL TECHNICAL ACCEPTANCE PASS'
   Write-Host ('Candidate SHA256: ' + $candidateSha)
   Write-Host ('Evidence root: ' + $PhysicalOutRoot)
-  Write-Host 'Offline internet use and Human/Product acceptance remain separate claims; do not mark them PASS unless actually performed.'
+  Write-Host 'Rollback, non-admin, Candidate selftest, A-B-A, persistent PATH and requested offline observation passed. Human/Product/Stable remain separate gates.'
 }
 catch {
   $Summary.status='FAIL'
@@ -834,6 +939,7 @@ catch {
   $Summary.failed_utc=[DateTime]::UtcNow.ToString('o')
   try {
     Export-TransientEvidence
+    $Summary.network_snapshot_end=Get-NetworkSnapshot
     if ($PathBefore) {
       $PathAfter=Get-PathSnapshot
       $Summary.persistent_path_status = if ((ConvertTo-Json $PathBefore -Depth 8 -Compress) -eq (ConvertTo-Json $PathAfter -Depth 8 -Compress)) {'UNCHANGED'} else {'CHANGED_REQUIRES_REVIEW'}
