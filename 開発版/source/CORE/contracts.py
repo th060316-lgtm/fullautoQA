@@ -23,9 +23,9 @@ def validate_profile_references(p):
 def profile_plan(p,options=None,imported=False):
     validate_profile_references(p);options=options or {};rows=[];game=p['game_id']
     def add(case,gate='REQUIRED'):rows.append({'test_case':case,'gate':gate})
-    def scenario(s):
+    def scenario(s, policy_demonstration=True):
         base=game+'.'+s['id'];add(base+'.launch');add(base+('.goal' if s.get('goal') else '.execution'))
-        if s.get('agent')=='Goal' and s.get('goal') and (s.get('require_goal_agent') is True or p.get('require_goal_agent') is True or 'Goal' in (options.get('required_agents') or [])):
+        if policy_demonstration and s.get('agent')=='Goal' and s.get('goal') and (s.get('require_goal_agent') is True or p.get('require_goal_agent') is True or 'Goal' in (options.get('required_agents') or [])):
             add(base+'.goal_agent')
         if s.get('save_load'):
             add(base+'.save_load')
@@ -50,12 +50,16 @@ def profile_plan(p,options=None,imported=False):
     for s in p['scenarios']:
         scenario(s)
         if s.get('verify_seed_replay'):
-            scenario(dict(s,id=s['id']+'_seed_replay'));add(game+'.seed_replay')
+            # Replay proves deterministic reproduction of the recorded action sequence.
+            # It must not be used as evidence that the Goal policy itself selected those actions.
+            scenario(dict(s,id=s['id']+'_seed_replay'),policy_demonstration=False);add(game+'.seed_replay')
     plan=p.get('qa_plan',{});reg=plan.get('regression')
     if reg:
         original=scenario_by_id(p,reg['scenario'])
         if not imported:scenario(dict(original,id='__qa_baseline',save_load=False,retry_test=False))
-        scenario(dict(original,id='__qa_regression',save_load=False,retry_test=False))
+        # Regression replay checks baseline behaviour/visual/performance equivalence.
+        # Goal-policy capability is demonstrated by a direct Goal run, not by replay.
+        scenario(dict(original,id='__qa_regression',save_load=False,retry_test=False),policy_demonstration=False)
         for kind in ('behavioral_regression','visual_regression'):add(game+'.__qa_regression.'+kind)
         add(game+'.__qa_regression.performance_regression','REQUIRED' if reg.get('performance_limits') else 'OPTIONAL')
     soak=soak_scenario(p,options.get('soak_seconds'))
