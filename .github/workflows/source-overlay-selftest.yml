@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - '開発版/source/**'
+      - '開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip'
+      - '開発版/transfer/TRANSFER_MANIFEST.json'
       - '.github/workflows/source-overlay-selftest.yml'
 permissions:
   contents: read
@@ -27,8 +29,8 @@ jobs:
             const before=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
             const after=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
             if(before.truncated||after.truncated) throw new Error('SOURCE_TREE_TRUNCATED');
-            const source=t=>t.tree.find(x=>x.path==='開発版/source')?.sha;
-            const changed=!source(before)||source(before)!==source(after);
+            const select=t=>JSON.stringify(t.tree.filter(x=>x.path==='開発版/source' || x.path==='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip' || x.path==='開発版/transfer/TRANSFER_MANIFEST.json').map(x=>[x.path,x.sha]).sort());
+            const changed=select(before)!==select(after);
             core.setOutput('changed',String(changed));
             if(changed) {
               const branch=context.payload.pull_request.head.ref;
@@ -49,6 +51,7 @@ jobs:
           sparse-checkout: |
             開発版/source
             開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
+            開発版/transfer/TRANSFER_MANIFEST.json
           sparse-checkout-cone-mode: false
       - uses: actions/download-artifact@v4
         with:
