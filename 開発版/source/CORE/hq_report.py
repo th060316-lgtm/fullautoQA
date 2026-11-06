@@ -69,6 +69,18 @@ def readback_html(data):
         parts.append('<p>status: <b>%s</b> &middot; reason: %s &middot; accepted: %s</p>' % (
             _escape(readback.get('status')), _escape(readback.get('reason_code')),
             'yes' if readback.get('accepted') else 'no'))
+        if domain == 'sales':
+            audience = readback.get('audience_summary') or {}
+            if isinstance(audience, dict) and audience.get('status') == 'GENERATED':
+                parts.append('<h4>Audience summary</h4>')
+                for entry in audience.get('entries') or []:
+                    if not isinstance(entry, dict):
+                        continue
+                    parts.append('<p><b>What this game asks the player to do:</b> %s</p>' %
+                                 _escape(entry.get('what_game')))
+                    parts.append('<p><b>Name/IP/price-blind description:</b> %s</p>' %
+                                 _escape(entry.get('product_description')))
+                parts.append('<p>Readability remains subject to the Sales communication/readability gate.</p>')
         measurements = _measurement_rows(readback)
         if measurements:
             parts.append('<h4>Measurements</h4><table><tr><th>metric</th><th>value</th></tr>%s</table>'
@@ -97,6 +109,17 @@ def readback_text(data):
     for domain, readback in sections:
         lines.append('%s HQ: %s (%s)' % (domain.capitalize(), readback.get('status'),
                                          readback.get('reason_code')))
+        if domain == 'sales':
+            audience = readback.get('audience_summary') or {}
+            if isinstance(audience, dict) and audience.get('status') == 'GENERATED':
+                for entry in audience.get('entries') or []:
+                    if not isinstance(entry, dict):
+                        continue
+                    lines.append('  what this game asks the player to do: %s' %
+                                 (entry.get('what_game') or ''))
+                    lines.append('  name/IP/price-blind description: %s' %
+                                 (entry.get('product_description') or ''))
+                lines.append('  readability: requires Sales communication/readability acceptance')
         for item in readback.get('unavailable') or []:
             lines.append('  unavailable: %s (%s)' % (item.get('item'), item.get('reason_code')))
         for risk in readback.get('risks') or []:
