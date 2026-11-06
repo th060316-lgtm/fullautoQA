@@ -74,6 +74,19 @@ def sales_bundle(reviewer='human'):
     return {
         'evidence_kind': 'real_human' if reviewer == 'human' else 'model_proxy',
         'reviewer': {'kind': reviewer, 'id': 'reviewer-1'},
+        'audience_summary': {
+            'schema_version': 1,
+            'status': 'GENERATED',
+            'entries': [{
+                'target_index': 0,
+                'what_game': 'The player moves and reaches an objective.',
+                'product_description': 'A game centered on movement and reaching an objective.',
+                'evidence': ['player_review_packet.json'],
+            }],
+            'evidence': ['player_review_packet.json'],
+            'description_contract': {'brand_price_independent': True},
+        },
+        'audience_summary_evidence': ['audience_summary.json', 'AUDIENCE_SUMMARY.txt'],
         'sessions': [{
             'session_id': 's1',
             'cold_start': True,
