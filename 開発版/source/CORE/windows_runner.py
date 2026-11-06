@@ -3,7 +3,7 @@ import argparse,copy,os,sys,time,uuid,subprocess,shutil,traceback,json,re,thread
 from pathlib import Path
 from common import *
 from profile import load,condition,get
-from observations import observation_condition,predicate_evidence,condition_source
+from observations import observation_condition,predicate_evidence,condition_source,profile_requests_observation
 from tools import Tools
 from agents import Agent,StallDetector
 from adapters import load_adapter,image_features,image_distance
@@ -298,7 +298,7 @@ class Session:
     def run_scenario(self,s,seed,replay=None):
         case=self.p['game_id']+'.'+s['id'];work=self.copy_game(case);agent=Agent(self.p,s,seed);self.coverage['scenarios'].add(case)
         write_json(self.e.root/'journal.json',{'run_id':self.e.run_id,'current_profile':self.p['game_id'],'scenario':s['id'],'seed':seed,'state':'running','resume_policy':'restart_current_scenario_from_pristine_copy'})
-        p=None;a=None;shots=[];observed=deque(maxlen=s.get('memory_limit',1024)) if s.get('soak') else [];self.transitions=[];features=None;start=time.monotonic();last_shot=0;last_monitor=0;recovery=0;ocr_certified=False
+        p=None;a=None;shots=[];observed=deque(maxlen=s.get('memory_limit',1024)) if s.get('soak') else [];self.transitions=[];features=None;start=time.monotonic();last_shot=0;last_monitor=0;recovery=0;media_certified=set()
         try:
             if s.get('missing_asset'):
                 missing=inside(work,s['missing_asset']);missing.unlink(missing_ok=True);proof=case+'_assets.json';inspection=inspect_assets(work,self.p);write_json(self.e.root/proof,inspection);self.verdict(case+'.assets','FAIL' if inspection['missing'] else 'HARNESS_ERROR','MISSING_ASSET' if inspection['missing'] else 'FAULT_ASSET_NOT_REQUIRED',[proof]);return agent.export(),list(observed)
@@ -319,12 +319,24 @@ class Session:
                     self.verdict(case+'.crash','FAIL','CRASH',[name,case+'_stderr.log'],severity='CRITICAL');return agent.export(),list(observed)
                 obs=a.observe();state=obs['internal_state'];observed.append(state);self.coverage['states'].add(agent.signature(state))
                 if s.get('soak') and len(self.coverage['states'])>s.get('memory_limit',1024):self.coverage['states'].pop()
-                self.e.event('state',case,current_state=state,internal_state=state,observation_status=obs.get('observation_status'),external_observations=obs.get('external_observations'),ocr=obs.get('ocr'),window=obs['window'],scene=obs.get('scene'),goal_progress=condition(state,goal) if goal else None)
-                if caps.get('ocr') and not ocr_certified and isinstance(obs.get('ocr'),dict):
-                    ocr_record=obs['ocr'];ocr_status=ocr_record.get('status')
-                    if ocr_status in ('PASS','HARNESS_ERROR'):
-                        self.verdict(case+'.ocr',ocr_status,ocr_record.get('reason_code') or ('OCR_CAPTURE_COMPLETED' if ocr_status=='PASS' else 'OCR_OBSERVATION_FAILED'),list(ocr_record.get('evidence') or []),gate='OPTIONAL',claim='Visible-window OCR observation only; semantic game outcome remains unverified')
-                        ocr_certified=True
+                self.e.event('state',case,current_state=state,internal_state=state,observation_status=obs.get('observation_status'),external_observations=obs.get('external_observations'),ocr=obs.get('ocr'),audio=obs.get('audio'),window=obs['window'],scene=obs.get('scene'),goal_progress=condition(state,goal) if goal else None)
+                for capability,claim in (
+                    ('ocr','Visible-window OCR observation only; semantic game outcome remains unverified'),
+                    ('audio','Declared audio observation only; enjoyment, mix quality, and semantic game outcome remain unverified'),
+                ):
+                    if capability in media_certified or not caps.get(capability) or not profile_requests_observation(self.p,capability):
+                        continue
+                    record=obs.get(capability)
+                    if not isinstance(record,dict):
+                        continue
+                    status=record.get('status')
+                    if status not in ('PASS','HARNESS_ERROR','FAIL','INCONCLUSIVE'):
+                        continue
+                    evidence=list(record.get('evidence') or [])
+                    reason=record.get('reason_code') or (capability.upper()+'_OBSERVATION_COMPLETED' if status=='PASS' else capability.upper()+'_OBSERVATION_FAILED')
+                    gate='REQUIRED' if case+'.'+capability in getattr(self,'required_cases',[]) else 'OPTIONAL'
+                    self.verdict(case+'.'+capability,status,reason,evidence,gate=gate,claim=claim,method=record.get('method'),claim_scope=record.get('claim_scope'))
+                    media_certified.add(capability)
                 if not obs['window']['exists']:
                     wins=self.desktop.windows(child_pids(p.pid))
                     if wins:self.desktop.hwnd=wins[0][0]
