@@ -27,7 +27,7 @@ $SeriesOut = $null
 $BuildOut = $null
 
 $Summary = [ordered]@{
-  schema_version = 5
+  schema_version = 6
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
@@ -44,6 +44,7 @@ $Summary = [ordered]@{
   network_snapshot = $null
   network_snapshot_end = $null
   candidate = $null
+  handoff_preflight = 'NOT_RUN'
   donor_join = 'NOT_RUN'
   candidate_build = 'NOT_RUN'
   candidate_integrity = 'NOT_RUN'
@@ -85,6 +86,77 @@ function Resolve-RepositoryRelativePath([string]$Root,[string]$Relative) {
     throw ('DECLARED_REPOSITORY_PATH_ESCAPE:'+ $Relative)
   }
   return $candidate
+}
+
+function Assert-RealMachineHandoff([string]$Root) {
+  $problems=New-Object 'System.Collections.Generic.List[string]'
+  $manifestPath=Resolve-RepositoryRelativePath -Root $Root -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
+  if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+    $problems.Add('TRANSFER_MANIFEST_MISSING')
+    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))
+  }
+
+  try {
+    $manifest=Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  } catch {
+    $problems.Add('TRANSFER_MANIFEST_INVALID_JSON')
+    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))
+  }
+
+  if (-not $manifest.latest_complete_candidate -or
+      [string]::IsNullOrWhiteSpace([string]$manifest.latest_complete_candidate.path)) {
+    $problems.Add('DONOR_DECLARATION_MISSING')
+  } else {
+    $donorRoot=Resolve-RepositoryRelativePath -Root $Root -Relative ([string]$manifest.latest_complete_candidate.path)
+    foreach ($name in @('JOIN_COMPLETE.ps1','manifest.json')) {
+      if (-not (Test-Path -LiteralPath (Join-Path $donorRoot $name) -PathType Leaf)) {
+        $problems.Add('DONOR_INPUT_MISSING:'+$name)
+      }
+    }
+    $blocks=Join-Path $donorRoot 'blocks'
+    if (-not (Test-Path -LiteralPath $blocks -PathType Container)) {
+      $problems.Add('DONOR_BLOCKS_MISSING')
+    } elseif ($manifest.latest_complete_candidate.blocks_required) {
+      $count=@(Get-ChildItem -LiteralPath $blocks -File -ErrorAction Stop).Count
+      if ($count -ne [int]$manifest.latest_complete_candidate.blocks_required) {
+        $problems.Add('DONOR_BLOCK_COUNT_MISMATCH:'+$count)
+      }
+    }
+  }
+
+  if (-not $manifest.recovery_source -or
+      [string]::IsNullOrWhiteSpace([string]$manifest.recovery_source.path) -or
+      [string]::IsNullOrWhiteSpace([string]$manifest.recovery_source.sha256)) {
+    $problems.Add('RECOVERY_SOURCE_DECLARATION_MISSING')
+  } else {
+    $recovery=Resolve-RepositoryRelativePath -Root $Root -Relative ([string]$manifest.recovery_source.path)
+    if (-not (Test-Path -LiteralPath $recovery -PathType Leaf)) {
+      $problems.Add('RECOVERY_SOURCE_ARCHIVE_MISSING')
+    } elseif ((Get-SHA256 $recovery) -ne ([string]$manifest.recovery_source.sha256).ToLowerInvariant()) {
+      $problems.Add('RECOVERY_SOURCE_SHA256_MISMATCH')
+    }
+  }
+
+  foreach ($relative in @(
+    '開発版/source/scripts/PREPARE_SOURCE.ps1',
+    '開発版/source/scripts/PHASE3_OVERLAY_REBUILD.ps1',
+    '開発版/acceptance_targets/FINAL_SERIES_PLAN.json',
+    '開発版/acceptance_targets/run_series.py',
+    '開発版/acceptance_targets/RUN_FINAL_ACCEPTANCE.cmd',
+    '開発版/rollback/RESTORE_PREDECESSOR.ps1',
+    'RUN_LOCAL_COMPLETION.cmd',
+    'RUN_LOCAL_COMPLETION.ps1'
+  )) {
+    $path=Resolve-RepositoryRelativePath -Root $Root -Relative $relative
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+      $problems.Add('REQUIRED_HANDOFF_FILE_MISSING:'+$relative)
+    }
+  }
+
+  if ($problems.Count -gt 0) {
+    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))
+  }
+  return $manifest
 }
 
 function Write-Summary {
@@ -686,13 +758,13 @@ try {
   $Summary.logical_evidence_root = $OutRoot
   $Summary.status = 'RUNNING'
 
+  Write-Host '=== 0/7 Real-machine handoff preflight ==='
+  $transfer=Assert-RealMachineHandoff -Root $RepoRoot
+  $Summary.handoff_preflight='PASS'
+
   $Summary.network_snapshot = Get-NetworkSnapshot
   $PathBefore = Get-PathSnapshot
   Write-Summary
-
-  $transferManifestPath=Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
-  if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
-  $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
   Write-Host '=== 1/7 Reconstruct preserved v0.3.3 donor ==='
   if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {
