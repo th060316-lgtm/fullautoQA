@@ -1,4 +1,6 @@
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -6,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "CORE"))
 
 from adapters import Adapter
-from profile import validate
+from profile import load as load_profile
 from target_intake import tool_ids_from_profile, validate_profile_structure
 
 
@@ -32,8 +34,20 @@ def profile_for(launch, build=None):
         "prototype_type": "playable",
         "launch": {"argv": launch},
         "actions": actions,
-        "goals": [{"id": "observe_progress"}],
-        "scenarios": [{"id": "main_loop", "actions": list(actions), "retry_test": True}],
+        "goals": [{
+            "id": "observe_progress",
+            "type": "trigger_event",
+            "field": "scene",
+            "op": "exists",
+            "value": True,
+        }],
+        "scenarios": [{
+            "id": "main_loop",
+            "agent": "Explorer",
+            "goal": "observe_progress",
+            "sequence": list(actions),
+            "retry_test": True,
+        }],
         "tests": [],
         "observations": ["window", "screenshot", "process", "log"],
         "instructions": "Use the declared actions and observe the resulting game loop.",
@@ -44,6 +58,13 @@ def profile_for(launch, build=None):
 
 
 class GenericRuntimeProfileMatrixTests(unittest.TestCase):
+    def assert_profile_loads(self, profile):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "profile.json"
+            path.write_text(json.dumps(profile), encoding="utf-8")
+            loaded = load_profile(tmp, path)
+            self.assertEqual(loaded["game_id"], profile["game_id"])
+
     def test_runtime_and_native_executable_families_use_the_same_profile_contract(self):
         matrix = {
             "godot": (["{godot}", "GAME/project.godot"], None, {"godot"}),
@@ -59,7 +80,7 @@ class GenericRuntimeProfileMatrixTests(unittest.TestCase):
             with self.subTest(family=family):
                 profile = profile_for(launch, build)
                 self.assertEqual(validate_profile_structure(profile), [])
-                validate(profile)
+                self.assert_profile_loads(profile)
                 self.assertEqual(
                     set(tool_ids_from_profile(profile, DECLARED_TOOLS)),
                     expected_tools,
@@ -67,7 +88,7 @@ class GenericRuntimeProfileMatrixTests(unittest.TestCase):
 
     def test_operation_names_are_profile_data_not_core_hardcoded_categories(self):
         profile = profile_for(["GAME/game.exe"])
-        validate(profile)
+        self.assert_profile_loads(profile)
         self.assertEqual(
             set(profile["actions"]),
             {"move", "camera", "menu", "combat", "ui", "tutorial", "retry", "save_load"},
