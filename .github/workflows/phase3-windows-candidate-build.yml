@@ -91,19 +91,27 @@ jobs:
           $bundleTree=(git rev-parse 'HEAD:開発版/acceptance_targets').Trim()
           "ACCEPTANCE_TREE=$bundleTree" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          $fingerprintScript = @'
-import hashlib, pathlib, sys
-root=pathlib.Path(sys.argv[1])
-rows=[]
-for p in sorted((x for x in root.rglob('*') if x.is_file()), key=lambda x: str(x).lower()):
-    rel=p.relative_to(root).as_posix()
-    h=hashlib.sha256(p.read_bytes()).hexdigest()
-    rows.append(f"{rel}\t{p.stat().st_size}\t{h}")
-print(hashlib.sha256("\n".join(rows).encode("utf-8")).hexdigest())
-'@
-          $preparedFingerprint = $fingerprintScript | python - "$sourceRoot"
-          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($preparedFingerprint)) { throw 'PREPARED_SOURCE_FINGERPRINT_FAILED' }
-          "PREPARED_SOURCE_FINGERPRINT=$($preparedFingerprint.Trim())" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          function Get-SHA256([string]$Path) {
+            $stream=[IO.File]::OpenRead($Path); $hash=[Security.Cryptography.SHA256]::Create()
+            try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
+            finally { $hash.Dispose(); $stream.Dispose() }
+          }
+          function Get-TreeFingerprint([string]$Root) {
+            $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+            $prefix=$rootFull+[IO.Path]::DirectorySeparatorChar
+            $rows=New-Object 'System.Collections.Generic.List[string]'
+            foreach ($file in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File | Sort-Object FullName)) {
+              $relative=$file.FullName.Substring($prefix.Length).Replace([IO.Path]::DirectorySeparatorChar,'/')
+              $rows.Add(($relative + [char]9 + $file.Length + [char]9 + (Get-SHA256 $file.FullName)))
+            }
+            $bytes=[Text.Encoding]::UTF8.GetBytes(($rows -join [Environment]::NewLine))
+            $alg=[Security.Cryptography.SHA256]::Create()
+            try { return ([BitConverter]::ToString($alg.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() }
+            finally { $alg.Dispose() }
+          }
+          $preparedFingerprint = Get-TreeFingerprint $sourceRoot
+          if ([string]::IsNullOrWhiteSpace($preparedFingerprint)) { throw 'PREPARED_SOURCE_FINGERPRINT_FAILED' }
+          "PREPARED_SOURCE_FINGERPRINT=$preparedFingerprint" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Compile and run complete Source regression before donor JOIN
         id: source_tests
