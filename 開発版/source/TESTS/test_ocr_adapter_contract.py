@@ -126,7 +126,7 @@ class OcrAdapterContractTests(unittest.TestCase):
 
 
 class OcrRunnerEvidenceTests(unittest.TestCase):
-    def test_scenario_emits_optional_ocr_evidence_without_semantic_promotion(self):
+    def test_requested_scenario_emits_required_ocr_evidence_without_semantic_promotion(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             evidence = Evidence(root / "E", "run")
@@ -135,6 +135,7 @@ class OcrRunnerEvidenceTests(unittest.TestCase):
                 "actions": {"noop": {"inputs": []}},
                 "goals": [],
                 "tests": [],
+                "observations": ["ocr"],
                 "state_signature": ["scene"],
             }
             scenario = {
@@ -183,13 +184,13 @@ class OcrRunnerEvidenceTests(unittest.TestCase):
             session.checkpoint = Mock()
             session.behavioral_regression = Mock()
             session.observe_features = Mock(return_value=None)
-            session.required_cases = []
+            session.required_cases = ["g.s.ocr"]
 
             session.run_scenario(scenario, 7)
 
             row = next(r for r in session.results if r["test_case"] == "g.s.ocr")
             self.assertEqual(row["status"], "PASS")
-            self.assertEqual(row["gate"], "OPTIONAL")
+            self.assertEqual(row["gate"], "REQUIRED")
             self.assertEqual(row["evidence"], ["ocr.json"])
             self.assertIn("semantic game outcome remains unverified", row["claim"])
 
