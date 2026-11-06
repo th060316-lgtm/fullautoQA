@@ -559,7 +559,7 @@ def main():
         results+=tools.prepare(required=known_required,optional=optional_tools)
         desktop=Desktop()
         # Dedicated self-test is a real GUI window. Input assertions are implemented in the fixture suite.
-        for capability in ['ocr','audio','gamepad']:results.append(e.result('selftest.'+capability,'NOT_RUN','NO_VALIDATED_BACKEND'))
+        for capability in ['audio','gamepad']:results.append(e.result('selftest.'+capability,'NOT_RUN','NO_VALIDATED_BACKEND'))
         ffmpeg=tools.get('ffmpeg');ffprobe=str(Path(ffmpeg).with_name('ffprobe.exe'))
         rec=select_recording({'desktop_ffmpeg':lambda:Recorder(ffmpeg,ffprobe,out/'FULL_EVIDENCE'/'screen.mp4'),'captured_frames':lambda:threaded_desktop_recorder(ffmpeg,ffprobe,out/'FULL_EVIDENCE'/'screen.mp4')},out,read_json(root/'acceptance_manifest.json').get('recording',{}).get('preferred_backends',['desktop_ffmpeg','captured_frames']))
         results+=selftest(root,e,tools,required_tools)
