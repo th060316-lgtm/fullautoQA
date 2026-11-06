@@ -32,9 +32,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
-            開発版/complete_v033
-            開発版/transfer
-            開発版/rollback
+            開発版
           sparse-checkout-cone-mode: true
 
       - name: Execute the exact rollback entrypoint on a fresh destination
