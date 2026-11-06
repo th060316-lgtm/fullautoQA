@@ -62,8 +62,10 @@ $plan=Find-PackageFile -Name 'FINAL_SERIES_PLAN.json' -RequiredSiblings @('run_s
 $acceptanceRoot=$plan.Directory.FullName
 $transferManifest=Find-PackageFile -Name 'TRANSFER_MANIFEST.json'
 $transferRoot=$transferManifest.Directory.FullName
+$rollbackScript=Find-PackageFile -Name 'RESTORE_PREDECESSOR.ps1'
+$rollbackRoot=$rollbackScript.Directory.FullName
 
-$managedRoots=@($sourceRoot,$acceptanceRoot,$transferRoot)
+$managedRoots=@($sourceRoot,$acceptanceRoot,$transferRoot,$rollbackRoot)
 foreach ($packageManagedRoot in $managedRoots) {
   $relative=Get-RelativePath $PackageRoot $packageManagedRoot
   $targetManagedRoot=Join-Path $TargetRoot $relative
@@ -110,7 +112,7 @@ if ((Get-SHA256 $runnerSource) -ne (Get-SHA256 $runnerDest)) { throw 'UPDATED_RU
 Write-Host 'UPDATE PASS'
 Write-Host ('Files copied and verified: '+$copied)
 Write-Host ('Updated folder: '+$TargetRoot)
-Write-Host 'Managed Source, acceptance and transfer trees were replaced from the update package.'
+Write-Host 'Managed Source, acceptance, transfer and rollback trees were replaced from the update package.'
 Write-Host 'Preserved donor block payload outside those managed trees was not removed.'
 Write-Host 'Next: run RUN_LOCAL_COMPLETION.cmd in the updated folder.'
 exit 0
