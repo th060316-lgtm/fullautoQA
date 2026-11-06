@@ -2,6 +2,7 @@ import importlib.util,json,time,struct,math
 from pathlib import Path
 from common import inside,read_json,write_json
 from ocr_backend import OculixOCR
+from observations import profile_requests_observation
 
 class Adapter:
     """Default black-box/optional file bridge adapter; physical actions use the selected real display/input backend."""
@@ -9,12 +10,7 @@ class Adapter:
     def __init__(self,profile,context):
         self.profile=profile;self.context=context;self.desktop=context['desktop'];self.previous=None;self._ocr=None
     def _ocr_requested(self):
-        observations=self.profile.get('observations')
-        if isinstance(observations,(list,tuple,set)):
-            return any(str(x).lower()=='ocr' for x in observations)
-        if isinstance(observations,dict):
-            return bool(observations.get('ocr'))
-        return bool(self.profile.get('ocr'))
+        return profile_requests_observation(self.profile,'ocr')
     def _ocr_supported(self):
         return self._ocr_requested() and OculixOCR.supported(self.context.get('tools'),self.desktop)
     def _ocr_backend(self):
