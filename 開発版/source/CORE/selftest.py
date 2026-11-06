@@ -48,6 +48,7 @@ def selftest(root,e,t,required_tools=()):
     if not (available('java') and available('oculix')):
         results.append(e.result('tool.oculix.linkage','NOT_RUN','TOOL_NOT_PREPARED',gate=gate('java','oculix')))
         results.append(e.result('tool.oculix.visual','NOT_RUN','TOOL_NOT_PREPARED',gate='OPTIONAL'))
+        results.append(e.result('selftest.ocr','NOT_RUN','NO_VALIDATED_BACKEND',gate='OPTIONAL'))
     else:
         link_ok=False
         try:
@@ -60,6 +61,7 @@ def selftest(root,e,t,required_tools=()):
 
         if not link_ok:
             results.append(e.result('tool.oculix.visual','HARNESS_ERROR','OCULIX_LINK_FAILED',['oculix_probe.log'],gate='OPTIONAL'))
+            results.append(e.result('selftest.ocr','HARNESS_ERROR','OCULIX_LINK_FAILED',['oculix_probe.log'],gate='OPTIONAL'))
         else:
             p2=None;d2=None;stdout2=None;stderr2=None
             try:
@@ -93,10 +95,13 @@ def selftest(root,e,t,required_tools=()):
                 normalized=' '.join(text.upper().split())
                 ok=r.returncode==0 and 'HARNESS' in normalized and 'TEST' in normalized
                 write_json(out/'oculix_visual_assertion.json',{'rect':[x,y,right,bottom],'ocr_text':text,'required_tokens':['HARNESS','TEST'],'matched':ok})
-                results.append(e.result('tool.oculix.visual','PASS' if ok else 'HARNESS_ERROR','OCULIX_OCR_TEXT_OBSERVED' if ok else 'OCULIX_OCR_QUALIFICATION_FAILED',['oculix_visual.log','oculix_visual_assertion.json','oculix_visual_target.bmp'],gate='OPTIONAL'))
+                visual_evidence=['oculix_visual.log','oculix_visual_assertion.json','oculix_visual_target.bmp']
+                results.append(e.result('tool.oculix.visual','PASS' if ok else 'HARNESS_ERROR','OCULIX_OCR_TEXT_OBSERVED' if ok else 'OCULIX_OCR_QUALIFICATION_FAILED',visual_evidence,gate='OPTIONAL'))
+                results.append(e.result('selftest.ocr','PASS' if ok else 'HARNESS_ERROR','OCR_BACKEND_VALIDATED' if ok else 'OCULIX_OCR_QUALIFICATION_FAILED',visual_evidence,gate='OPTIONAL',claim='Visible-window OCR capability only; not semantic game-state proof'))
             except Exception as ex:
                 write_json(out/'oculix_visual_error.json',{'error':repr(ex)})
                 results.append(e.result('tool.oculix.visual','HARNESS_ERROR','OCULIX_OCR_QUALIFICATION_FAILED',['oculix_visual_error.json'],detail=repr(ex),gate='OPTIONAL'))
+                results.append(e.result('selftest.ocr','HARNESS_ERROR','OCULIX_OCR_QUALIFICATION_FAILED',['oculix_visual_error.json'],detail=repr(ex),gate='OPTIONAL'))
             finally:
                 if d2:
                     try:d2.release()
