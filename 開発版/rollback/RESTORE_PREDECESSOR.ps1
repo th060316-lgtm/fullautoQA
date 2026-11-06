@@ -5,6 +5,7 @@
 param(
   [Parameter(Mandatory=$true)][string]$Destination,
   [string]$RepositoryRoot='',
+  [string]$PredecessorSet='',
   [string]$EvidenceDirectory='',
   [switch]$SelfTest
 )
@@ -47,13 +48,17 @@ if ([string]::IsNullOrWhiteSpace($EvidenceDirectory)) {
 if (Test-Path -LiteralPath $Destination) { throw 'ROLLBACK_DESTINATION_MUST_BE_FRESH' }
 if (Test-Path -LiteralPath $EvidenceDirectory) { throw 'ROLLBACK_EVIDENCE_DESTINATION_MUST_BE_FRESH' }
 
-$transferPath=Resolve-RepositoryRelativePath -Root $RepositoryRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
-if (-not (Test-Path -LiteralPath $transferPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
-$transfer=Get-Content -LiteralPath $transferPath -Raw -Encoding UTF8 | ConvertFrom-Json
-if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {
-  throw 'ROLLBACK_PREDECESSOR_DECLARATION_MISSING'
+if ([string]::IsNullOrWhiteSpace($PredecessorSet)) {
+  $transferPath=Resolve-RepositoryRelativePath -Root $RepositoryRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
+  if (-not (Test-Path -LiteralPath $transferPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
+  $transfer=Get-Content -LiteralPath $transferPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {
+    throw 'ROLLBACK_PREDECESSOR_DECLARATION_MISSING'
+  }
+  $setRoot=Resolve-RepositoryRelativePath -Root $RepositoryRoot -Relative ([string]$transfer.latest_complete_candidate.path)
+} else {
+  $setRoot=[IO.Path]::GetFullPath($PredecessorSet)
 }
-$setRoot=Resolve-RepositoryRelativePath -Root $RepositoryRoot -Relative ([string]$transfer.latest_complete_candidate.path)
 $manifestPath=Join-Path $setRoot 'manifest.json'
 $joinPath=Join-Path $setRoot 'JOIN_COMPLETE.ps1'
 if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf) -or
