@@ -3,7 +3,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main]
-    paths: ['.github/workflows/issue1-source-substrate.yml']
+    paths:
+      - '.github/workflows/issue1-source-substrate.yml'
+      - '開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip'
+      - '開発版/transfer/TRANSFER_MANIFEST.json'
 permissions:
   contents: read
 jobs:
@@ -14,16 +17,23 @@ jobs:
         with:
           sparse-checkout: |
             開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
+            開発版/transfer/TRANSFER_MANIFEST.json
           sparse-checkout-cone-mode: false
       - name: Verify immutable recovered-source archive
         run: |
           python3 - <<'PY'
-          import hashlib,pathlib
+          import hashlib,json,pathlib
           path=pathlib.Path('開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip')
+          manifest_path=pathlib.Path('開発版/transfer/TRANSFER_MANIFEST.json')
           raw=path.read_bytes()
           blob=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+          sha256=hashlib.sha256(raw).hexdigest()
+          manifest=json.loads(manifest_path.read_text(encoding='utf-8-sig'))
+          recovery=manifest['recovery_source']
           assert blob=='5f5ea465e400e5e85c602c7ee19540698d6170e3'
-          print('RECOVERY_GIT_BLOB='+blob,'SIZE='+str(len(raw)),'SHA256='+hashlib.sha256(raw).hexdigest())
+          assert recovery['path']=='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip'
+          assert recovery['sha256'].lower()==sha256
+          print('RECOVERY_GIT_BLOB='+blob,'SIZE='+str(len(raw)),'SHA256='+sha256,'MANIFEST_BINDING=PASS')
           PY
       - name: Optional duplicate recovery artifact
         continue-on-error: true
