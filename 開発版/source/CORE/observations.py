@@ -3,6 +3,18 @@ from common import inside
 from profile import condition
 
 SOURCES=('internal_state','external_observations')
+_OBSERVATION_ALIASES={'audio':('audio','sound'),'ocr':('ocr',)}
+
+
+def profile_requests_observation(profile,name):
+    aliases=_OBSERVATION_ALIASES.get(str(name).lower(),(str(name).lower(),))
+    raw=profile.get('observations')
+    if isinstance(raw,(list,tuple,set)):
+        values={str(x).lower() for x in raw}
+        return any(alias in values for alias in aliases)
+    if isinstance(raw,dict):
+        return any(bool(raw.get(alias)) for alias in aliases)
+    return any(bool(profile.get(alias)) for alias in aliases)
 
 
 def condition_source(predicate):
