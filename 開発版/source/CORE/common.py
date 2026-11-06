@@ -24,8 +24,13 @@ def write_json(p,v):
 def read_json(p): return json.loads(Path(p).read_text(encoding='utf-8-sig'))
 def inside(root,rel):
     operational_root=Path(root)
+    relative=Path(rel)
+    # Reject lexical escape intent before resolving filesystem aliases.  A subst
+    # drive root can otherwise collapse "Z:\\.." back to "Z:\\", hiding '..'.
+    if relative.is_absolute() or relative.drive or '..' in relative.parts:
+        raise ValueError('PATH_ESCAPE: '+str(rel))
     identity_root=operational_root.resolve()
-    candidate=operational_root/rel
+    candidate=operational_root/relative
     # Keep the caller's operational spelling (for example a subst drive) for
     # downstream file operations. Resolve only for containment identity.
     try:
