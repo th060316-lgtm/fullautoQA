@@ -34,10 +34,15 @@ class OculixOCR:
         if not callable(available) or not (available("java") and available("oculix")):
             return False
         try:
-            rect = (desktop.state() or {}).get("rect")
+            state = desktop.state() or {}
+            rect = state.get("rect")
         except Exception:
             return False
-        return isinstance(rect, (list, tuple)) and len(rect) == 4
+        return (
+            state.get("native_window") is True
+            and isinstance(rect, (list, tuple))
+            and len(rect) == 4
+        )
 
     def _write_proof(self, payload):
         self._seq += 1
