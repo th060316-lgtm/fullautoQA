@@ -1,0 +1,112 @@
+name: Rollback predecessor qualification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '開発版/complete_v033/**'
+      - '.github/workflows/rollback-predecessor-qualification.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '開発版/complete_v033/**'
+      - '.github/workflows/rollback-predecessor-qualification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rollback-predecessor-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  qualify-v033-predecessor:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            開発版/complete_v033
+          sparse-checkout-cone-mode: false
+
+      - name: Reconstruct preserved predecessor and verify byte identity
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $complete=(Resolve-Path './開発版/complete_v033').Path
+          $manifest=Get-Content -LiteralPath (Join-Path $complete 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $complete 'JOIN_COMPLETE.ps1')
+          if ($LASTEXITCODE -ne 0) { throw "ROLLBACK_PREDECESSOR_JOIN_FAILED:$LASTEXITCODE" }
+          $archive=Join-Path $complete ([string]$manifest.file)
+          if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) { throw 'ROLLBACK_PREDECESSOR_ARCHIVE_MISSING' }
+          $size=(Get-Item -LiteralPath $archive).Length
+          $sha=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($size -ne [long]$manifest.size) { throw 'ROLLBACK_PREDECESSOR_SIZE_MISMATCH' }
+          if ($sha -ne ([string]$manifest.sha256).ToLowerInvariant()) { throw 'ROLLBACK_PREDECESSOR_SHA_MISMATCH' }
+          "ROLLBACK_ARCHIVE=$archive" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "ROLLBACK_SIZE=$size" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "ROLLBACK_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "ROLLBACK_VERSION=$([string]$manifest.version)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "ROLLBACK_PREDECESSOR_IDENTITY_PASS version=$($manifest.version) size=$size sha256=$sha"
+
+      - name: Fresh extract predecessor
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $fresh=Join-Path $PWD '_rollback_fresh'
+          if (Test-Path -LiteralPath $fresh) { throw 'ROLLBACK_FRESH_ROOT_ALREADY_EXISTS' }
+          [IO.Compression.ZipFile]::ExtractToDirectory($env:ROLLBACK_ARCHIVE,$fresh)
+          if (-not (Test-Path -LiteralPath (Join-Path $fresh 'START_QA.cmd') -PathType Leaf)) { throw 'ROLLBACK_START_QA_MISSING' }
+          "ROLLBACK_FRESH=$fresh" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run predecessor selftest from fresh bytes
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $results=Join-Path $env:ROLLBACK_FRESH 'RESULTS'
+          $before=@()
+          if (Test-Path -LiteralPath $results) {
+            $before=@(Get-ChildItem -LiteralPath $results -Recurse -File -Filter 'RESULT_FOR_CHATGPT.zip' | ForEach-Object { $_.FullName })
+          }
+          $log=Join-Path $PWD 'ROLLBACK_PREDECESSOR_SELFTEST.log'
+          Push-Location $env:ROLLBACK_FRESH
+          try {
+            & (Join-Path $env:ROLLBACK_FRESH 'START_QA.cmd') -SelfTest *>&1 | Tee-Object -FilePath $log
+            $code=$LASTEXITCODE
+          } finally {
+            Pop-Location
+          }
+          $after=@()
+          if (Test-Path -LiteralPath $results) {
+            $after=@(Get-ChildItem -LiteralPath $results -Recurse -File -Filter 'RESULT_FOR_CHATGPT.zip')
+          }
+          $new=@($after | Where-Object { $before -notcontains $_.FullName } | Sort-Object LastWriteTimeUtc -Descending)
+          $status=if ($code -eq 0 -and $new.Count -ge 1) {'PASS'} else {'FAIL'}
+          $proof=[ordered]@{
+            schema_version=1
+            predecessor_version=$env:ROLLBACK_VERSION
+            archive_size=[long]$env:ROLLBACK_SIZE
+            archive_sha256=$env:ROLLBACK_SHA
+            fresh_extraction=$true
+            start_qa_selftest_exit_code=[int]$code
+            new_result_zip_count=$new.Count
+            result_zip=if($new.Count -ge 1){$new[0].FullName.Substring($env:ROLLBACK_FRESH.Length).TrimStart('\').Replace('\','/')}else{$null}
+            runnable_rollback_status=$status
+            claim_scope='Byte-identical preserved predecessor can be reconstructed and execute its own fresh START_QA selftest. This is rollback executability evidence, not Product Acceptance, Stable certification, or current-version QA.'
+          }
+          $proof | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $PWD 'ROLLBACK_PREDECESSOR_QUALIFICATION.json') -Encoding UTF8
+          if ($status -ne 'PASS') { throw "ROLLBACK_PREDECESSOR_SELFTEST_FAILED:$code:$($new.Count)" }
+          Write-Host "ROLLBACK_PREDECESSOR_RUNNABLE_PASS exit=$code new_result_zips=$($new.Count)"
+
+      - name: Upload rollback qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rollback-Predecessor-Qualification-${{ github.run_id }}-Attempt-${{ github.run_attempt }}
+          path: |
+            ROLLBACK_PREDECESSOR_QUALIFICATION.json
+            ROLLBACK_PREDECESSOR_SELFTEST.log
+          retention-days: 90
