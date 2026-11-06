@@ -378,6 +378,23 @@ function Invoke-RepositoryDiscoveryContractTest {
     if ($source -match 'Get-ChildItem\s+-LiteralPath\s+\$rootFull\s+-Recurse\s+-File\s+-Filter') {
       throw 'REPOSITORY_DISCOVERY_RECURSIVE_PREFILTER_REGRESSION'
     }
+    if ($source.Contains("Join-Path `$RepoRoot ('.fqa_work_'") -or
+        $source.Contains("Join-Path `$RepoRoot ('LOCAL_FINAL_ACCEPTANCE_'")) {
+      throw 'STRATEGIC_ROUTE_REPOSITORY_OUTPUT_REGRESSION'
+    }
+    if (-not $source.Contains("`$PhysicalWorkRoot = Join-Path ([IO.Path]::GetTempPath())") -or
+        -not $source.Contains("`$WorkDrive = New-RepoDrive `$PhysicalWorkRoot") -or
+        -not $source.Contains("`$WorkRoot = (`$WorkDrive + '\\')")) {
+      throw 'STRATEGIC_ROUTE_WORKSPACE_ISOLATION_MISSING'
+    }
+    if ($source.Contains('Find-RepositoryFile -Root $RepoRoot')) {
+      throw 'STRATEGIC_ROUTE_LIVE_REPOSITORY_DISCOVERY_REGRESSION'
+    }
+    if (-not $source.Contains('開発版/transfer/TRANSFER_MANIFEST.json') -or
+        -not $source.Contains('prepared_source_fingerprint') -or
+        -not $source.Contains("'-SourceBaseline',`$Summary.prepared_source_fingerprint")) {
+      throw 'STRATEGIC_ROUTE_DECLARED_INPUT_OR_PROVENANCE_MISSING'
+    }
     Write-Host 'REPOSITORY_DISCOVERY_CONTRACT_TEST_PASS'
   } finally {
     if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue }
