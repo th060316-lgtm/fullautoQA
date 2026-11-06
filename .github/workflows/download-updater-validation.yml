@@ -54,7 +54,11 @@ jobs:
           if(@($transfer).Count -ne 1){ throw 'TEST_TRANSFER_MARKER_DISCOVERY_FAILED' }
           $transferRoot=$transfer.Directory.FullName
 
-          foreach($root in @($sourceRoot,$acceptanceRoot,$transferRoot)){
+          $rollback=Get-ChildItem -LiteralPath $target -Recurse -File -Filter 'RESTORE_PREDECESSOR.ps1'
+          if(@($rollback).Count -ne 1){ throw 'TEST_ROLLBACK_MARKER_DISCOVERY_FAILED' }
+          $rollbackRoot=$rollback.Directory.FullName
+
+          foreach($root in @($sourceRoot,$acceptanceRoot,$transferRoot,$rollbackRoot)){
             Set-Content -LiteralPath (Join-Path $root 'STALE_SHOULD_BE_REMOVED.tmp') -Value 'stale' -Encoding ASCII
           }
 
@@ -73,7 +77,8 @@ jobs:
           foreach($name in @(
             (Join-Path $sourceRoot 'STALE_SHOULD_BE_REMOVED.tmp'),
             (Join-Path $acceptanceRoot 'STALE_SHOULD_BE_REMOVED.tmp'),
-            (Join-Path $transferRoot 'STALE_SHOULD_BE_REMOVED.tmp')
+            (Join-Path $transferRoot 'STALE_SHOULD_BE_REMOVED.tmp'),
+            (Join-Path $rollbackRoot 'STALE_SHOULD_BE_REMOVED.tmp')
           )){ if(Test-Path -LiteralPath $name){ throw ('STALE_FILE_SURVIVED:'+ $name) } }
           if(-not (Test-Path -LiteralPath $sentinel -PathType Leaf)){ throw 'DONOR_BLOCK_SENTINEL_REMOVED' }
           Write-Host 'LIGHTWEIGHT_UPDATER_VALIDATION_PASS'
