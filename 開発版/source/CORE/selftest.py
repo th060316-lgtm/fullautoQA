@@ -3,6 +3,7 @@ from pathlib import Path
 from common import *
 from windows import Desktop,child_pids,process_metrics
 from adapters import image_features
+from ocr_backend import OculixOCR
 
 def selftest(root,e,t,required_tools=()):
     root=Path(root);out=e.root;results=[];p=None;d=None;required_tools=set(required_tools or ())
@@ -75,27 +76,13 @@ def selftest(root,e,t,required_tools=()):
                 x,y,right,bottom=[int(v) for v in rect];w=right-x;h=bottom-y
                 if w<=0 or h<=0:raise OSError('OCULIX_TARGET_RECT_INVALID')
                 d2.capture(out/'oculix_visual_target.bmp')
-                visual=out/'OculixVisualProbe.java'
-                visual.write_text(
-                    'class OculixVisualProbe { public static void main(String[] args) throws Exception { '
-                    'var u=new java.io.File(args[0]).toURI().toURL(); '
-                    'try(var c=new java.net.URLClassLoader(new java.net.URL[]{u}, ClassLoader.getSystemClassLoader())) { '
-                    'Thread.currentThread().setContextClassLoader(c); '
-                    'var k=Class.forName("org.sikuli.script.Region", true, c); '
-                    'var ctor=k.getConstructor(int.class,int.class,int.class,int.class); '
-                    'var region=ctor.newInstance(Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4])); '
-                    'var text=k.getMethod("text").invoke(region); '
-                    'System.out.println("OCR_TEXT_BEGIN");System.out.println(text==null?"":text.toString());System.out.println("OCR_TEXT_END"); '
-                    '} } }',
-                    encoding='utf-8'
-                )
-                r=subprocess.run([t.get('java'),str(visual),t.get('oculix'),str(x),str(y),str(w),str(h)],capture_output=True,timeout=45,cwd=out)
-                (out/'oculix_visual.log').write_bytes(r.stdout+r.stderr)
-                text=(r.stdout or b'').decode('utf-8',errors='replace')
+                backend=OculixOCR(t,d2,out,interval_seconds=0)
+                record=backend.read()
+                text=record.get('text','')
                 normalized=' '.join(text.upper().split())
-                ok=r.returncode==0 and 'HARNESS' in normalized and 'TEST' in normalized
-                write_json(out/'oculix_visual_assertion.json',{'rect':[x,y,right,bottom],'ocr_text':text,'required_tokens':['HARNESS','TEST'],'matched':ok})
-                visual_evidence=['oculix_visual.log','oculix_visual_assertion.json','oculix_visual_target.bmp']
+                ok=record.get('status')=='PASS' and 'HARNESS' in normalized and 'TEST' in normalized
+                write_json(out/'oculix_visual_assertion.json',{'rect':[x,y,right,bottom],'ocr_text':text,'required_tokens':['HARNESS','TEST'],'matched':ok,'backend_record':record})
+                visual_evidence=list(record.get('evidence') or [])+['oculix_visual_assertion.json','oculix_visual_target.bmp']
                 results.append(e.result('tool.oculix.visual','PASS' if ok else 'HARNESS_ERROR','OCULIX_OCR_TEXT_OBSERVED' if ok else 'OCULIX_OCR_QUALIFICATION_FAILED',visual_evidence,gate='OPTIONAL'))
                 results.append(e.result('selftest.ocr','PASS' if ok else 'HARNESS_ERROR','OCR_BACKEND_VALIDATED' if ok else 'OCULIX_OCR_QUALIFICATION_FAILED',visual_evidence,gate='OPTIONAL',claim='Visible-window OCR capability only; not semantic game-state proof'))
             except Exception as ex:
