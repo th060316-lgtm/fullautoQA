@@ -378,21 +378,24 @@ function Invoke-RepositoryDiscoveryContractTest {
     if ($source -match 'Get-ChildItem\s+-LiteralPath\s+\$rootFull\s+-Recurse\s+-File\s+-Filter') {
       throw 'REPOSITORY_DISCOVERY_RECURSIVE_PREFILTER_REGRESSION'
     }
-    if ($source.Contains("Join-Path `$RepoRoot ('.fqa_work_'") -or
-        $source.Contains("Join-Path `$RepoRoot ('LOCAL_FINAL_ACCEPTANCE_'")) {
+    $mainMatch=[regex]::Match($source,"(?m)^try \\{\\r?\\n  if \\(\\`$env:OS -ne 'Windows_NT'\\)")
+    if (-not $mainMatch.Success) { throw 'STRATEGIC_ROUTE_MAIN_BLOCK_NOT_FOUND' }
+    $live=$source.Substring($mainMatch.Index)
+    if ($live.Contains("Join-Path `$RepoRoot ('.fqa_work_'") -or
+        $live.Contains("Join-Path `$RepoRoot ('LOCAL_FINAL_ACCEPTANCE_'")) {
       throw 'STRATEGIC_ROUTE_REPOSITORY_OUTPUT_REGRESSION'
     }
-    if (-not $source.Contains("`$PhysicalWorkRoot = Join-Path ([IO.Path]::GetTempPath())") -or
-        -not $source.Contains("`$WorkDrive = New-RepoDrive `$PhysicalWorkRoot") -or
-        -not $source.Contains("`$WorkRoot = (`$WorkDrive + '\\')")) {
+    if (-not $live.Contains("`$PhysicalWorkRoot = Join-Path ([IO.Path]::GetTempPath())") -or
+        -not $live.Contains("`$WorkDrive = New-RepoDrive `$PhysicalWorkRoot") -or
+        -not $live.Contains("`$WorkRoot = (`$WorkDrive + '\')")) {
       throw 'STRATEGIC_ROUTE_WORKSPACE_ISOLATION_MISSING'
     }
-    if ($source.Contains('Find-RepositoryFile -Root $RepoRoot')) {
+    if ($live.Contains('Find-RepositoryFile -Root $RepoRoot')) {
       throw 'STRATEGIC_ROUTE_LIVE_REPOSITORY_DISCOVERY_REGRESSION'
     }
-    if (-not $source.Contains('開発版/transfer/TRANSFER_MANIFEST.json') -or
-        -not $source.Contains('prepared_source_fingerprint') -or
-        -not $source.Contains("'-SourceBaseline',`$Summary.prepared_source_fingerprint")) {
+    if (-not $live.Contains('開発版/transfer/TRANSFER_MANIFEST.json') -or
+        -not $live.Contains('prepared_source_fingerprint') -or
+        -not $live.Contains("'-SourceBaseline',`$Summary.prepared_source_fingerprint")) {
       throw 'STRATEGIC_ROUTE_DECLARED_INPUT_OR_PROVENANCE_MISSING'
     }
     Write-Host 'REPOSITORY_DISCOVERY_CONTRACT_TEST_PASS'
