@@ -65,7 +65,7 @@ class Desktop:
     def state(self):
         if not self.hwnd or not U.IsWindow(self.hwnd):return {'exists':False}
         r=W.RECT();U.GetWindowRect(self.hwnd,C.byref(r));t=C.create_unicode_buffer(1024);U.GetWindowTextW(self.hwnd,t,1024)
-        return {'exists':True,'title':t.value,'focused':U.GetForegroundWindow()==self.hwnd,'minimized':bool(U.IsIconic(self.hwnd)),'rect':[r.left,r.top,r.right,r.bottom]}
+        return {'exists':True,'title':t.value,'focused':U.GetForegroundWindow()==self.hwnd,'minimized':bool(U.IsIconic(self.hwnd)),'rect':[r.left,r.top,r.right,r.bottom],'backend':'Windows native window','native_window':True}
     def send(self,item):
         if U.SendInput(1,C.byref(item),C.sizeof(INPUT))!=1:raise OSError('SENDINPUT_FAILED_OR_UIPI')
     def key(self,k,up=False):
