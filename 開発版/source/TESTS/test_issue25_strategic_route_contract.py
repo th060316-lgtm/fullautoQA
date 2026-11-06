@@ -26,7 +26,9 @@ class Issue25StrategicRouteContractTests(unittest.TestCase):
         self.assertNotIn("Join-Path $RepoRoot ('.fqa_work_'", text)
         self.assertNotIn("Join-Path $RepoRoot ('LOCAL_FINAL_ACCEPTANCE_'", text)
 
-        live = text.split("try {", 1)[1]
+        main_marker = "try {\n  if ($env:OS -ne 'Windows_NT')"
+        self.assertIn(main_marker, text)
+        live = text.split(main_marker, 1)[1]
         self.assertNotIn(
             "Find-RepositoryFile -Root $RepoRoot",
             live,
