@@ -1,0 +1,3335 @@
+Used GitHub · Ran a web search · Used 4 tools
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thought for 1s
+Let me investigate the GitHub repo. Use web_search/open_url tools via run_typescript, or maybe a github_app connector. Start by opening the URLs.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Fetch PR #27, #29, and more of Issue #1 (it was truncated at 8000 chars). Also look at PR #23/#26 state, commits, actions. Let me open PRs and rest of issue 1.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+I need more: rest of Issue #1 body (checklist, sections C-K), PR files/diff for #27/#29, repo tree, actions results. Let me fetch the rest of issue 1 and PR files. Use raw github content maybe easier. Fetch issue 1 content beyond 8000 chars.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+I have the issue body and main comments. I need more: recent state — main HEAD, PR #26 merged?, PR #27/#29 diffs, TRANSFER_MANIFEST_MISSING runs, checklist 127 checked/22 unchecked. Let me check PR #26 status, recent commits, actions, and the actual code (PREPARE_SOURCE, run_series, handoff preflight). Also check PR #27 and #29 files changed. Use GitHub API via open_url on github.com API endpoints? open_url can open api.github.com probably.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pageapi.github.com
+
+
+
+
+
+
+
+
+
+
+
+Opened pageapi.github.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Rate-limited. Maybe there's a github_app connector available. Search for it.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Found relevant tools
+
+
+
+
+
+
+
+
+
+
+
+Found relevant tools
+
+
+
+
+
+
+
+
+
+
+
+GitHub • List Pull Requests
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+state
+"all"
+perPage
+30
+fields
+[
+  "number",
+  "title",
+  "state",
+  "merged",
+  "merged_at",
+  "head",
+  "base",
+  "changed_files",
+  "updated_at"
+]
+sort
+"created"
+direction
+"desc"
+
+
+Response
+
+
+0
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "17f6f9ba21adcdfbbc689e312072cb9841ac8461"
+  },
+  "head": {
+    "ref": "work/issue25-handoff-preflight-20261107",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "c80facb1f63ba73c8e4df0fd037ba0b02a20a448"
+  },
+  "merged": false,
+  "number": 29,
+  "state": "open",
+  "title": "Handoff: preflight the complete real-machine package before QA",
+  "updated_at": "2026-11-06T16:36:49Z"
+}
+1
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "7a48d3e8a2ab7279aed0a202fbb89d62d549602f"
+  },
+  "head": {
+    "ref": "work/issue25-real-machine-finalization-20261107",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "eb4400606a79974b69dc5aead59dfeaac6608280"
+  },
+  "merged": true,
+  "merged_at": "2026-11-06T16:22:07Z",
+  "number": 28,
+  "state": "closed",
+  "title": "Finalization: consolidate rollback and offline gates into one real-machine run",
+  "updated_at": "2026-11-06T16:22:07Z"
+}
+2
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "7a48d3e8a2ab7279aed0a202fbb89d62d549602f"
+  },
+  "head": {
+    "ref": "work/issue25-source-immutability-20261106",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "304e556ca1670e5a14b233c0518f698e38bd552c"
+  },
+  "merged": false,
+  "number": 27,
+  "state": "open",
+  "title": "Strategic: make prepared Source regression immutability explicit",
+  "updated_at": "2026-11-06T14:30:41Z"
+}
+3
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "dcad269b21c81eb901d1965280264ce98b564a2c"
+  },
+  "head": {
+    "ref": "work/issue25-strategic-route-restructure-20261106",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "d5910da37c841c0d926ef05010f1b3da3f03bd91"
+  },
+  "merged": true,
+  "merged_at": "2026-11-06T14:19:30Z",
+  "number": 26,
+  "state": "closed",
+  "title": "Strategic: restructure Issue #25 completion route boundaries",
+  "updated_at": "2026-11-06T14:19:30Z"
+}
+4
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "dcad269b21c81eb901d1965280264ce98b564a2c"
+  },
+  "head": {
+    "ref": "download/local-final-acceptance",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "3ef3f0fd2b510d9f8412a125d3c1d4540973bba8"
+  },
+  "merged": false,
+  "number": 24,
+  "state": "closed",
+  "title": "Download/local final acceptance",
+  "updated_at": "2026-11-06T16:37:56Z"
+}
+5
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "dcad269b21c81eb901d1965280264ce98b564a2c"
+  },
+  "head": {
+    "ref": "work/final-local-acceptance-tactical-20261105",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "dedbf4af664efb1a22e6df63c6d8238dc3f6626f"
+  },
+  "merged": false,
+  "number": 23,
+  "state": "closed",
+  "title": "Tactical: complete the local 6-stage acceptance route toward Issue #1",
+  "updated_at": "2026-11-06T11:09:54Z"
+}
+6
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "6311396d9b867e5ae90f958a5c7f80e5ac48c0b1"
+  },
+  "head": {
+    "ref": "work/native-test-log-capture-20261105",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "1804d62ae6ef7f978c77b748134cfddfbd13b67b"
+  },
+  "merged": true,
+  "merged_at": "2026-11-05T12:44:28Z",
+  "number": 22,
+  "state": "closed",
+  "title": "Harden final local acceptance path and evidence before fresh A-B-A",
+  "updated_at": "2026-11-05T12:44:28Z"
+}
+7
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "16bcf4e209c4b65ca98273eb43ee47ab38dbae11"
+  },
+  "head": {
+    "ref": "work/evidence-share-and-source-regression-20261105",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "1d6f857ddcf52bece02fdf3227fc1828542c2225"
+  },
+  "merged": true,
+  "merged_at": "2026-11-05T11:52:27Z",
+  "number": 21,
+  "state": "closed",
+  "title": "Keep final Candidate local and export compact chat evidence",
+  "updated_at": "2026-11-05T11:52:27Z"
+}
+8
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "ed15668b339f7f29053ebaa780f80097c0f393e9"
+  },
+  "head": {
+    "ref": "work/local-short-workspace-20261105",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "4a3873a2bff829c9614af914e9847cd60cfc0275"
+  },
+  "merged": true,
+  "merged_at": "2026-11-05T11:13:23Z",
+  "number": 20,
+  "state": "closed",
+  "title": "Run local final acceptance from an automatic short workspace",
+  "updated_at": "2026-11-05T11:13:23Z"
+}
+9
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "c176b979db8fadd2c7215081b1f395e6077cbf8c"
+  },
+  "head": {
+    "ref": "work/ascii-path-discovery-20261105",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "7b2cb4e1ac27e7ec38f48f2d598662ca7d3a97a6"
+  },
+  "merged": true,
+  "merged_at": "2026-11-05T10:27:38Z",
+  "number": 19,
+  "state": "closed",
+  "title": "Make local completion path discovery encoding-safe",
+  "updated_at": "2026-11-05T10:27:38Z"
+}
+10
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "2c8d4eed3a45736e1f59fdf29b2804a8b05fdf77"
+  },
+  "head": {
+    "ref": "work/local-completion-entrypoint-20261105",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "99b042ffb7788fa475f11eb0436d79684d623e3d"
+  },
+  "merged": true,
+  "merged_at": "2026-11-05T03:39:55Z",
+  "number": 18,
+  "state": "closed",
+  "title": "Add local final-completion runner to bypass Actions artifact quota",
+  "updated_at": "2026-11-05T03:39:55Z"
+}
+11
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "23e0f3809ecb0da2ab68d62ffee443c68e68e408"
+  },
+  "head": {
+    "ref": "work/issue1-tiered-closeout-20261104",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "5914e945f78e1579fc0715867dd2eaaf3aee7569"
+  },
+  "merged": true,
+  "merged_at": "2026-11-05T00:51:58Z",
+  "number": 17,
+  "state": "closed",
+  "title": "Issue #1: converge remaining QA gates and evidence",
+  "updated_at": "2026-11-05T00:51:58Z"
+}
+12
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "780ae10c2ec14878747de94e9426130f4685e128"
+  },
+  "head": {
+    "ref": "work/issue1-realtime-fixture-fault-20261104",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "858c625796393040dca565fedd0a68d2ec0516df"
+  },
+  "merged": true,
+  "merged_at": "2026-11-04T05:23:19Z",
+  "number": 16,
+  "state": "closed",
+  "title": "Issue #1: make realtime fixture loop injection match its fault contract",
+  "updated_at": "2026-11-05T11:04:20Z"
+}
+13
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "780ae10c2ec14878747de94e9426130f4685e128"
+  },
+  "head": {
+    "ref": "work/issue1-final-evidence-readback-20261104",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "b1d26df92ca57e5740b93ec466a6939fba07a537"
+  },
+  "merged": true,
+  "merged_at": "2026-11-05T10:07:44Z",
+  "number": 15,
+  "state": "closed",
+  "title": "Issue #1: read back frozen acceptance evidence without rebuilding Candidate",
+  "updated_at": "2026-11-05T11:04:18Z"
+}
+14
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "1423c3c7bdca58f9d5615b8a7c8fbd8d4a8b94f8"
+  },
+  "head": {
+    "ref": "work/issue1-final-aba-20261104",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "813258c654c2e9174a475271619ad1ff3269befa"
+  },
+  "merged": true,
+  "merged_at": "2026-11-04T04:23:08Z",
+  "number": 14,
+  "state": "closed",
+  "title": "Issue #1: repair sparse detectors and prepare frozen A-B-A evidence",
+  "updated_at": "2026-11-05T11:04:17Z"
+}
+15
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "1423c3c7bdca58f9d5615b8a7c8fbd8d4a8b94f8"
+  },
+  "head": {
+    "ref": "work/issue1-preserve-candidate-20261103",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "e1e623d71d937946cad9daa16f3d3122236a2372"
+  },
+  "merged": true,
+  "merged_at": "2026-11-05T10:07:26Z",
+  "number": 13,
+  "state": "closed",
+  "title": "Issue #1: preserve existing Candidate without rebuilding",
+  "updated_at": "2026-11-05T11:04:16Z"
+}
+16
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "a1cc17825953f53c934bc91d5a0a532a7734b52a"
+  },
+  "head": {
+    "ref": "work/issue1-windows-evidence-finalization-20261103",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "f4322fbee996e06fa0a136ef78d6bb528cac0e7f"
+  },
+  "merged": true,
+  "merged_at": "2026-11-03T12:33:49Z",
+  "number": 12,
+  "state": "closed",
+  "title": "Issue #1: fix Windows archive references and observed storage restoration",
+  "updated_at": "2026-11-03T22:06:26Z"
+}
+17
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "bb850a4aebc315709f8cc2a6540a9389ee561d46"
+  },
+  "head": {
+    "ref": "work/issue1-reproducible-windows-candidate-20261103",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "40ed5154d54aee2943acb391f382c6343cb56663"
+  },
+  "merged": true,
+  "merged_at": "2026-11-03T11:55:30Z",
+  "number": 11,
+  "state": "closed",
+  "title": "Issue #1: reproducible Windows Candidate and selected real-game E2E",
+  "updated_at": "2026-11-03T22:06:38Z"
+}
+18
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
+  },
+  "head": {
+    "ref": "work/issue1-phase3-postmerge-hardening-v2-20261103",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "c0d15c9fb3c88ed19d56e98172b3b455ed3a9d2d"
+  },
+  "merged": true,
+  "merged_at": "2026-11-03T10:28:31Z",
+  "number": 10,
+  "state": "closed",
+  "title": "Phase 3: acceptance hardening on latest main",
+  "updated_at": "2026-11-03T22:06:51Z"
+}
+19
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
+  },
+  "head": {
+    "ref": "work/phase3-windows-candidate-build-20261103",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "40fa2e5206e50a861721dcb46acdd28d9a1d758a"
+  },
+  "merged": true,
+  "merged_at": "2026-11-03T10:30:51Z",
+  "number": 9,
+  "state": "closed",
+  "title": "CI: run Phase 3 complete Candidate build on Windows",
+  "updated_at": "2026-11-03T22:07:20Z"
+}
+20
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "5aecd7cbe934a3a3aa71d8fb1d927c1193d980b9"
+  },
+  "head": {
+    "ref": "work/issue1-phase3-postmerge-hardening-20261103",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "6bf1662c9cd2f0fa4d2ac392fd0e23e3b26b6fb6"
+  },
+  "merged": false,
+  "number": 8,
+  "state": "closed",
+  "title": "Phase 3: harden hybrid acceptance after timeout recovery",
+  "updated_at": "2026-11-05T10:06:45Z"
+}
+21
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "1598a853b3f737995ca437f9534a194529e7f077"
+  },
+  "head": {
+    "ref": "work/issue1-phase3-repair-complete-overlay-20261103",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "ad06a50addd25cd9c4dad4ec7d25905a92923b3d"
+  },
+  "merged": true,
+  "merged_at": "2026-11-03T10:08:34Z",
+  "number": 7,
+  "state": "closed",
+  "title": "Phase 3 repair: overlay the complete current source tree",
+  "updated_at": "2026-11-05T10:06:44Z"
+}
+22
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "f596116cffdbc0215e800fd66a6a9ae75c67ebf9"
+  },
+  "head": {
+    "ref": "work/issue1-phase3-repair-deferred-tool-gate-20261103",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "7cea694619ab8a3d5e96e4142bcba29f154f126c"
+  },
+  "merged": true,
+  "merged_at": "2026-11-03T10:05:52Z",
+  "number": 6,
+  "state": "closed",
+  "title": "Phase 3 repair: deferred tool preparation gate",
+  "updated_at": "2026-11-05T10:06:43Z"
+}
+23
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "fdd2a13658649d77cf775c4d9a939c87aff62948"
+  },
+  "head": {
+    "ref": "work/issue1-phase3-complete-candidate-windows-acceptance-20261102",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "09b22f3d02b4143c15db8b3d3881cfed0bd0e43a"
+  },
+  "merged": true,
+  "merged_at": "2026-11-03T10:01:51Z",
+  "number": 5,
+  "state": "closed",
+  "title": "Phase 3: integrate three-way accepted hybrid candidate",
+  "updated_at": "2026-11-03T10:01:55Z"
+}
+24
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "5cff0c1f15522609f9af87b68425d83976ec5c14"
+  },
+  "head": {
+    "ref": "work/issue1-phase2-postmerge-readback-fix-20261102",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "ecdf55badb128b1bbfda7a190cca74501118257b"
+  },
+  "merged": true,
+  "merged_at": "2026-11-02T14:12:13Z",
+  "number": 4,
+  "state": "closed",
+  "title": "Phase 2 hotfix: keep HQ readbacks separate from fresh evidence",
+  "updated_at": "2026-11-05T10:06:43Z"
+}
+25
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "a4ccbf28aae38d2a2e4aaa0262560205f545f5b1"
+  },
+  "head": {
+    "ref": "work/issue1-phase2-two-candidate-integration-20261102",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "de3e76c5568b134d82d22418e95dabc9048d267f"
+  },
+  "merged": true,
+  "merged_at": "2026-11-02T14:09:21Z",
+  "number": 3,
+  "state": "closed",
+  "title": "Phase 2: integrate Grok runtime QA + MiniMax Management/Sales HQ",
+  "updated_at": "2026-11-02T14:09:27Z"
+}
+26
+{
+  "base": {
+    "ref": "main",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "41d2de9298bd09682d29ca537ffbf6ce1e8910ce"
+  },
+  "head": {
+    "ref": "work/issue1-phase1-three-hq-foundation-20261102",
+    "repo": {
+      "description": "完全自動QAシステム作成",
+      "full_name": "th060316-lgtm/fullautoQA"
+    },
+    "sha": "28d3044b3237036652b58f448f953808aafdb845"
+  },
+  "merged": true,
+  "merged_at": "2026-11-02T12:10:01Z",
+  "number": 2,
+  "state": "closed",
+  "title": "Phase 1: integrate three-HQ gates and target freeze before result ZIP finalization",
+  "updated_at": "2026-11-02T14:09:43Z"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Now get PR #27 and #29 diffs/files, check runs on their heads, main HEAD commit state, and Issue #1 unchecked items. Also PR #28 merged after #26 — main head is now something after PR #28 merge (base sha 7a48d3e8 = main at time of #29). Let me fetch PR #27 files/diff, PR #29 files/diff, PR #28 files, check runs for PR heads, and Issue #1 checklist state (unchecked 22 items).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+27
+method
+"get_files"
+
+
+Response
+
+
+0
+{
+  "filename": ".github/workflows/phase2-source-tests.yml",
+  "status": "modified",
+  "additions": 27,
+  "changes": 27,
+  "patch": "@@ -41,6 +41,12 @@ jobs:\n           \"SOURCE_ROOT=$sourceRoot\" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append\n           \"ACCEPTANCE_ROOT=$((Resolve-Path './開発版/acceptance_targets').Path)\" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append\n \n+      - name: Snapshot reconstructed Source before regression\n+        shell: pwsh\n+        run: |\n+          python -B \"$env:SOURCE_ROOT/scripts/source_tree_immutability.py\" snapshot --root \"$env:SOURCE_ROOT\" --output \"$env:GITHUB_WORKSPACE/SOURCE_TREE_BEFORE.json\"\n+          if ($LASTEXITCODE -ne 0) { throw \"SOURCE_TREE_SNAPSHOT_FAILED:$LASTEXITCODE\" }\n+\n       - name: Compile reconstructed Python source\n         shell: pwsh\n         run: python -m compileall -q \"$env:SOURCE_ROOT/CORE\" \"$env:SOURCE_ROOT/TESTS\"\n@@ -50,6 +56,27 @@ jobs:\n         run: python -m unittest discover -s \"$env:SOURCE_ROOT/TESTS\" -v\n \n \n+      - name: Verify Source regression did not mutate its input\n+        shell: pwsh\n+        run: |\n+          Get-ChildItem -LiteralPath \"$env:SOURCE_ROOT\" -Directory -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force\n+          python -B \"$env:SOURCE_ROOT/scripts/source_tree_immutability.py\" compare --root \"$env:SOURCE_ROOT\" --before \"$env:GITHUB_WORKSPACE/SOURCE_TREE_BEFORE.json\" --output \"$env:GITHUB_WORKSPACE/SOURCE_TREE_MUTATION.json\"\n+          if ($LASTEXITCODE -ne 0) {\n+            Get-Content -LiteralPath \"$env:GITHUB_WORKSPACE/SOURCE_TREE_MUTATION.json\"\n+            throw \"SOURCE_REGRESSION_MUTATED_INPUT\"\n+          }\n+\n+      - name: Upload Source immutability evidence\n+        if: always()\n+        uses: actions/upload-artifact@v4\n+        with:\n+          name: Source-Immutability-${{ runner.os }}-${{ github.run_id }}-Attempt-${{ github.run_attempt }}\n+          path: |\n+            SOURCE_TREE_BEFORE.json\n+            SOURCE_TREE_MUTATION.json\n+          if-no-files-found: warn\n+          retention-days: 14\n+\n       - name: Parse Windows PowerShell scripts\n         if: runner.os == 'Windows'\n         shell: powershell"
+}
+1
+{
+  "filename": ".github/workflows/phase3-windows-candidate-build.yml",
+  "status": "modified",
+  "additions": 7,
+  "changes": 7,
+  "patch": "@@ -112,6 +112,8 @@ jobs:\n           $preparedFingerprint = Get-TreeFingerprint $sourceRoot\n           if ([string]::IsNullOrWhiteSpace($preparedFingerprint)) { throw 'PREPARED_SOURCE_FINGERPRINT_FAILED' }\n           \"PREPARED_SOURCE_FINGERPRINT=$preparedFingerprint\" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append\n+          python -B \"$sourceRoot/scripts/source_tree_immutability.py\" snapshot --root \"$sourceRoot\" --output \"$env:BUILD_OUT/SOURCE_TREE_BEFORE.json\"\n+          if ($LASTEXITCODE -ne 0) { throw \"SOURCE_TREE_SNAPSHOT_FAILED:$LASTEXITCODE\" }\n \n       - name: Compile and run complete Source regression before donor JOIN\n         id: source_tests\n@@ -122,6 +124,11 @@ jobs:\n           python -B -m unittest discover -s \"$env:SOURCE_ROOT/TESTS\" -v 2>&1 | Tee-Object -FilePath \"$env:BUILD_OUT/SOURCE_TESTS.log\"\n           if ($LASTEXITCODE -ne 0) { throw \"SOURCE_REGRESSION_FAILED:$LASTEXITCODE\" }\n           Get-ChildItem -LiteralPath \"$env:SOURCE_ROOT\" -Directory -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force\n+          python -B \"$env:SOURCE_ROOT/scripts/source_tree_immutability.py\" compare --root \"$env:SOURCE_ROOT\" --before \"$env:BUILD_OUT/SOURCE_TREE_BEFORE.json\" --output \"$env:BUILD_OUT/SOURCE_TREE_MUTATION.json\"\n+          if ($LASTEXITCODE -ne 0) {\n+            Get-Content -LiteralPath \"$env:BUILD_OUT/SOURCE_TREE_MUTATION.json\"\n+            throw \"SOURCE_REGRESSION_MUTATED_INPUT\"\n+          }\n \n       - name: Parse Windows PowerShell scripts before expensive build\n         id: parse"
+}
+2
+{
+  "filename": "開発版/source/scripts/SOURCE_TREE_FINGERPRINT.ps1",
+  "status": "added",
+  "additions": 64,
+  "changes": 64,
+  "patch": "@@ -0,0 +1,64 @@\n+# Canonical FullAutoQA Source-tree fingerprint.\n+# The result is independent of PowerShell culture/version and host newline.\n+[CmdletBinding()]\n+param(\n+  [Parameter(Mandatory=$true)][string]$Root,\n+  [string]$ManifestOut=''\n+)\n+Set-StrictMode -Version Latest\n+$ErrorActionPreference='Stop'\n+\n+function Get-SHA256([string]$Path) {\n+  $stream=[IO.File]::OpenRead($Path)\n+  $hash=[Security.Cryptography.SHA256]::Create()\n+  try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }\n+  finally { $hash.Dispose(); $stream.Dispose() }\n+}\n+\n+$rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)\n+if (-not (Test-Path -LiteralPath $rootFull -PathType Container)) { throw 'SOURCE_FINGERPRINT_ROOT_MISSING' }\n+$prefix=$rootFull+[IO.Path]::DirectorySeparatorChar\n+$records=New-Object 'System.Collections.Generic.List[object]'\n+foreach($file in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File)) {\n+  $relative=$file.FullName.Substring($prefix.Length).Replace([IO.Path]::DirectorySeparatorChar,'/')\n+  $records.Add([pscustomobject]@{\n+    path=$relative\n+    size=[long]$file.Length\n+    sha256=Get-SHA256 $file.FullName\n+  })\n+}\n+$byPath=@{}\n+$paths=New-Object 'System.Collections.Generic.List[string]'\n+foreach($record in $records) {\n+  $byPath[[string]$record.path]=$record\n+  $paths.Add([string]$record.path)\n+}\n+$pathArray=$paths.ToArray()\n+[Array]::Sort($pathArray,[StringComparer]::Ordinal)\n+$rows=New-Object 'System.Collections.Generic.List[string]'\n+foreach($path in $pathArray) {\n+  $record=$byPath[$path]\n+  $rows.Add(($path + [char]9 + [string]$record.size + [char]9 + [string]$record.sha256))\n+}\n+$array=$rows.ToArray()\n+$payload=[string]::Join([char]10,$array)\n+$bytes=[Text.Encoding]::UTF8.GetBytes($payload)\n+$alg=[Security.Cryptography.SHA256]::Create()\n+try { $fingerprint=([BitConverter]::ToString($alg.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() }\n+finally { $alg.Dispose() }\n+\n+if (-not [string]::IsNullOrWhiteSpace($ManifestOut)) {\n+  $manifest=[ordered]@{\n+    schema_version=1\n+    algorithm='relative-path-tab-size-tab-sha256; rows ordinal; LF; UTF-8'\n+    root=$rootFull\n+    fingerprint=$fingerprint\n+    file_count=$array.Length\n+    files=@($pathArray | ForEach-Object {\n+      $record=$byPath[$_]\n+      [ordered]@{path=$record.path;size=$record.size;sha256=$record.sha256}\n+    })\n+  }\n+  $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ManifestOut -Encoding UTF8\n+}\n+[Console]::Out.WriteLine($fingerprint)"
+}
+3
+{
+  "filename": "開発版/source/scripts/source_tree_immutability.py",
+  "status": "added",
+  "additions": 102,
+  "changes": 102,
+  "patch": "@@ -0,0 +1,102 @@\n+\"\"\"Fail-closed audit that Source regression does not modify its input tree.\n+\n+The Candidate builder binds an exact prepared-source fingerprint.  Tests may\n+create transient bytecode caches, but after those are removed the actual Source\n+files must be byte-for-byte identical to the pre-test snapshot.\n+\"\"\"\n+from __future__ import annotations\n+\n+import argparse\n+import hashlib\n+import json\n+from pathlib import Path\n+\n+\n+def sha256(path: Path) -> str:\n+    h = hashlib.sha256()\n+    with path.open(\"rb\") as stream:\n+        for chunk in iter(lambda: stream.read(1024 * 1024), b\"\"):\n+            h.update(chunk)\n+    return h.hexdigest()\n+\n+\n+def eligible(path: Path, root: Path) -> bool:\n+    rel = path.relative_to(root)\n+    if \"__pycache__\" in rel.parts:\n+        return False\n+    if path.suffix.lower() in {\".pyc\", \".pyo\"}:\n+        return False\n+    return path.is_file()\n+\n+\n+def snapshot(root: Path) -> dict:\n+    root = root.resolve()\n+    files = {}\n+    for path in sorted(root.rglob(\"*\"), key=lambda p: p.as_posix().casefold()):\n+        if not eligible(path, root):\n+            continue\n+        rel = path.relative_to(root).as_posix()\n+        files[rel] = {\"size\": path.stat().st_size, \"sha256\": sha256(path)}\n+    rows = [\n+        f\"{rel}\\t{record['size']}\\t{record['sha256']}\"\n+        for rel, record in sorted(files.items())\n+    ]\n+    fingerprint = hashlib.sha256(\"\\n\".join(rows).encode(\"utf-8\")).hexdigest()\n+    return {\"schema_version\": 1, \"root\": str(root), \"fingerprint\": fingerprint, \"files\": files}\n+\n+\n+def compare(before: dict, after: dict) -> dict:\n+    a = before.get(\"files\") or {}\n+    b = after.get(\"files\") or {}\n+    added = sorted(set(b) - set(a))\n+    removed = sorted(set(a) - set(b))\n+    changed = sorted(\n+        name for name in set(a) & set(b)\n+        if a[name] != b[name]\n+    )\n+    return {\n+        \"schema_version\": 1,\n+        \"status\": \"PASS\" if not (added or removed or changed) else \"FAIL\",\n+        \"before_fingerprint\": before.get(\"fingerprint\"),\n+        \"after_fingerprint\": after.get(\"fingerprint\"),\n+        \"added\": added,\n+        \"removed\": removed,\n+        \"changed\": changed,\n+        \"change_count\": len(added) + len(removed) + len(changed),\n+    }\n+\n+\n+def write(path: Path, value: dict) -> None:\n+    path.parent.mkdir(parents=True, exist_ok=True)\n+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding=\"utf-8\")\n+\n+\n+def main() -> int:\n+    ap = argparse.ArgumentParser()\n+    sub = ap.add_subparsers(dest=\"command\", required=True)\n+    s = sub.add_parser(\"snapshot\")\n+    s.add_argument(\"--root\", required=True)\n+    s.add_argument(\"--output\", required=True)\n+    c = sub.add_parser(\"compare\")\n+    c.add_argument(\"--root\", required=True)\n+    c.add_argument(\"--before\", required=True)\n+    c.add_argument(\"--output\", required=True)\n+    args = ap.parse_args()\n+\n+    root = Path(args.root)\n+    if args.command == \"snapshot\":\n+        value = snapshot(root)\n+        write(Path(args.output), value)\n+        print(\"SOURCE_TREE_SNAPSHOT=\" + value[\"fingerprint\"])\n+        return 0\n+\n+    before = json.loads(Path(args.before).read_text(encoding=\"utf-8-sig\"))\n+    after = snapshot(root)\n+    result = compare(before, after)\n+    write(Path(args.output), result)\n+    print(json.dumps(result, ensure_ascii=False))\n+    return 0 if result[\"status\"] == \"PASS\" else 2\n+\n+\n+if __name__ == \"__main__\":\n+    raise SystemExit(main())"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+27
+method
+"get_check_runs"
+
+
+Response
+
+
+total_count
+10
+check_runs
+[
+  {
+    "id": 127948936352,
+    "name": "source-tests (windows-latest)",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566644/job/127948936352",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566644/job/127948936352",
+    "started_at": "2026-11-06T14:31:12Z",
+    "completed_at": "2026-11-06T14:31:54Z"
+  },
+  {
+    "id": 127948935794,
+    "name": "source-tests (ubuntu-latest)",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566644/job/127948935794",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566644/job/127948935794",
+    "started_at": "2026-11-06T14:31:12Z",
+    "completed_at": "2026-11-06T14:31:29Z"
+  },
+  {
+    "id": 127948811365,
+    "name": "diagnostic",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566360/job/127948811365",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566360/job/127948811365",
+    "started_at": "2026-11-06T14:30:58Z",
+    "completed_at": "2026-11-06T14:49:54Z"
+  },
+  {
+    "id": 127948807446,
+    "name": "fixture-probe",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566246/job/127948807446",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566246/job/127948807446",
+    "started_at": "2026-11-06T14:30:55Z",
+    "completed_at": "2026-11-06T14:30:54Z"
+  },
+  {
+    "id": 127948806394,
+    "name": "build-candidate",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566246/job/127948806394",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566246/job/127948806394",
+    "started_at": "2026-11-06T14:30:55Z",
+    "completed_at": "2026-11-06T14:30:54Z"
+  },
+  {
+    "id": 127948739039,
+    "name": "offline-delivery",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566450/job/127948739039",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566450/job/127948739039",
+    "started_at": "2026-11-06T14:30:47Z",
+    "completed_at": "2026-11-06T14:30:46Z"
+  },
+  {
+    "id": 127948738527,
+    "name": "final-series",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566450/job/127948738527",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566450/job/127948738527",
+    "started_at": "2026-11-06T14:30:47Z",
+    "completed_at": "2026-11-06T14:30:46Z"
+  },
+  {
+    "id": 127948736943,
+    "name": "candidate",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566450/job/127948736943",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566450/job/127948736943",
+    "started_at": "2026-11-06T14:30:46Z",
+    "completed_at": "2026-11-06T14:30:46Z"
+  },
+  {
+    "id": 127948734434,
+    "name": "inputs",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566360/job/127948734434",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566360/job/127948734434",
+    "started_at": "2026-11-06T14:30:48Z",
+    "completed_at": "2026-11-06T14:30:55Z"
+  },
+  {
+    "id": 127948733200,
+    "name": "candidate-inputs",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566246/job/127948733200",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42234566246/job/127948733200",
+    "started_at": "2026-11-06T14:30:48Z",
+    "completed_at": "2026-11-06T14:30:54Z"
+  }
+]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+29
+method
+"get_files"
+
+
+Response
+
+
+0
+{
+  "filename": "README_LOCAL_COMPLETION.md",
+  "status": "modified",
+  "additions": 2,
+  "deletions": 2,
+  "changes": 4,
+  "patch": "@@ -1,13 +1,13 @@\n # Local Final Completion\n \n-This entrypoint runs the current Source through Candidate rebuild, Source regression, fresh START_QA selftest, fresh PoliticsTrasport -> codegeas -> PoliticsTrasport, preserved-predecessor rollback qualification, and final environment readback on a standard Windows user session. GitHub-hosted checks are preflight only; this local run is the primary technical acceptance evidence.\n+This entrypoint first validates the complete real-machine handoff, then runs the current Source through Candidate rebuild, Source regression, fresh START_QA selftest, fresh PoliticsTrasport -> codegeas -> PoliticsTrasport, preserved-predecessor rollback qualification, and final environment readback on a standard Windows user session. GitHub-hosted checks are preflight only; this local run is the primary technical acceptance evidence.\n \n ## Run\n \n 1. Use a complete FullAutoQA download that contains the preserved donor blocks, or apply the lightweight download update pack to a previous complete download.\n 2. Do not run as administrator.\n 3. Disconnect external network access before starting. The standard CMD entrypoint now requires offline evidence; it does not treat an online run as final acceptance.\n-4. Run RUN_LOCAL_COMPLETION.cmd once. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.\n+4. Run RUN_LOCAL_COMPLETION.cmd once. Stage 0 validates the transfer manifest, preserved donor block set, recovery archive SHA-256, Source/build scripts, Final-series files, rollback entrypoint, and runner files before technical QA begins. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.\n \n The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. It does not permanently change PATH or Registry values.\n "
+}
+1
+{
+  "filename": "RUN_LOCAL_COMPLETION.ps1",
+  "status": "modified",
+  "additions": 77,
+  "deletions": 5,
+  "changes": 82,
+  "patch": "@@ -27,7 +27,7 @@ $SeriesOut = $null\n $BuildOut = $null\n \n $Summary = [ordered]@{\n-  schema_version = 5\n+  schema_version = 6\n   run_tag = $RunTag\n   status = 'STARTING'\n   source_tree_fingerprint = $null\n@@ -44,6 +44,7 @@ $Summary = [ordered]@{\n   network_snapshot = $null\n   network_snapshot_end = $null\n   candidate = $null\n+  handoff_preflight = 'NOT_RUN'\n   donor_join = 'NOT_RUN'\n   candidate_build = 'NOT_RUN'\n   candidate_integrity = 'NOT_RUN'\n@@ -87,6 +88,77 @@ function Resolve-RepositoryRelativePath([string]$Root,[string]$Relative) {\n   return $candidate\n }\n \n+function Assert-RealMachineHandoff([string]$Root) {\n+  $problems=New-Object 'System.Collections.Generic.List[string]'\n+  $manifestPath=Resolve-RepositoryRelativePath -Root $Root -Relative '開発版/transfer/TRANSFER_MANIFEST.json'\n+  if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {\n+    $problems.Add('TRANSFER_MANIFEST_MISSING')\n+    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))\n+  }\n+\n+  try {\n+    $manifest=Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json\n+  } catch {\n+    $problems.Add('TRANSFER_MANIFEST_INVALID_JSON')\n+    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))\n+  }\n+\n+  if (-not $manifest.latest_complete_candidate -or\n+      [string]::IsNullOrWhiteSpace([string]$manifest.latest_complete_candidate.path)) {\n+    $problems.Add('DONOR_DECLARATION_MISSING')\n+  } else {\n+    $donorRoot=Resolve-RepositoryRelativePath -Root $Root -Relative ([string]$manifest.latest_complete_candidate.path)\n+    foreach ($name in @('JOIN_COMPLETE.ps1','manifest.json')) {\n+      if (-not (Test-Path -LiteralPath (Join-Path $donorRoot $name) -PathType Leaf)) {\n+        $problems.Add('DONOR_INPUT_MISSING:'+$name)\n+      }\n+    }\n+    $blocks=Join-Path $donorRoot 'blocks'\n+    if (-not (Test-Path -LiteralPath $blocks -PathType Container)) {\n+      $problems.Add('DONOR_BLOCKS_MISSING')\n+    } elseif ($manifest.latest_complete_candidate.blocks_required) {\n+      $count=@(Get-ChildItem -LiteralPath $blocks -File -ErrorAction Stop).Count\n+      if ($count -ne [int]$manifest.latest_complete_candidate.blocks_required) {\n+        $problems.Add('DONOR_BLOCK_COUNT_MISMATCH:'+$count)\n+      }\n+    }\n+  }\n+\n+  if (-not $manifest.recovery_source -or\n+      [string]::IsNullOrWhiteSpace([string]$manifest.recovery_source.path) -or\n+      [string]::IsNullOrWhiteSpace([string]$manifest.recovery_source.sha256)) {\n+    $problems.Add('RECOVERY_SOURCE_DECLARATION_MISSING')\n+  } else {\n+    $recovery=Resolve-RepositoryRelativePath -Root $Root -Relative ([string]$manifest.recovery_source.path)\n+    if (-not (Test-Path -LiteralPath $recovery -PathType Leaf)) {\n+      $problems.Add('RECOVERY_SOURCE_ARCHIVE_MISSING')\n+    } elseif ((Get-SHA256 $recovery) -ne ([string]$manifest.recovery_source.sha256).ToLowerInvariant()) {\n+      $problems.Add('RECOVERY_SOURCE_SHA256_MISMATCH')\n+    }\n+  }\n+\n+  foreach ($relative in @(\n+    '開発版/source/scripts/PREPARE_SOURCE.ps1',\n+    '開発版/source/scripts/PHASE3_OVERLAY_REBUILD.ps1',\n+    '開発版/acceptance_targets/FINAL_SERIES_PLAN.json',\n+    '開発版/acceptance_targets/run_series.py',\n+    '開発版/acceptance_targets/RUN_FINAL_ACCEPTANCE.cmd',\n+    '開発版/rollback/RESTORE_PREDECESSOR.ps1',\n+    'RUN_LOCAL_COMPLETION.cmd',\n+    'RUN_LOCAL_COMPLETION.ps1'\n+  )) {\n+    $path=Resolve-RepositoryRelativePath -Root $Root -Relative $relative\n+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {\n+      $problems.Add('REQUIRED_HANDOFF_FILE_MISSING:'+$relative)\n+    }\n+  }\n+\n+  if ($problems.Count -gt 0) {\n+    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))\n+  }\n+  return $manifest\n+}\n+\n function Write-Summary {\n   if (-not $SummaryPath) { return }\n   $Summary.updated_utc = [DateTime]::UtcNow.ToString('o')\n@@ -686,14 +758,14 @@ try {\n   $Summary.logical_evidence_root = $OutRoot\n   $Summary.status = 'RUNNING'\n \n+  Write-Host '=== 0/7 Real-machine handoff preflight ==='\n+  $transfer=Assert-RealMachineHandoff -Root $RepoRoot\n+  $Summary.handoff_preflight='PASS'\n+\n   $Summary.network_snapshot = Get-NetworkSnapshot\n   $PathBefore = Get-PathSnapshot\n   Write-Summary\n \n-  $transferManifestPath=Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'\n-  if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }\n-  $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json\n-\n   Write-Host '=== 1/7 Reconstruct preserved v0.3.3 donor ==='\n   if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {\n     throw 'DONOR_DECLARATION_MISSING'"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+29
+method
+"get_check_runs"
+
+
+Response
+
+
+total_count
+6
+check_runs
+[
+  {
+    "id": 128016299411,
+    "name": "offline-delivery",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032167/job/128016299411",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032167/job/128016299411",
+    "started_at": "2026-11-06T16:36:54Z",
+    "completed_at": "2026-11-06T16:36:53Z"
+  },
+  {
+    "id": 128016298316,
+    "name": "final-series",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032167/job/128016298316",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032167/job/128016298316",
+    "started_at": "2026-11-06T16:36:54Z",
+    "completed_at": "2026-11-06T16:36:53Z"
+  },
+  {
+    "id": 128016297025,
+    "name": "candidate",
+    "status": "completed",
+    "conclusion": "skipped",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032167/job/128016297025",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032167/job/128016297025",
+    "started_at": "2026-11-06T16:36:53Z",
+    "completed_at": "2026-11-06T16:36:53Z"
+  },
+  {
+    "id": 128016294437,
+    "name": "source-tests (ubuntu-latest)",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032215/job/128016294437",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032215/job/128016294437",
+    "started_at": "2026-11-06T16:36:56Z",
+    "completed_at": "2026-11-06T16:37:13Z"
+  },
+  {
+    "id": 128016293664,
+    "name": "source-tests (windows-latest)",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032215/job/128016293664",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032215/job/128016293664",
+    "started_at": "2026-11-06T16:36:55Z",
+    "completed_at": "2026-11-06T16:37:33Z"
+  },
+  {
+    "id": 128016293035,
+    "name": "parse",
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032080/job/128016293035",
+    "details_url": "https://github.com/th060316-lgtm/fullautoQA/actions/runs/42254032080/job/128016293035",
+    "started_at": "2026-11-06T16:36:56Z",
+    "completed_at": "2026-11-06T16:37:16Z"
+  }
+]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Notable: PR #29 head has a failing "parse" check (PowerShell parse). PR #27 checks: source-tests PASS, candidate-build-related jobs skipped. Need more: Issue #1 checklist unchecked items (22), the rest of PR #29 diff, and current main HEAD + PR #28 content. Also check PR #27 full diff including new script source_tree_immutability.py, and PR #28 (merged) content — "consolidate rollback and offline gates into one real-machine run".
+Get: Issue #1 unchecked items via issue_read get (body has checkboxes). Get full PR #29 diff. Get PR #28 files. Maybe list commits on main.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Issue Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+issue_number
+1
+method
+"get"
+
+
+Response
+
+
+number
+1
+title
+【3総本山統合】FullAutoQA不足機能の完成化・実ゲーム3周受入・Stable昇格ゲート
+body
+# 目的
+
+FullAutoQA v0.3.3 の既存実装を中核エンジンとして保全しつつ、**ゲーム制作総本山・管理総本山・営業総本山の3総本山QAを1本の全自動QAパイプラインへ統合**する。
+
+本Issueは不足機能を分散させず、3総本山版の完成までを1件で追跡する総合Issueとする。
+
+---
+
+# 現在の基準点
+
+- **2026-11-06時点の最新戦略現在地**: authoritative main は PR #22 統合後 `dcad269b21c81eb901d1965280264ce98b564a2c`。PR #23 は OPEN / head `285f46c88c25c9d3a35c54a89a047d37fbf3a633`、実機用軽量transportは `a46e728015cc18b4fa8c574fdc9c50d479c23468`。最新実機Run `20261105T133102Z_d018dc3c` は donor JOIN / Candidate build / Candidate integrity / bundled Source regression を PASS し、fresh `START_QA.cmd -SelfTest` で実Godot・Screenshot・Video・fault evidence生成まで到達。selftest は path-length / mutable-WORK / outer evidence export 境界の HARNESS_ERROR で未PASS、A→B→A は NOT_RUN。PR #23 はこれらを修正した未検証候補で、次の同一Windows実機再走が受入証拠。Product Acceptance / Stable は HOLD のまま。
+
+- PR #14/#16をdevelopment mainへ統合済み。main `23e0f3809ecb0da2ab68d62ffee443c68e68e408` / Source tree `d2fac7374b68677f037c5166d92e0da7a72e53b3` / acceptance bundle tree `8639920ec6af48496f8559b3a8d3d6bb84ad76d5`。旧main `1423c3c7...` は復旧参照として履歴保全。
+- Source363件: Windows360PASS/3skip、Ubuntu357PASS/6skip、同梱Python+FFmpeg Windows361PASS/2skip。テストID照合で363件すべてに実行PASS証拠、missing0/failure0。個別skipは維持。compile/PowerShell5/helper PASS。run41765580575 / bundled41765580553。main Source CI41772880159も同じSource treeで成功。新Source d2fac737もSource CI41776808114と同梱再回帰41776808108で全IDを再確認。
+- 最新Source-overlay full selftest `START_QA.cmd -SelfTest`: **Required170/170 PASS / 30故障検出PASS**。run41776808108 / RunID `20261104T050336_a6c3f5e3` / artifact13298061983。完全ZIP977entries・976manifest Size/SHA・CRC・全参照Evidence検証PASS。旧Candidateへの同一Source overlay診断であり新Package受入ではない。
+- **ユーザー確定済み**: 旧MiniMaxIntegrationTestは正式Target acceptance contract外のdiagnostic test。Workが追加したFinal Requiredからのみ分離し、原テスト・過去FAIL・旧Evidenceを保全。他Requiredは維持。A診断41765580553 / RunID `20261104T031307_2d859fd8` はRequired47/47PASS、完全ZIP検証PASS。Result内に旧FAIL原本参照・historical_only・affects_required_gate=falseと生ログを実収録。自動GateはProduction PASS / Management NOT_RUN / Sales NOT_RUN、独立最終裁定ではない。
+- A=PoliticsTrasport `03d120ae08ce3c7e42b9e74a807358c08f02ab4b` / `開発版/runtime` tree `73013c3dbe66ac10ef25c5b9fa6f6866ac42841c`、B=codegeas `b5a0d2207a77854be5187a0b00fc2d234b0745b8` / `game` tree `a40b156db48444d4b72d96ff19a15f2d3e00b62a`。両repo read-only、凍結snapshotと隔離copyだけを使用。AはLogic Prototypeのまま、未実装Save/Loadを捏造しない。
+- 最終A Profile1.4-final-contractのpreflight41769703178 / RunID `20261104T035300_1c0587b0` はRequired49/49PASS。Smoke5操作、Pause false→true→false、観測client transformと19物理input記録、完全ZIP195manifest/CRC/参照欠落0をCI readback41771998026で確認。COREへGodot/game固有分岐なし。原ゲーム無変更。
+- 保全済み中間Candidate: **1,021,458,648 bytes / SHA-256 `6b2190c79a14f55ef17b4ba1be14e98567a2fa4ade67a1a5d7758c5f59b46b1d`**、build41636608324。donor JOIN128/128・全Manifest・Runtime/Payload同一性・CRC・同梱Python fresh integrity PASS。最終受入版ではない。元v0.3.3 donor **1,099,679,545 bytes / SHA-256 `8858cd388d283a294e13ed3e9d9e87e930b26d84bd83fe548dba10883007816c`** は不変。
+- 過去B診断41636608248 / RunID `20261103T123711_d00902ba` はRequired41/41PASS。歴史Evidenceとして保持しFinalへ再利用しない。A preflight・fixtureもFinalへ算入しない。
+- **Final Candidate固定: 1,022,018,941 bytes / SHA-256 `1609669c150b738c5ef82c4ab8f5e163aaf26618cd12c66ed073f0015cd2c8d2` / build41778937768・fresh package integrity PASS / 同bytesのfresh selftest170/170・全30故障検出PASS / Final A→B→A technical series 3/3 PASS（run41778937797）**。Final RunIDは A=`20261104T054954_472a6a42`、B=`20261104T055820_f1051db3`、A=`20261104T060748_db44ced6`。3RunすべてSTART_QA exit0、archive integrity PASS、Evidence missing0、Required NOT_RUN/HARNESS_ERROR/FAIL=0。Productionは3RunともPASS、Managementは`MANAGEMENT_SIGNAL_ABSENT`でNOT_RUN、Salesは`SALES_OBSERVATION_INCOMPLETE`でNOT_RUN。独立3総本山最終Gateは未完、Human NOT_RUN / local Windows offline NOT_RUN。旧ea56Candidateはselftest169PASS/1FAILの歴史Evidenceとして保持。
+- Stable tree `0c57de0cfcd945f87bbdd1b793d7edb4436c9813` は不変。ただしREADME1ファイルのみで受入済みStable実行物は存在確認できず、機能Rollbackを実証済みとしない。
+- **Product Acceptance HOLD / Stable HOLD / Issue OPEN**。Hosted Windows ≠ ユーザーPC完全offline/非管理者受入。自動Proxy ≠ Human。他Engine/bridgeなし実ゲームの動的証拠へ一般化しない。
+
+> A〜Eのチェックは実装構造の受入であり、Final実ゲーム/人間/ローカルWindowsの動的PASSを意味しない。GのPackage/JOINは保全済み中間Candidateのhosted実測。Final系列のチェックは実証まで未成立のまま。
+
+---
+
+# A. 共通統括・Coordinator
+
+## A-1. 3総本山Coordinator
+- [x] 制作・管理・営業QAを1 Run 内で統括するCoordinatorを実装
+- [x] 各総本山を独立Gateとして保持
+- [x] 一方のPASSで他方の未実施を隠さない
+- [x] REQUIRED / OPTIONAL / NOT_RUN / INCONCLUSIVE / FAIL / HARNESS_ERROR を総本山別・全体別に保持
+- [x] 全Gate完了前に completion/stable certification を出さない
+- [x] 各総本山の判定根拠を RESULT_FOR_CHATGPT.zip に保存
+
+## A-2. Capability Enforcement
+- [x] Profile/Targetごとに必要Capabilityを事前契約
+- [x] 実行後に都合よく必須Capabilityを減らせない
+- [x] Capability不足は明示的NOT_RUN/HARNESS_ERROR
+- [x] video / screenshot / input / process / save-load / regression 等の必須CapabilityをGate化
+
+## A-3. Lazy Runtime Selection
+- [x] 必要なRuntime/Toolのみ展開・起動
+- [x] Java / Python / Godot / Node / Git / C / FFmpeg / AHK / OBS / OculiX をProfile要求に応じ選択
+- [x] 不要Toolの故障が無関係なゲームQAを巻き込まない
+- [x] REQUIRED Toolだけが総合判定を阻止
+- [ ] Windows完全オフライン・管理者権限不要・Registry/PATH変更なしを維持
+
+## A-4. Intake / Target Binding
+- [ ] 実ゲーム投入時に低負担でTarget/Profile生成・選択可能
+- [x] Fixtureと実ゲームTargetを厳密分離
+- [x] 自動検出だけで勝手に別ゲームを対象化しない
+- [x] Target identity / game version / profile version / source をEvidence化
+- [x] A→B→A ゲーム差替え時に旧Target/旧Baseline/旧Evidenceを再利用しない
+- [x] stale target / stale latest / stale result ZIP の混入を検出
+
+---
+
+# B. ゲーム制作総本山QA
+
+既存v0.3.3の Smoke / Goal / Explorer / Random、Save/Load、Crash/Stall、録画、Regression、Soak、Evidenceを土台にする。
+
+## B-1. 実ゲーム汎用QAの完成
+- [ ] Godot / Unity / Unreal / Java / Node / Python / C / EXE の実ゲーム適用をProfile/Adapter方式で維持
+- [ ] Black-boxゲームは Screenshot / Window / Input / OCR / Log を用いて検証
+- [x] Internal bridge があるゲームは内部状態もEvidenceとして利用
+- [ ] Bridgeなしでも最低限のPlayable QAが成立すること
+- [x] Action抽象化を実ゲーム入力へ確実にBinding
+
+## B-2. Browser Backend復旧
+- [x] Browser/Webゲーム用Backendを復旧
+- [x] URL/ローカルWeb起動、Window/Viewport、Input、Screenshot、Console/Process evidence を取得
+- [x] WebゲームでもSmoke/Goal/Explorer/Randomが使用可能
+- [x] Browser Backend未対応を黙ってDesktop Backend PASSにしない
+
+## B-3. Observational Agent Learning
+- [x] AgentがObservation/Action/Result履歴から有効Actionを学習
+- [x] 無限ループ検出
+- [x] Action失敗回数・成功回数・状態遷移を利用
+- [x] Goal Agent失敗時のExplorer Fallbackを強化
+- [x] Randomだけで偶然Goal到達した結果をGoal能力PASSと誤認しない
+- [x] State Memory / Action History / Loop detection / FallbackをEvidence化
+
+## B-4. Game-side Storage QA
+- [x] Save/Load以外のゲーム側Storageを検証
+- [x] Config / settings / progression / local storage / DB / cache 等をProfile契約で検査可能
+- [ ] 保存後→変更→再起動→復元を検証
+- [ ] 壊れたStorage/旧Version/Migration/複数Slot/Autosaveを対応可能な範囲で検査
+- [x] 未対応項目をPASSではなくNOT_RUN化
+
+## B-5. Playable / Product品質Evidence
+- [ ] 初見30秒評価Evidence
+- [ ] 5分行動→反応→判断→結果ループEvidence
+- [ ] 操作、移動、Camera、Menu、Combat/UI/Sound/Tutorial/Retry/SaveLoad/Main Loop をProfile要求に応じ確認
+- [x] 自動Proxy評価と人間評価を明確に分離
+- [x] 自動テストPASSだけでHuman Playtest Readyを認定しない
+- [x] Player/Product Acceptanceを独立Gate化
+
+---
+
+# C. 管理総本山QA
+
+管理総本山は他総本山を指揮せず、**資源・制約・再現性・運用リスク・意思決定品質**を独立評価する。
+
+## C-1. Resource / Performance QA
+- [x] CPU / RAM / Handle / Disk / Runtime / Evidence容量をRun単位で計測
+- [x] 長時間実行時の持続的増加候補を検出
+- [x] 前BaselineとのPerformance Regression
+- [x] Profile単位の上限/許容差
+- [x] 計測不能を0やPASSにしない
+
+## C-2. Reproducibility QA
+- [x] Seed同一時の再現性
+- [ ] Profile順序反転でもRequired結果が変化しない
+- [x] Fresh extractionごとの独立性
+- [x] RunID/Evidence/Resultの取り違え防止
+- [x] A→B→A入替再現性
+- [x] stale cache / stale runtime / stale baseline の検出
+
+## C-3. Operational Burden QA
+- [x] 1クリック実行性
+- [x] ゲーム差替え手順の操作数/手入力箇所を記録
+- [x] 管理者権限要求がないこと — 標準ユーザー実機Run `20261105T133102Z_d018dc3c` が donor JOIN → Candidate build/integrity → Source regression → fresh selftest → 実Godot起動まで進行。local runner自身も管理者セッションを受け付けず、昇格要求なし。
+- [ ] ネット接続要求がないこと
+- [ ] Program Files / Registry / PATH恒久変更がないこと
+- [x] 人間介入が必要な工程は明示し、自動完了扱いしない
+
+## C-4. Risk / Integrity QA
+- [x] CORE改変検知
+- [x] 必須File / Size / SHA-256 / CORE Version / Schema / Capability検査
+- [x] CandidateとSourceを混同しない
+- [x] Evidenceの欠落・改竄・重複・path escapeを拒否
+- [x] Result ZIP生成失敗時に偽PASSを出さない
+- [x] Diagnostic archiveとCertified resultを分離
+
+## C-5. Management Readback
+- [x] Run終了後に管理総本山用Summaryを生成
+- [x] PASS/FAILだけでなく、資源負荷・再現性・運用負担・残存リスクを出力
+- [x] Fixture結果を実ゲーム受入の代用にしない
+- [x] 管理評価未実施の場合はManagement GateをNOT_RUNにする
+
+---
+
+# D. 営業総本山QA
+
+営業総本山は制作仕様を変更せず、**未知の受け手が理解・継続・選択できるか**を独立Gateとして評価する。
+
+## D-1. Cold-start Audience QA
+- [ ] ゲーム固有の事前知識なしで開始した評価を別Run/別Sessionとして保持
+- [x] README/説明資料を読む前と読んだ後を混同しない
+- [ ] 初見30秒で目的・操作が読み取れるかEvidence化
+- [ ] 5分で継続理由/フィードバックループが存在するかEvidence化
+- [x] モデルProxyと実ユーザー評価を区別
+
+## D-2. Shelf / Product Test
+- [ ] ゲーム名/IP/無料条件に依存しない商品説明テスト
+- [ ] 「何をするゲームか」をEvidenceから要約
+- [x] 操作不能、意味不明、無反応、debug表示依存等を商品品質FAIL候補にする
+- [x] 競合比較なしに「売れる」と認定しない
+- [x] Product AcceptanceとRelease/Distribution Approvalを分離
+
+## D-3. Communication QA
+- [ ] RESULT/SUMMARY/HTML reportが技術者以外にも読める
+- [x] PASSの意味を過大表示しない
+- [x] JOIN COMPLETE / QA COMPLETE / Product Accepted / Stable / Release Approved を別状態として表示
+- [x] NOT_RUNと未対応Capabilityを隠さない
+- [x] 実ユーザー未試験ならその旨を明記
+
+## D-4. Sales Readback
+- [x] Cold-start営業評価Summaryを自動生成
+- [x] 30秒/5分/Product testを独立項目化
+- [x] 営業Gate未実施なら全体Product Acceptanceを自動PASSにしない
+
+---
+
+# E. Evidence / Recording / Result
+
+- [x] ScreenshotをRunID/TestCase/EventIDと同期
+- [x] 連続Video必須
+- [x] Video backend選択結果をEvidence化
+- [x] OBS functional probeを保持
+- [x] FFmpeg fallbackを保持
+- [x] Failure Clip自動生成
+- [x] State log / Action log / Process log / Tool log / Runtime log
+- [x] Save/Load evidence
+- [x] Regression evidence
+- [x] Soak evidence
+- [x] Management summary
+- [x] Sales cold-start summary
+- [x] 制作総本山 summary
+- [x] Evidence Manifestに全同梱ファイルのSize/SHA-256
+- [x] Resultから参照されたEvidence欠落時はPASS取消
+- [x] 最終成果として RESULT_FOR_CHATGPT.zip を生成
+- [x] Evidence ZIPそのものを再検証してから公開
+
+---
+
+# F. 実ゲーム最終受入
+
+Fixture/selftestだけでは完成扱いにしない。
+
+最終系列は **A=PoliticsTrasport → B=codegeas → A=PoliticsTrasport**。既存Code Geass run41636608248は過去診断Evidenceとして保持し、この欄のFinal Runへは算入しない。Final Candidate変更時は系列を再開始する。
+
+## 必須E2E
+- [x] 実ゲームをTargetとして設定
+- [x] Fresh extraction #1
+- [x] Fresh extraction #2
+- [x] Fresh extraction #3
+- [x] 3回とも START_QA.cmd から開始
+- [x] 実ゲームProcess起動確認
+- [x] 実Input送信確認
+- [x] Screenshot取得
+- [x] Continuous video取得
+- [x] Goal/Smoke/Explorer/Randomの契約対象実行
+- [x] Save/Load
+- [x] Regression
+- [x] Soak
+- [x] Crash/Stall監視
+- [x] RESULT_FOR_CHATGPT.zip
+- [x] 3総本山のGate結果
+- [x] 各Runが独立RunID・独立Evidence
+- [x] 古いResultを再利用しない
+
+## A-B-A差替え検査
+- [x] Game AをQA
+- [x] Game Bへ差替えQA
+- [x] 再度Game Aへ差替えQA
+- [x] Target/Profile/Baseline/Evidence/Resultがそれぞれ正しいゲームへBindingされる
+- [x] Bの情報がAへ残留しない
+- [x] Aの過去Resultを新Runとして再利用しない
+
+---
+
+# G. Stable昇格条件
+
+以下を**全て満たすまで安定版へ昇格禁止**。
+
+- [x] Source unit tests全PASS
+- [x] Package integrity PASS
+- [x] Windows JOIN実行 PASS
+- [x] Windows fresh extract acceptance PASS
+- [x] 実ゲームE2E 3/3 PASS
+- [x] A-B-A差替え PASS
+- [x] ゲーム制作総本山Gate PASS
+- [ ] 管理総本山Gate PASS
+- [ ] 営業総本山Gate PASS
+- [x] Required NOT_RUN = 0
+- [x] Required HARNESS_ERROR = 0
+- [x] Evidence参照欠落 = 0
+- [x] 最終CandidateのSize/SHA-256固定
+- [x] 最終Candidateから3周を再現可能
+- [ ] Rollback可能
+- [x] 旧Stableを暗黙上書きしない
+
+---
+
+# 禁止事項
+
+- 既存v0.3.3の機能削除でテスト項目を減らしてPASSさせない
+- Fixture PASSを実ゲームPASS扱いしない
+- NOT_RUNをPASS扱いしない
+- Required項目を実行後にOptionalへ降格しない
+- 動画の代わりに静止画だけで録画PASSにしない
+- 人間評価未実施を人間評価済みとしない
+- 管理/営業未実施を制作QA PASSで代用しない
+- Sourceのみを完全Candidate扱いしない
+- Windows以外の環境結果をWindows E2E PASS扱いしない
+- ネット接続、クラウドAPI、管理者権限を完成必須条件に追加しない
+- 固定絶対パス、固定Drive、特定ユーザー環境依存を導入しない
+
+---
+
+# Definition of Done
+
+このIssueは、**3総本山が独立Gateとして実装され、同一の全自動QA Runに統合され、実ゲーム3周＋A-B-A差替え＋Evidence完全性＋Windows実機受入を通過した最終Candidateが生成され、初めて完了**とする。
+
+完了までは Product Acceptance / Stable を HOLD のまま維持する。
+
+state
+open
+html_url
+https://github.com/th060316-lgtm/fullautoQA/issues/1
+user
+{
+  "login": "th060316-lgtm",
+  "id": 334371505,
+  "profile_url": "https://github.com/th060316-lgtm",
+  "avatar_url": "https://avatars.githubusercontent.com/u/334371505?v=4"
+}
+author_association
+OWNER
+assignees
+[]
+comments
+56
+reactions
+{
+  "total_count": 0,
+  "+1": 0,
+  "-1": 0,
+  "laugh": 0,
+  "confused": 0,
+  "heart": 0,
+  "hooray": 0,
+  "rocket": 0,
+  "eyes": 0
+}
+created_at
+2026-11-02T10:21:39Z
+updated_at
+2026-11-06T10:56:23Z
+has_parent
+false
+has_children
+false
+closed_by_pull_requests
+{
+  "total_count": 0,
+  "references": []
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Now get PR #28 (merged) content, PR #29 full diff remainder, and main HEAD. Also check PR #29 "parse" failure detail. Also check main's latest actions runs and whether candidate build succeeded on main post-#26/#28. Get PR #28 files and PR #29 diff.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+28
+method
+"get"
+
+
+Response
+
+
+number
+28
+title
+Finalization: consolidate rollback and offline gates into one real-machine run
+body
+## Purpose
+
+Move as much of Final technical acceptance as possible onto the real Windows machine in one pass, without returning to blocker-by-blocker local debugging.
+
+### This PR changes the local final-completion route
+
+The existing local runner already performs:
+1. preserved donor reconstruction
+2. current Source reconstruction + Candidate build
+3. bundled Source regression
+4. fresh START_QA selftest
+5. fresh A→B→A real-game series
+6. environment readback
+
+This PR extends it to a seven-stage real-machine finalization route:
+
+1. donor reconstruction
+2. Candidate build
+3. bundled Source regression
+4. fresh START_QA selftest
+5. fresh A→B→A
+6. **fresh preserved-predecessor rollback qualification**
+7. combined local environment/final gate readback
+
+### Real-machine gate behavior
+
+The normal `RUN_LOCAL_COMPLETION.cmd` now passes `-RequireOffline`.
+
+A technical local PASS requires:
+- standard non-admin session
+- Candidate build/integrity PASS
+- bundled Source regression PASS
+- fresh Candidate START_QA selftest PASS
+- fresh A→B→A PASS with exactly three Result ZIPs
+- preserved predecessor restored fresh + START_QA selftest PASS
+- persistent user/machine PATH unchanged
+- no up non-loopback IP interfaces observed at run start, all three final runs, and run end
+
+Rollback evidence and any rollback RESULT_FOR_CHATGPT.zip readback are preserved before temporary workspace cleanup.
+
+### Important scope limits
+
+- This does **not** claim a complete Registry-write audit; that remains a separate unresolved evidence boundary.
+- It does not turn technical A→B→A into Human/Product/Stable PASS.
+- GitHub-hosted checks remain preflight. The new local route is intended as the primary technical acceptance evidence.
+- Rollback is placed after A→B→A so a rollback failure does not prevent collection of the other final technical evidence in the same machine run.
+
+Issue #1 remains the DoD authority; Issue #25 remains the current completion-route strategy authority.
+state
+closed
+draft
+false
+merged
+true
+mergeable_state
+unknown
+html_url
+https://github.com/th060316-lgtm/fullautoQA/pull/28
+user
+{
+  "login": "th060316-lgtm",
+  "id": 334371505,
+  "profile_url": "https://github.com/th060316-lgtm",
+  "avatar_url": "https://avatars.githubusercontent.com/u/334371505?v=4"
+}
+merged_by
+th060316-lgtm
+head
+{
+  "ref": "work/issue25-real-machine-finalization-20261107",
+  "sha": "eb4400606a79974b69dc5aead59dfeaac6608280",
+  "repo": {
+    "full_name": "th060316-lgtm/fullautoQA",
+    "description": "完全自動QAシステム作成"
+  }
+}
+base
+{
+  "ref": "main",
+  "sha": "7a48d3e8a2ab7279aed0a202fbb89d62d549602f",
+  "repo": {
+    "full_name": "th060316-lgtm/fullautoQA",
+    "description": "完全自動QAシステム作成"
+  }
+}
+additions
+132
+deletions
+22
+changed_files
+3
+commits
+3
+created_at
+2026-11-06T16:20:55Z
+updated_at
+2026-11-06T16:22:07Z
+closed_at
+2026-11-06T16:22:07Z
+merged_at
+2026-11-06T16:22:07Z
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+28
+method
+"get_files"
+
+
+Response
+
+
+0
+{
+  "filename": "README_LOCAL_COMPLETION.md",
+  "status": "modified",
+  "additions": 9,
+  "deletions": 5,
+  "changes": 14,
+  "patch": "@@ -1,27 +1,31 @@\n # Local Final Completion\n \n-This entrypoint runs the current frozen Source through Candidate rebuild, Source regression, START_QA selftest, and fresh PoliticsTrasport -> codegeas -> PoliticsTrasport on a standard Windows user session.\n+This entrypoint runs the current Source through Candidate rebuild, Source regression, fresh START_QA selftest, fresh PoliticsTrasport -> codegeas -> PoliticsTrasport, preserved-predecessor rollback qualification, and final environment readback on a standard Windows user session. GitHub-hosted checks are preflight only; this local run is the primary technical acceptance evidence.\n \n ## Run\n \n 1. Use a complete FullAutoQA download that contains the preserved donor blocks, or apply the lightweight download update pack to a previous complete download.\n 2. Do not run as administrator.\n-3. To validate offline operation at the same time, disconnect external network access before starting.\n-4. Run RUN_LOCAL_COMPLETION.cmd once.\n+3. Disconnect external network access before starting. The standard CMD entrypoint now requires offline evidence; it does not treat an online run as final acceptance.\n+4. Run RUN_LOCAL_COMPLETION.cmd once. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.\n \n The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. It does not permanently change PATH or Registry values.\n \n ## Evidence\n \n-The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory beside the repository contains the summary and logs. Large/deep transient trees stay in the separate temporary work area and are never repository inputs. The runner exports compact evidence before cleanup:\n+The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory beside the repository contains the summary and logs. Large/deep transient trees stay in the separate temporary work area and are never repository inputs. The run also restores the preserved predecessor into a fresh temporary directory and executes its START_QA selftest; rollback evidence is preserved before cleanup. The runner exports compact evidence before cleanup:\n \n - LOCAL_COMPLETION_SUMMARY.json\n - Candidate build files under candidate_build/\n - SELFTEST_RESULTS.zip when selftest results exist\n - ABA_EVIDENCE.zip when series evidence exists\n - three RunN_RESULT_FOR_CHATGPT.zip files after a complete A-B-A series\n+- rollback_predecessor/ qualification evidence and rollback result readback\n+- ROLLBACK_PREDECESSOR.log\n+- start/end network observations plus per-run network observations\n+- persistent user/machine PATH before/after comparison\n - step logs\n \n-A technical series PASS does not automatically promote Human test, Product Acceptance, Stable, or Release.\n+A local technical PASS now requires: standard-user execution, Candidate/source/selftest/A-B-A success, preserved-predecessor rollback selftest PASS, unchanged persistent user/machine PATH, and no up non-loopback IP interfaces observed at local-run start, throughout all three Final runs, and at local-run end. This is still not a complete Registry-write audit and does not automatically promote Human test, Product Acceptance, Stable, or Release.\n \n If the run fails, keep the visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory and return it for diagnosis."
+}
+1
+{
+  "filename": "RUN_LOCAL_COMPLETION.cmd",
+  "status": "modified",
+  "additions": 1,
+  "deletions": 1,
+  "changes": 2,
+  "patch": "@@ -1,7 +1,7 @@\n @echo off\n setlocal\n cd /d \"%~dp0\"\n-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File \"%~dp0RUN_LOCAL_COMPLETION.ps1\"\n+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File \"%~dp0RUN_LOCAL_COMPLETION.ps1\" -RequireOffline\n set \"CODE=%ERRORLEVEL%\"\n echo.\n if \"%CODE%\"==\"0\" ("
+}
+2
+{
+  "filename": "RUN_LOCAL_COMPLETION.ps1",
+  "status": "modified",
+  "additions": 122,
+  "deletions": 16,
+  "changes": 138,
+  "patch": "@@ -2,7 +2,7 @@\n # Repository input, transient workspace, and preserved evidence are separate roots.\n # Temporary drive mappings keep operational paths short without requiring fixed drive letters.\n [CmdletBinding()]\n-param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest,[switch]$RepositoryDiscoveryContractTest)\n+param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest,[switch]$RepositoryDiscoveryContractTest,[switch]$RequireOffline)\n \n Set-StrictMode -Version Latest\n $ErrorActionPreference = 'Stop'\n@@ -27,7 +27,7 @@ $SeriesOut = $null\n $BuildOut = $null\n \n $Summary = [ordered]@{\n-  schema_version = 4\n+  schema_version = 5\n   run_tag = $RunTag\n   status = 'STARTING'\n   source_tree_fingerprint = $null\n@@ -42,6 +42,7 @@ $Summary = [ordered]@{\n   started_utc = [DateTime]::UtcNow.ToString('o')\n   non_admin_session = $null\n   network_snapshot = $null\n+  network_snapshot_end = $null\n   candidate = $null\n   donor_join = 'NOT_RUN'\n   candidate_build = 'NOT_RUN'\n@@ -50,9 +51,11 @@ $Summary = [ordered]@{\n   windows_selftest = 'NOT_RUN'\n   aba_series = 'NOT_RUN'\n   aba_result_zip_count = 0\n+  rollback_predecessor = 'NOT_RUN'\n+  rollback_result_zip_count = 0\n   persistent_path_status = 'NOT_MEASURED'\n   workspace_cleanup = 'NOT_RUN'\n-  offline_internet_status = 'USER_MUST_RUN_WITH_EXTERNAL_NETWORK_DISCONNECTED'\n+  offline_internet_status = $(if ($RequireOffline) {'REQUIRED_NOT_YET_VERIFIED'} else {'USER_MUST_RUN_WITH_EXTERNAL_NETWORK_DISCONNECTED'})\n   human_test = 'NOT_RUN'\n   product_acceptance = 'HOLD'\n   stable = 'HOLD'\n@@ -114,11 +117,35 @@ function Get-PathSnapshot {\n \n function Get-NetworkSnapshot {\n   try {\n-    $rows = @(Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' } | Select-Object Name,InterfaceDescription,Status,LinkSpeed)\n+    $active=New-Object 'System.Collections.Generic.List[object]'\n+    foreach ($adapter in @(Get-NetAdapter -IncludeHidden -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' })) {\n+      $addresses=@(Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue | ForEach-Object { [string]$_.IPAddress })\n+      $usable=$false\n+      foreach ($raw in $addresses) {\n+        $candidate=([string]$raw).Split('%')[0]\n+        $ip=$null\n+        if ([Net.IPAddress]::TryParse($candidate,[ref]$ip)) {\n+          if (-not [Net.IPAddress]::IsLoopback($ip) -and\n+              -not $ip.Equals([Net.IPAddress]::Any) -and\n+              -not $ip.Equals([Net.IPAddress]::IPv6Any)) {\n+            $usable=$true\n+            break\n+          }\n+        }\n+      }\n+      if ($usable) {\n+        $active.Add([ordered]@{\n+          name=[string]$adapter.Name\n+          interface_description=[string]$adapter.InterfaceDescription\n+          addresses=$addresses\n+        })\n+      }\n+    }\n     return [ordered]@{\n-      status='OBSERVED_ONLY_NOT_INTERNET_PROOF'\n-      up_adapter_count=$rows.Count\n-      up_adapters=$rows\n+      status='MEASURED'\n+      up_adapter_count=$active.Count\n+      up_adapters=@($active)\n+      method='windows_powershell_up_adapters_with_nonloopback_ip'\n     }\n   } catch {\n     return [ordered]@{status='NOT_MEASURED';reason=$_.Exception.Message}\n@@ -540,7 +567,8 @@ function Export-ChatEvidence {\n     'CANDIDATE_BUILD.log',\n     'BUNDLED_SOURCE_TESTS.log',\n     'START_QA_SELFTEST.log',\n-    'ABA_SERIES.log'\n+    'ABA_SERIES.log',\n+    'ROLLBACK_PREDECESSOR.log'\n   )) {\n     $source=Join-Path $OutRoot $name\n     if (Test-Path -LiteralPath $source -PathType Leaf) {\n@@ -559,6 +587,14 @@ function Export-ChatEvidence {\n   if (Test-Path -LiteralPath $selftestReadback -PathType Container) {\n     Copy-Item -LiteralPath $selftestReadback -Destination (Join-Path $stage 'selftest') -Recurse -Force\n   }\n+  $rollbackEvidence=Join-Path $OutRoot 'rollback_predecessor'\n+  if (Test-Path -LiteralPath $rollbackEvidence -PathType Container) {\n+    Copy-Item -LiteralPath $rollbackEvidence -Destination (Join-Path $stage 'rollback_predecessor') -Recurse -Force\n+  }\n+  $rollbackReadback=Join-Path $OutRoot 'rollback_readback'\n+  if (Test-Path -LiteralPath $rollbackReadback -PathType Container) {\n+    Copy-Item -LiteralPath $rollbackReadback -Destination (Join-Path $stage 'rollback_readback') -Recurse -Force\n+  }\n   if ($SeriesOut -and (Test-Path -LiteralPath $SeriesOut -PathType Container)) {\n     $seriesStage=Join-Path $stage 'series'\n     New-Item -ItemType Directory -Path $seriesStage -Force | Out-Null\n@@ -658,7 +694,7 @@ try {\n   if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }\n   $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json\n \n-  Write-Host '=== 1/6 Reconstruct preserved v0.3.3 donor ==='\n+  Write-Host '=== 1/7 Reconstruct preserved v0.3.3 donor ==='\n   if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {\n     throw 'DONOR_DECLARATION_MISSING'\n   }\n@@ -681,7 +717,7 @@ try {\n   $Summary.donor_join='PASS'\n   Write-Summary\n \n-  Write-Host '=== 2/6 Reconstruct current Source and build Candidate ==='\n+  Write-Host '=== 2/7 Reconstruct current Source and build Candidate ==='\n   $sourceDestination = Join-Path $WorkRoot 'prepared'\n   $prepare = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/source/scripts/PREPARE_SOURCE.ps1'\n   $rebuildDeclared = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/source/scripts/PHASE3_OVERLAY_REBUILD.ps1'\n@@ -752,7 +788,7 @@ try {\n   $candidate=$persistedCandidate\n   Write-Summary\n \n-  Write-Host '=== 3/6 Fresh Candidate Source regression ==='\n+  Write-Host '=== 3/7 Fresh Candidate Source regression ==='\n   $SelftestRoot = Join-Path $WorkRoot 'selftest'\n   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)\n   $bundledPython = Join-Path $SelftestRoot 'RUNTIME\\python\\python.exe'\n@@ -769,7 +805,7 @@ try {\n   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)\n   Set-Content -LiteralPath (Join-Path $SelftestRoot 'PHASE3_FRESH_EXTRACTION.marker') -Value ([Guid]::NewGuid().ToString('N')) -Encoding ASCII\n \n-  Write-Host '=== 4/6 Fresh Candidate START_QA selftest ==='\n+  Write-Host '=== 4/7 Fresh Candidate START_QA selftest ==='\n   $selfRun=Invoke-NativeLogged -FilePath (Join-Path $env:SystemRoot 'System32\\cmd.exe') -Arguments @('/d','/c','START_QA.cmd','-SelfTest') -WorkingDirectory $SelftestRoot -LogPath (Join-Path $OutRoot 'START_QA_SELFTEST.log')\n   $selfCode=$selfRun.ExitCode\n   Export-TransientEvidence\n@@ -780,7 +816,7 @@ try {\n   Remove-Item -LiteralPath $SelftestRoot -Recurse -Force\n   $SelftestRoot=$null\n \n-  Write-Host '=== 5/6 Fresh PoliticsTrasport -> codegeas -> PoliticsTrasport ==='\n+  Write-Host '=== 5/7 Fresh PoliticsTrasport -> codegeas -> PoliticsTrasport ==='\n   $ControllerRoot = Join-Path $WorkRoot 'controller'\n   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$ControllerRoot)\n   $controllerPython = Join-Path $ControllerRoot 'RUNTIME\\python\\python.exe'\n@@ -813,27 +849,97 @@ try {\n   }\n   Write-Summary\n \n-  Write-Host '=== 6/6 Local environment readback ==='\n+  Write-Host '=== 6/7 Fresh preserved predecessor rollback qualification ==='\n+  $rollbackScript = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/rollback/RESTORE_PREDECESSOR.ps1'\n+  if (-not (Test-Path -LiteralPath $rollbackScript -PathType Leaf)) {\n+    throw 'ROLLBACK_ENTRYPOINT_MISSING'\n+  }\n+  $rollbackDestination = Join-Path $WorkRoot 'rollback_predecessor'\n+  $rollbackEvidence = Join-Path $OutRoot 'rollback_predecessor'\n+  $rollbackArgs=@(\n+    '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$rollbackScript,\n+    '-RepositoryRoot',$RepoRoot,\n+    '-Destination',$rollbackDestination,\n+    '-EvidenceDirectory',$rollbackEvidence,\n+    '-SelfTest'\n+  )\n+  $rollbackRun=Invoke-NativeLogged -FilePath \"$env:SystemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" -Arguments $rollbackArgs -WorkingDirectory $RepoRoot -LogPath (Join-Path $OutRoot 'ROLLBACK_PREDECESSOR.log')\n+  $rollbackCode=$rollbackRun.ExitCode\n+\n+  $rollbackResults=Join-Path $rollbackDestination 'RESULTS'\n+  if (Test-Path -LiteralPath $rollbackResults -PathType Container) {\n+    $rollbackReadback=Join-Path $OutRoot 'rollback_readback'\n+    New-Item -ItemType Directory -Path $rollbackReadback -Force | Out-Null\n+    foreach ($zip in @(Get-ChildItem -LiteralPath $rollbackResults -Recurse -File -Filter 'RESULT_FOR_CHATGPT.zip' -ErrorAction Stop | Sort-Object LastWriteTimeUtc)) {\n+      $dest=Join-Path $OutRoot ('ROLLBACK_' + $zip.Directory.Name + '_RESULT_FOR_CHATGPT.zip')\n+      Copy-Item -LiteralPath $zip.FullName -Destination $dest -Force\n+      Export-ResultReadback -ResultZip $zip.FullName -Destination (Join-Path $rollbackReadback $zip.Directory.Name)\n+      $Summary.rollback_result_zip_count++\n+    }\n+  }\n+\n+  $rollbackProofPath=Join-Path $rollbackEvidence 'ROLLBACK_PREDECESSOR_QUALIFICATION.json'\n+  if (Test-Path -LiteralPath $rollbackProofPath -PathType Leaf) {\n+    $rollbackProof=Get-Content -LiteralPath $rollbackProofPath -Raw -Encoding UTF8 | ConvertFrom-Json\n+    if ($rollbackCode -eq 0 -and\n+        $rollbackProof.byte_identity -eq 'PASS' -and\n+        $rollbackProof.runnable_rollback_status -eq 'PASS') {\n+      $Summary.rollback_predecessor='PASS'\n+    } else {\n+      $Summary.rollback_predecessor='FAIL'\n+    }\n+  } else {\n+    $Summary.rollback_predecessor='FAIL'\n+  }\n+  Write-Summary\n+\n+  Write-Host '=== 7/7 Local environment readback ==='\n+  $Summary.network_snapshot_end=Get-NetworkSnapshot\n   $PathAfter=Get-PathSnapshot\n   $Summary.persistent_path_status = if ((ConvertTo-Json $PathBefore -Depth 8 -Compress) -eq (ConvertTo-Json $PathAfter -Depth 8 -Compress)) {'UNCHANGED'} else {'CHANGED_REQUIRES_REVIEW'}\n-  $Summary.status='TECHNICAL_LOCAL_ACCEPTANCE_PASS'\n+\n+  if ($RequireOffline) {\n+    $offlineStart=($Summary.network_snapshot.status -eq 'MEASURED' -and [int]$Summary.network_snapshot.up_adapter_count -eq 0)\n+    $offlineEnd=($Summary.network_snapshot_end.status -eq 'MEASURED' -and [int]$Summary.network_snapshot_end.up_adapter_count -eq 0)\n+    $offlineSeries=($Summary.offline_internet_status -eq 'NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_ALL_FINAL_RUNS')\n+    if ($offlineStart -and $offlineEnd -and $offlineSeries) {\n+      $Summary.offline_internet_status='PASS_NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_START_SERIES_END'\n+    } else {\n+      $Summary.offline_internet_status='FAIL_OR_NOT_MEASURED'\n+    }\n+  }\n+\n   $Summary.completed_utc=[DateTime]::UtcNow.ToString('o')\n   Export-TransientEvidence\n   Write-Summary\n+\n+  $finalFailures=New-Object 'System.Collections.Generic.List[string]'\n+  if ($Summary.rollback_predecessor -ne 'PASS') { $finalFailures.Add('ROLLBACK_PREDECESSOR_NONPASS') }\n+  if ($Summary.persistent_path_status -ne 'UNCHANGED') { $finalFailures.Add('PERSISTENT_PATH_CHANGED_OR_NOT_MEASURED') }\n+  if ($RequireOffline -and $Summary.offline_internet_status -ne 'PASS_NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_START_SERIES_END') {\n+    $finalFailures.Add('OFFLINE_REQUIREMENT_NONPASS')\n+  }\n+  if ($finalFailures.Count -gt 0) {\n+    throw ('FINAL_LOCAL_GATE_NONPASS:' + ($finalFailures -join ','))\n+  }\n+\n+  $Summary.status='TECHNICAL_LOCAL_ACCEPTANCE_PASS'\n+  Write-Summary\n   $ExitCode=0\n \n   Write-Host ''\n   Write-Host 'LOCAL TECHNICAL ACCEPTANCE PASS'\n   Write-Host ('Candidate SHA256: ' + $candidateSha)\n   Write-Host ('Evidence root: ' + $PhysicalOutRoot)\n-  Write-Host 'Offline internet use and Human/Product acceptance remain separate claims; do not mark them PASS unless actually performed.'\n+  Write-Host 'Rollback, non-admin, Candidate selftest, A-B-A, persistent PATH and requested offline observation passed. Human/Product/Stable remain separate gates.'\n }\n catch {\n   $Summary.status='FAIL'\n   $Summary.error=$_.Exception.Message\n   $Summary.failed_utc=[DateTime]::UtcNow.ToString('o')\n   try {\n     Export-TransientEvidence\n+    $Summary.network_snapshot_end=Get-NetworkSnapshot\n     if ($PathBefore) {\n       $PathAfter=Get-PathSnapshot\n       $Summary.persistent_path_status = if ((ConvertTo-Json $PathBefore -Depth 8 -Compress) -eq (ConvertTo-Json $PathAfter -Depth 8 -Compress)) {'UNCHANGED'} else {'CHANGED_REQUIRES_REVIEW'}"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+29
+method
+"get_diff"
+
+
+Response
+
+
+value
+diff --git a/README_LOCAL_COMPLETION.md b/README_LOCAL_COMPLETION.md
+index 8577ffd..d4ef209 100644
+--- a/README_LOCAL_COMPLETION.md
++++ b/README_LOCAL_COMPLETION.md
+@@ -1,13 +1,13 @@
+ # Local Final Completion
+ 
+-This entrypoint runs the current Source through Candidate rebuild, Source regression, fresh START_QA selftest, fresh PoliticsTrasport -> codegeas -> PoliticsTrasport, preserved-predecessor rollback qualification, and final environment readback on a standard Windows user session. GitHub-hosted checks are preflight only; this local run is the primary technical acceptance evidence.
++This entrypoint first validates the complete real-machine handoff, then runs the current Source through Candidate rebuild, Source regression, fresh START_QA selftest, fresh PoliticsTrasport -> codegeas -> PoliticsTrasport, preserved-predecessor rollback qualification, and final environment readback on a standard Windows user session. GitHub-hosted checks are preflight only; this local run is the primary technical acceptance evidence.
+ 
+ ## Run
+ 
+ 1. Use a complete FullAutoQA download that contains the preserved donor blocks, or apply the lightweight download update pack to a previous complete download.
+ 2. Do not run as administrator.
+ 3. Disconnect external network access before starting. The standard CMD entrypoint now requires offline evidence; it does not treat an online run as final acceptance.
+-4. Run RUN_LOCAL_COMPLETION.cmd once. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.
++4. Run RUN_LOCAL_COMPLETION.cmd once. Stage 0 validates the transfer manifest, preserved donor block set, recovery archive SHA-256, Source/build scripts, Final-series files, rollback entrypoint, and runner files before technical QA begins. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.
+ 
+ The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. It does not permanently change PATH or Registry values.
+ 
+diff --git a/RUN_LOCAL_COMPLETION.ps1 b/RUN_LOCAL_COMPLETION.ps1
+index c3a6687..67a848d 100644
+--- a/RUN_LOCAL_COMPLETION.ps1
++++ b/RUN_LOCAL_COMPLETION.ps1
+@@ -27,7 +27,7 @@ $SeriesOut = $null
+ $BuildOut = $null
+ 
+ $Summary = [ordered]@{
+-  schema_version = 5
++  schema_version = 6
+   run_tag = $RunTag
+   status = 'STARTING'
+   source_tree_fingerprint = $null
+@@ -44,6 +44,7 @@ $Summary = [ordered]@{
+   network_snapshot = $null
+   network_snapshot_end = $null
+   candidate = $null
++  handoff_preflight = 'NOT_RUN'
+   donor_join = 'NOT_RUN'
+   candidate_build = 'NOT_RUN'
+   candidate_integrity = 'NOT_RUN'
+@@ -87,6 +88,77 @@ function Resolve-RepositoryRelativePath([string]$Root,[string]$Relative) {
+   return $candidate
+ }
+ 
++function Assert-RealMachineHandoff([string]$Root) {
++  $problems=New-Object 'System.Collections.Generic.List[string]'
++  $manifestPath=Resolve-RepositoryRelativePath -Root $Root -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
++  if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
++    $problems.Add('TRANSFER_MANIFEST_MISSING')
++    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))
++  }
++
++  try {
++    $manifest=Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
++  } catch {
++    $problems.Add('TRANSFER_MANIFEST_INVALID_JSON')
++    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))
++  }
++
++  if (-not $manifest.latest_complete_candidate -or
++      [string]::IsNullOrWhiteSpace([string]$manifest.latest_complete_candidate.path)) {
++    $problems.Add('DONOR_DECLARATION_MISSING')
++  } else {
++    $donorRoot=Resolve-RepositoryRelativePath -Root $Root -Relative ([string]$manifest.latest_complete_candidate.path)
++    foreach ($name in @('JOIN_COMPLETE.ps1','manifest.json')) {
++      if (-not (Test-Path -LiteralPath (Join-Path $donorRoot $name) -PathType Leaf)) {
++        $problems.Add('DONOR_INPUT_MISSING:'+$name)
++      }
++    }
++    $blocks=Join-Path $donorRoot 'blocks'
++    if (-not (Test-Path -LiteralPath $blocks -PathType Container)) {
++      $problems.Add('DONOR_BLOCKS_MISSING')
++    } elseif ($manifest.latest_complete_candidate.blocks_required) {
++      $count=@(Get-ChildItem -LiteralPath $blocks -File -ErrorAction Stop).Count
++      if ($count -ne [int]$manifest.latest_complete_candidate.blocks_required) {
++        $problems.Add('DONOR_BLOCK_COUNT_MISMATCH:'+$count)
++      }
++    }
++  }
++
++  if (-not $manifest.recovery_source -or
++      [string]::IsNullOrWhiteSpace([string]$manifest.recovery_source.path) -or
++      [string]::IsNullOrWhiteSpace([string]$manifest.recovery_source.sha256)) {
++    $problems.Add('RECOVERY_SOURCE_DECLARATION_MISSING')
++  } else {
++    $recovery=Resolve-RepositoryRelativePath -Root $Root -Relative ([string]$manifest.recovery_source.path)
++    if (-not (Test-Path -LiteralPath $recovery -PathType Leaf)) {
++      $problems.Add('RECOVERY_SOURCE_ARCHIVE_MISSING')
++    } elseif ((Get-SHA256 $recovery) -ne ([string]$manifest.recovery_source.sha256).ToLowerInvariant()) {
++      $problems.Add('RECOVERY_SOURCE_SHA256_MISMATCH')
++    }
++  }
++
++  foreach ($relative in @(
++    '開発版/source/scripts/PREPARE_SOURCE.ps1',
++    '開発版/source/scripts/PHASE3_OVERLAY_REBUILD.ps1',
++    '開発版/acceptance_targets/FINAL_SERIES_PLAN.json',
++    '開発版/acceptance_targets/run_series.py',
++    '開発版/acceptance_targets/RUN_FINAL_ACCEPTANCE.cmd',
++    '開発版/rollback/RESTORE_PREDECESSOR.ps1',
++    'RUN_LOCAL_COMPLETION.cmd',
++    'RUN_LOCAL_COMPLETION.ps1'
++  )) {
++    $path=Resolve-RepositoryRelativePath -Root $Root -Relative $relative
++    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
++      $problems.Add('REQUIRED_HANDOFF_FILE_MISSING:'+$relative)
++    }
++  }
++
++  if ($problems.Count -gt 0) {
++    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($problems -join ','))
++  }
++  return $manifest
++}
++
+ function Write-Summary {
+   if (-not $SummaryPath) { return }
+   $Summary.updated_utc = [DateTime]::UtcNow.ToString('o')
+@@ -686,14 +758,14 @@ try {
+   $Summary.logical_evidence_root = $OutRoot
+   $Summary.status = 'RUNNING'
+ 
++  Write-Host '=== 0/7 Real-machine handoff preflight ==='
++  $transfer=Assert-RealMachineHandoff -Root $RepoRoot
++  $Summary.handoff_preflight='PASS'
++
+   $Summary.network_snapshot = Get-NetworkSnapshot
+   $PathBefore = Get-PathSnapshot
+   Write-Summary
+ 
+-  $transferManifestPath=Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
+-  if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
+-  $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+-
+   Write-Host '=== 1/7 Reconstruct preserved v0.3.3 donor ==='
+   if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {
+     throw 'DONOR_DECLARATION_MISSING'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Now check PR #29's failing "parse" job, main HEAD, and remaining part of PR #27 (the new script). Also check the latest main actions runs (candidate build success after PR #26/#28?). Check main's recent commits and workflow runs. Also check whether Issue #25 has comments about TRANSFER_MANIFEST_MISSING runs and PR #27 fingerprint change root cause. Let me get Issue #25 comments, and list main commits.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Issue Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+issue_number
+25
+method
+"get_comments"
+perPage
+10
+
+
+Response
+
+
+0
+{
+  "id": 6683456310,
+  "body": "## 3外注レビュー受入・3総本山独立裁定 — Route B系 RESTRUCTURE 採択\n\nMistral Vibe / Grok / MiniMax の3返却を、内部採否より先に原本のまま受領・確認した。その後、現行PR #23 headの実コードへ照合し、制作・管理・営業の3総本山で独立比較した。\n\n### 外注結果\n- Mistral Vibe: RESTRUCTURE。入力/WORK/Evidenceの物理分離を推奨。Stage 2直接原因はログ不足のため断定せず。\n- Grok: RESTRUCTURE。6-stage高位構造は維持し、Discovery/SourceRecovery/CandidateRebuild/SelfTest/ABA/Evidence/Cleanupを独立契約化。提供資料だけでは安全なpatchを出さず。\n- MiniMax: RESTRUCTURE。6-stage semantics / run_seriesは維持、physical layout/artifact resolutionを置換。path budget・prepared source provenance・sealing/state machineまで拡張案を提示。\n\n一致そのものは採用根拠にしていない。\n\n### 現行コードで独立確認した構造事実\n1. PR #23 headのlocal runnerは transient `.fqa_work_*` と preserved `LOCAL_FINAL_ACCEPTANCE_*` をrepository input root配下へ作成していた。\n2. `PREPARE_SOURCE.ps1` はPR #23 headでもRepositoryRoot全体へ無剪定 `Get-ChildItem -Recurse` を実行していた。\n3. `開発版/transfer/TRANSFER_MANIFEST.json` はRecovery Sourceの正確なrepo-relative pathとSHA-256を既に保持しており、全repo再帰探索は不要。\n4. Candidate buildへ渡していたSourceBaselineはchecked-out source fingerprintで、実際のbuild inputであるrecovery+overlay後prepared sourceそのもののfingerprintではなかった。\n5. 観測失敗pathは280文字だが、「どのsubst/root変更でも短くならない」というMiniMaxの強い主張は採らない。現行はmapped repo rootの下へ `.fqa_work_<RunTag>` を追加しており、work root自体をdrive rootへmapすると同じ観測pathは計算上約243文字になる。直接原因は例外型/LongPaths状態不足のため未確定。\n\n### 3総本山裁定\n**Route B系 RESTRUCTURE を採択。**\n\n保存:\n- 6-stageの意味論\n- `run_series.py` のCandidate freeze / fresh extraction / stale evidence拒否 / A→B→A規律\n- Required / Evidence / CORE-GAME / Profile-Adapter / Windows offline/non-admin / 3HQ独立Gate\n- Product / Stable HOLD分離\n\n再構成:\n- repository / transient workspace / preserved evidenceを物理分離\n- manifest-declared inputへ移行しrepository-root discoveryをlive routeから外す\n- prepared source fingerprintをCandidate identityへ結合\n- defect-class contractをSource testで固定\n- user real-machine runを開発ループとして使わず、Source/CI/合成検証後の受入段階へ戻す\n\n不採用:\n- 「PREPARE_SOURCEの1行だけ直して即再走」\n- MiniMax patch丸ごと無検証適用\n- 現行runner全面廃棄\n- 旧A-B-A/旧Candidate PASSの新Candidate流用\n- observer限界を理由にIssue #1 Requiredを緩和\n\n### 実装現在地\nStrategic PR #26をPR #23 headから作成。PR #23は履歴保全の上でsupersededとしてclose。\n\nPR #26で既に実施:\n- workspaceをrepo外のtemporary physical rootへ分離し、workspace root自体をfree temporary drive rootへmap\n- preserved LOCAL_FINAL_ACCEPTANCE evidenceをrepo外のsiblingへ分離\n- Recovery SourceをTRANSFER_MANIFEST path + SHA-256から解決\n- live local routeのJOIN / PREPARE / FINAL_SERIES_PLANをdeclared repo-relative pathへ変更\n- prepared source fingerprintを計算し、PHASE3 builder側でSOURCE_BASELINE_MISMATCH fail-closed\n- Candidate identityへprepared_source_fingerprintを記録\n- Issue #25 strategic route contract testsを追加\n- operator READMEを更新\n\n### 次のGate\nPR #26のSource/Windows CIをまず確認する。CI/Source契約が成立する前に新たなユーザー実機Runは要求しない。\n\nNo Product Acceptance / Stable / Final A-B-A PASS is claimed by this comment.",
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/issues/25#issuecomment-6683456310",
+  "user": {
+    "login": "th060316-lgtm",
+    "id": 334371505,
+    "profile_url": "https://github.com/th060316-lgtm",
+    "avatar_url": "https://avatars.githubusercontent.com/u/334371505?v=4"
+  },
+  "author_association": "OWNER",
+  "reactions": {
+    "total_count": 0,
+    "+1": 0,
+    "-1": 0,
+    "laugh": 0,
+    "confused": 0,
+    "heart": 0,
+    "hooray": 0,
+    "rocket": 0,
+    "eyes": 0
+  },
+  "created_at": "2026-11-06T11:10:15Z",
+  "updated_at": "2026-11-06T11:10:15Z"
+}
+1
+{
+  "id": 6683799279,
+  "body": "## Issue #1 残22項目の戦略再分類 — Candidate freeze前\n\nこの分類は **未チェック項目をPASSへ昇格するものではない**。  \n目的は、22項目を「22個の局所修正」に分解せず、Candidateを凍結する前にSource側で閉じるべき仕事と、Final Evidenceでしか閉じない仕事を分離すること。\n\n### A. Source能力は既に存在し、主に受入Evidence待ち\n- #2 低負担Target/Profile生成・選択: `target_intake.py` + intake tests。低負担性の最終評価は実運用Evidence待ち。\n- #5 bridge-less playable QA: default Adapter/Windows display/Input/Screenshot/Log + supplementary black-box contract。実ゲームでの最終証拠待ち。\n- #6 保存→変更→再起動→復元: storage lifecycle testsでchild process restartを含む契約あり。\n- #7 corrupted/old/migration/multi-slot/autosave: dedicated storage lifecycle testsあり。\n- #8/#9 初見30秒・5分loop Evidence: Sales evaluatorに独立phase contractあり。自動録画だけではpositive verdictにしない。\n- #11 Profile順序反転: order/binding testsあり。\n- #14/#15/#16 cold-start別session、30秒、5分: Sales evaluator/provenance contractあり。実評価Evidence待ち。\n\n### B. Source能力をCandidate freeze前に明示補強する群\n- #3 Godot/Unity/Unreal/Java/Node/Python/C/EXE汎用Profile/Adapter: engine別CORE分岐を追加せず、同一data-only Profile contractを使えることをPR #26で明示matrix test化。\n- #10 movement/camera/menu/combat/UI/tutorial/retry/save-load/main-loop: operation名をCORE hardcodeせずProfile action/scenario dataとして扱えることを同matrixで固定。Sound/audioは未対応を偽PASSしない。\n- #17/#18/#19 商品説明・「何をするゲームか」要約・非技術者向けreport: PR #26で **Evidence-backed audience summary** を一機能群として追加中。\n  - game_id / IP / price / freeを説明生成basisから除外\n  - mechanics evidenceのみからwhat-game/product descriptionを生成\n  - plain-text/HTMLへ接続\n  - readabilityはSales communication/readability Gateが実際にPASSするまで最終PASSにしない\n\n### C. 明確なSource gap / 追加資格確認が必要\n- #4 black-box Screenshot/Window/Input/OCR/Log:\n  - Window/Screenshot/Input/Logは既存。\n  - **OCRは現物Recovery Sourceでも既知未実装**。default Adapterは `ocr=False`、設計資料も「OculiXはlinkage probeまで、validated visual/OCR scriptなし」としている。\n  - OculiX JARの存在だけでCLI/APIを捏造しない。runtime/JAR実クラス資格確認を前提に別途Source接続が必要。\n\n### D. Source unit testでは閉じないFinal/独立Gate群\n- #1 Windows完全offline・非admin・Registry/PATH\n- #12 network不要\n- #13 Program Files / Registry / PATH恒久変更なし\n- #20 Management Gate PASS\n- #21 Sales Gate PASS\n- #22 Rollback可能\n\n#1/#12/#13はbounded observerを「完全証明」に昇格しない。  \n#20/#21はProduction technical PASSで代用しない。  \n#22はREADMEだけの旧Stableをfunctional rollback証拠としない。\n\n### Candidate freeze前の原則\n\n1. PR #26のRoute B構造 + Source-resolvable群をまず収束。\n2. Issue #1のチェックは、実装存在だけで更新しない。\n3. OCRのような真正Source gapを未実装のまま隠さない。\n4. その後にCandidateを**一度だけ**再freezeする方針を維持。\n5. Final Windows/A-B-A/Management/Sales/RollbackのEvidence群はそのCandidateでまとめて閉じる。",
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/issues/25#issuecomment-6683799279",
+  "user": {
+    "login": "th060316-lgtm",
+    "id": 334371505,
+    "profile_url": "https://github.com/th060316-lgtm",
+    "avatar_url": "https://avatars.githubusercontent.com/u/334371505?v=4"
+  },
+  "author_association": "OWNER",
+  "reactions": {
+    "total_count": 0,
+    "+1": 0,
+    "-1": 0,
+    "laugh": 0,
+    "confused": 0,
+    "heart": 0,
+    "hooray": 0,
+    "rocket": 0,
+    "eyes": 0
+  },
+  "created_at": "2026-11-06T11:30:06Z",
+  "updated_at": "2026-11-06T11:30:06Z"
+}
+2
+{
+  "id": 6689833245,
+  "body": "## 実機優先Finalization route — one-pass handoff ready\n\nUser direction: move verification to the real Windows machine as far as practical, while avoiding a return to blocker-by-blocker local debugging.\n\n### Authoritative bytes\n- main: `17f6f9ba21adcdfbbc689e312072cb9841ac8461`\n- lightweight transport: `3ef3f0fd2b510d9f8412a125d3c1d4540973bba8`\n- managed payload comparison (runner + Source + acceptance + transfer + rollback): **0 blob differences**\n- lightweight updater validation run `42252393105`: **SUCCESS**\n\nPR #28 is merged. GitHub-hosted checks are now treated as preflight for this route; primary technical acceptance evidence comes from the user real Windows machine.\n\n### One-pass real-machine route\n\nNormal entrypoint: `RUN_LOCAL_COMPLETION.cmd` (passes `-RequireOffline`).\n\nRun from a normal non-admin Windows session with external network disconnected.\n\nThe run gathers, in one execution:\n\n1. preserved v0.3.3 donor JOIN / byte identity\n2. current prepared Source + new Candidate build / identity\n3. bundled Source regression\n4. fresh Candidate START_QA selftest\n5. fresh PoliticsTrasport → codegeas → PoliticsTrasport\n6. fresh preserved-predecessor restore + predecessor START_QA selftest\n7. environment final readback\n\nRollback is deliberately after A-B-A so a rollback nonpass does not prevent collection of the other Final technical evidence.\n\n### Combined local technical PASS requires\n- non-admin session\n- Candidate build/integrity PASS\n- bundled Source regression PASS\n- fresh Candidate selftest PASS\n- A-B-A PASS and exactly three Result ZIPs\n- predecessor rollback selftest PASS\n- persistent user/machine PATH unchanged\n- no up non-loopback IP interfaces observed at start, all three Final runs, and end\n\n### Evidence preservation\nKeep the sibling `LOCAL_FINAL_ACCEPTANCE_<RunTag>` directory whether PASS or FAIL. It includes compact chat evidence, Candidate identity/build metadata, selftest readback, A-B-A evidence/readback, rollback qualification/readback, and step logs.\n\n### Scope not overclaimed\n- Complete Registry write auditing is still not established by the standard-user self-contained observer.\n- Human/Product/Stable/Release remain separate from technical local PASS.\n- Changed Candidate bytes require the new run; historical A-B-A is not reused.\n\nDo not create a new local-patch loop from a single subfailure. If this one-pass run returns nonpass, analyze the complete evidence bundle against Issue #1 / #25 completion route before deciding whether code change, environment evidence, or gate design is actually responsible.",
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/issues/25#issuecomment-6689833245",
+  "user": {
+    "login": "th060316-lgtm",
+    "id": 334371505,
+    "profile_url": "https://github.com/th060316-lgtm",
+    "avatar_url": "https://avatars.githubusercontent.com/u/334371505?v=4"
+  },
+  "author_association": "OWNER",
+  "reactions": {
+    "total_count": 0,
+    "+1": 0,
+    "-1": 0,
+    "laugh": 0,
+    "confused": 0,
+    "heart": 0,
+    "hooray": 0,
+    "rocket": 0,
+    "eyes": 0
+  },
+  "created_at": "2026-11-06T16:27:49Z",
+  "updated_at": "2026-11-06T16:27:49Z"
+}
+3
+{
+  "id": 6690050689,
+  "body": "## Real-machine handoff route correction — lightweight overlay retired\n\nThe two user runs (offline and online) both stopped before substantive QA at the same handoff boundary:\n\n`TRANSFER_MANIFEST_MISSING`\n\nThis does **not** establish an offline/network defect. It establishes that the current real-machine handoff route allowed an invalid intermediate local tree to reach the runner.\n\n### Strategic decision\n\nDo not patch this as a one-file local defect.\n\nThe lightweight overlay route is retired for Final acceptance because authoritative main already contains the entire required self-contained substrate:\n\n- preserved v0.3.3 donor blocks (128 blocks)\n- donor JOIN/manifest\n- `開発版/transfer/TRANSFER_MANIFEST.json`\n- Recovery Source\n- current Source\n- acceptance targets\n- rollback scripts\n- seven-stage `RUN_LOCAL_COMPLETION.cmd/.ps1`\n\nTherefore the two-step state:\n\n`old complete download + update overlay -> runnable tree`\n\nis no longer justified for Final acceptance. It saves download volume but adds an avoidable mutable handoff boundary.\n\n### New Final real-machine source\n\nFrozen self-contained branch:\n\n`final/issue25-real-machine-freeze-20261107`\n\nFrozen commit:\n\n`17f6f9ba21adcdfbbc689e312072cb9841ac8461`\n\nThe frozen branch is byte/tree-identical to that main commit (ahead 0 / behind 0).\n\nPR #24 (lightweight transport) is closed as historical/superseded and must not be used for the next Final run.\n\n### Next Final execution rule\n\nUse a **fresh extraction of the frozen self-contained branch** in a new empty directory. No overlay onto a previous FullAutoQA tree. No reuse of the failed local runnable tree.\n\nThen, on the real Windows machine:\n- standard non-admin session\n- external network disconnected for the Final offline run\n- run `RUN_LOCAL_COMPLETION.cmd` directly from the fresh frozen extraction\n- preserve the generated sibling `LOCAL_FINAL_ACCEPTANCE_<RunTag>` directory whether PASS or FAIL\n\nThe two failed `TRANSFER_MANIFEST_MISSING` runs remain evidence that the retired overlay handoff was not reproducible. They are not evidence about Candidate, A-B-A, rollback, or offline behavior because none of those stages started.\n\nNo Issue #1 gate is marked PASS by this route correction.",
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/issues/25#issuecomment-6690050689",
+  "user": {
+    "login": "th060316-lgtm",
+    "id": 334371505,
+    "profile_url": "https://github.com/th060316-lgtm",
+    "avatar_url": "https://avatars.githubusercontent.com/u/334371505?v=4"
+  },
+  "author_association": "OWNER",
+  "reactions": {
+    "total_count": 0,
+    "+1": 0,
+    "-1": 0,
+    "laugh": 0,
+    "confused": 0,
+    "heart": 0,
+    "hooray": 0,
+    "rocket": 0,
+    "eyes": 0
+  },
+  "created_at": "2026-11-06T16:38:09Z",
+  "updated_at": "2026-11-06T16:38:09Z"
+}
+4
+{
+  "id": 6690557490,
+  "body": "## 3回目の実機handoff失敗 — 外部独立監査へ渡す戦略Evidence\n\nFresh self-contained freeze `final/issue25-real-machine-freeze-20261107` を展開した実機Runでも、Candidate工程へ入る前に再び `TRANSFER_MANIFEST_MISSING` で停止した。\n\nObserved run:\n- run tag: `20261106T165503Z_fcd800f2`\n- physical repository root: `C:\\Users\\th060\\Downloads\\fullautoQA-final-issue25-real-machine-freeze-20261107`\n- standard-user/non-admin: observed true\n- Candidate/source fingerprint: not created\n- donor join / Candidate build / source regression / selftest / A-B-A / rollback: all NOT_RUN\n- persistent PATH: unchanged in this stopped run\n- network observation: NOT_MEASURED due PowerShell argument-type mismatch; therefore offline/online conclusion must not be inferred\n- failure: `TRANSFER_MANIFEST_MISSING`\n\nThis is the third same-class stop at the real-machine entry boundary. It is now treated as evidence against the current completion/handoff path, not as a request to patch one missing file.\n\nExternal independent reviewers are being asked to read the public repository, Issue #1, Issue #25, open PR #27, open PR #29, and relevant Actions history directly and answer the higher-level question: **what completion route should actually be used to finish Issue #1 without continuing blocker-by-blocker iteration?**\n\nNo Issue #1 checkbox is promoted by this evidence. Product Acceptance / Stable remain HOLD.",
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/issues/25#issuecomment-6690557490",
+  "user": {
+    "login": "th060316-lgtm",
+    "id": 334371505,
+    "profile_url": "https://github.com/th060316-lgtm",
+    "avatar_url": "https://avatars.githubusercontent.com/u/334371505?v=4"
+  },
+  "author_association": "OWNER",
+  "reactions": {
+    "total_count": 0,
+    "+1": 0,
+    "-1": 0,
+    "laugh": 0,
+    "confused": 0,
+    "heart": 0,
+    "hooray": 0,
+    "rocket": 0,
+    "eyes": 0
+  },
+  "created_at": "2026-11-06T17:02:07Z",
+  "updated_at": "2026-11-06T17:02:07Z"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • List Commits
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+perPage
+15
+fields
+[
+  "sha",
+  "commit",
+  "html_url"
+]
+
+
+Response
+
+
+0
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T16:22:06Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T16:22:06Z",
+      "email": "noreply@github.com",
+      "name": "GitHub"
+    },
+    "message": "Merge pull request #28 from th060316-lgtm/work/issue25-real-machine-finalization-20261107\n\nFinalization: consolidate rollback and offline gates into one real-machine run"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/17f6f9ba21adcdfbbc689e312072cb9841ac8461",
+  "sha": "17f6f9ba21adcdfbbc689e312072cb9841ac8461"
+}
+1
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T16:20:43Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T16:20:43Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: document one-pass real-machine finalization"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/eb4400606a79974b69dc5aead59dfeaac6608280",
+  "sha": "eb4400606a79974b69dc5aead59dfeaac6608280"
+}
+2
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T16:20:40Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T16:20:40Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: require offline evidence in the real-machine entrypoint"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/76d81c418ebbd869595414597214e159b37ea9ca",
+  "sha": "76d81c418ebbd869595414597214e159b37ea9ca"
+}
+3
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T16:20:24Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T16:20:24Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: consolidate rollback and offline gates into one real-machine run"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/7777ce6af8758a1252f8b244df5c54db76c02af8",
+  "sha": "7777ce6af8758a1252f8b244df5c54db76c02af8"
+}
+4
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:19:29Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:19:29Z",
+      "email": "noreply@github.com",
+      "name": "GitHub"
+    },
+    "message": "Merge PR #26: strategic Issue #25 completion-route restructure\n\nFreeze the reviewed Source route on main. Product Acceptance / Stable / Human remain HOLD; rollback qualification remains an independent gate."
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/7a48d3e8a2ab7279aed0a202fbb89d62d549602f",
+  "sha": "7a48d3e8a2ab7279aed0a202fbb89d62d549602f"
+}
+5
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:10:27Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:10:27Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: qualify explicit preserved rollback predecessor"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/d5910da37c841c0d926ef05010f1b3da3f03bd91",
+  "sha": "d5910da37c841c0d926ef05010f1b3da3f03bd91"
+}
+6
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:10:22Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:10:22Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: allow explicit rollback predecessor set"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/a43010d999cb7ed2cf041e58f55afa8581344844",
+  "sha": "a43010d999cb7ed2cf041e58f55afa8581344844"
+}
+7
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:08:57Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:08:57Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: qualify rollback from complete development input snapshot"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/9d93a3a098dab04de7ee492f3b05b541300b2b8f",
+  "sha": "9d93a3a098dab04de7ee492f3b05b541300b2b8f"
+}
+8
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:07:43Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:07:43Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: use cone-mode rollback input directories"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/c13ab2495d49510ece39818d728e2a4ec7483eb0",
+  "sha": "c13ab2495d49510ece39818d728e2a4ec7483eb0"
+}
+9
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:06:28Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:06:28Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: checkout rollback transfer metadata as a directory"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/746c9b921f587cbe7905d4be45e4b644e54326a9",
+  "sha": "746c9b921f587cbe7905d4be45e4b644e54326a9"
+}
+10
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:04:32Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:04:32Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: preserve Unicode path when launching rollback qualification"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/15649808eb580c8fbe7c95eeda721db9a54276da",
+  "sha": "15649808eb580c8fbe7c95eeda721db9a54276da"
+}
+11
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:04:28Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:04:28Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: align OCR runner test with requested-observation contract"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/23c7f48c5de895b5e865cf3ae643fe998a07bee5",
+  "sha": "23c7f48c5de895b5e865cf3ae643fe998a07bee5"
+}
+12
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:02:42Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:02:42Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: test the exact rollback entrypoint in CI"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/bc1e363fdb1ccc1650a4bf97c06457a1519e1240",
+  "sha": "bc1e363fdb1ccc1650a4bf97c06457a1519e1240"
+}
+13
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:02:22Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:02:22Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: add executable predecessor rollback entrypoint"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/7681b33a1b7c286ab6784803bf0e15aaed303531",
+  "sha": "7681b33a1b7c286ab6784803bf0e15aaed303531"
+}
+14
+{
+  "commit": {
+    "author": {
+      "date": "2026-11-06T14:01:48Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "committer": {
+      "date": "2026-11-06T14:01:48Z",
+      "email": "th060316@gmail.com",
+      "name": "Takuna543"
+    },
+    "message": "Issue #25: qualify runnable rollback predecessor"
+  },
+  "html_url": "https://github.com/th060316-lgtm/fullautoQA/commit/919abf901c8337233bfecd6cdebc5314d1cef201",
+  "sha": "919abf901c8337233bfecd6cdebc5314d1cef201"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Key mystery: TRANSFER_MANIFEST_MISSING occurred even on a fresh extraction of the frozen branch that contains 開発版/transfer/TRANSFER_MANIFEST.json. Why? Likely path resolution: Resolve-RepositoryRelativePath — the file exists in the repo. Wait — does the frozen branch actually contain the manifest? Repo is huge (donor blocks 1GB), but GitHub repo... Let me check whether 開発版/transfer/TRANSFER_MANIFEST.json exists on main. The issue #25 comment says authoritative main contains it. But the third failure on fresh extraction suggests resolution bug — e.g., CJK path encoding (開発版) under PowerShell, or Resolve-RepositoryRelativePath resolving wrong root (repo root detection picks a nested dir?), or the extraction was a zip download without the file due to gitignore? Check the file exists on main via github search or reading raw. Also check Resolve-RepositoryRelativePath implementation and repo root detection in RUN_LOCAL_COMPLETION.ps1. And check PR #29 "parse" check failure details.
+Let me search code: use github search tools? Easier: open raw.githubusercontent.com for the file and open the RUN_LOCAL_COMPLETION.ps1 head portion.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pageraw.githubusercontent.com
+
+
+
+
+
+
+
+
+
+
+
+Opened pageraw.githubusercontent.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+The manifest exists on the frozen branch. Yet on a fresh extraction run, TRANSFER_MANIFEST_MISSING triggered. Note: the frozen branch commit 17f6f9b... main head includes 開発版/transfer/TRANSFER_MANIFEST.json — confirmed via raw. So why did Test-Path fail on real machine? Possibilities:
+The user downloaded the repo as a GitHub ZIP archive ("Code → Download ZIP"). GitHub ZIP downloads only include files tracked at that commit — the manifest IS tracked. But wait — is 開発版/complete_v033 blocks (128 blocks, ~1GB) actually in the git repo? Repo probably uses LFS? If files are stored via LFS, the ZIP download contains pointer files, not actual content — but they'd still exist as files. TRANSFER_MANIFEST_MISSING means the file itself was missing.
+Path resolution with CJK "開発版" and encoding: the script file RUN_LOCAL_COMPLETION.ps1 is presumably UTF-8; PowerShell 5.1 reads .ps1 without BOM as ANSI → '開発版/transfer/...' literal becomes mojibake → Test-Path fails. That is a very plausible root cause: Windows PowerShell 5.1 interprets non-BOM UTF-8 scripts in the system ANSI codepage. On a Japanese machine (CP932), the UTF-8 bytes of 開発版 would be misdecoded → path not found → TRANSFER_MANIFEST_MISSING. Notably Resolve-RepositoryRelativePath is fine; the literal string itself is corrupted. The failure occurring in three runs on the real machine but not in CI (CI probably runs pwsh 7 or the file has BOM on some commits?) — need to check BOM. Let me check the first bytes of RUN_LOCAL_COMPLETION.ps1 and the CMD file. Also, the GitHub ZIP download folder name matches: "fullautoQA-final-issue25-real-machine-freeze-20261107" — extracted from branch ZIP.
+Also check PR #29's "parse" failing check. And whether PR #27's source_tree_immutability script exists / tests. Also check .gitattributes for encoding/BOM enforcement. Let me check raw bytes (od via bash? no network in bash... actually bash sandbox—there's a virtual filesystem, no network). Use open_url? can't show bytes. But the raw fetch earlier printed content — content started with "#" not BOM-visible. Hard to verify BOM via text. However, I can check .github/workflows parse job and the diagnostic workflow that runs PowerShell parse checks.
+Key alternative: GitHub ZIP archive downloads don't include files ignored by export-ignore or in .gitattributes. Also, if the repo uses sparse checkout or if 開発版/transfer is in .gitignore... but raw fetch shows it's tracked.
+Another possibility: fresh extraction of branch ZIP — GitHub zipball includes all tracked files. So manifest should be there. Unless the user's antivirus/quarantine or path-length issues on extraction (long paths > 260 chars cause extraction failures — the repo has very deep Japanese paths; Windows Explorer ZIP extraction fails on >260 char paths silently or asks to skip). If the user used Explorer extract, some files fail to extract; 開発版/transfer/TRANSFER_MANIFEST.json path length is short though (~60 chars). Hmm.
+Another: Test-Path -LiteralPath with the manifest — the script's literal '開発版' encoded UTF-8 without BOM → misread by Windows PowerShell 5.1 as CP932 mojibake. CMD runs RUN_LOCAL_COMPLETION.cmd → powershell -File RUN_LOCAL_COMPLETION.ps1. If the .ps1 is UTF-8 no BOM, and Windows PowerShell 5.1 (default on Win10/11 when invoked as powershell), Japanese system codepage CP932: UTF-8 bytes E9 96 8B E7 99 BA for 開発 → decoded as CP932 garbage → Test-Path fails → TRANSFER_MANIFEST_MISSING. This matches perfectly: fails on user's Japanese real machine, passes in GitHub CI (pwsh Core / UTF-8 default) and in Work's own environment presumably. And error is exactly TRANSFER_MANIFEST_MISSING, deterministic across 3 attempts.
+Let me verify the CMD file: which powershell does it invoke? Fetch RUN_LOCAL_COMPLETION.cmd. Also check .gitattributes. Also check PR #29 failing parse job — interesting because PR #29 modifies .ps1 and there's a "parse" check failing — maybe exactly because non-ASCII. Let me fetch cmd and the parse workflow, and check BOM by fetching with something that reveals bytes... open_url content probably strips BOM. The parse check failure on PR #29 could hint. Let's look at the parse workflow job log. I can open the actions job URL? Logs may require auth. Try get_check_runs details via open_url of details_url. Probably not accessible without login. But we know the workflow file. Let's fetch .github/workflows that has "parse" job.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pageraw.githubusercontent.com
+
+
+
+
+
+
+
+
+
+
+
+Opened pageraw.githubusercontent.com
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Confirmed: RUN_LOCAL_COMPLETION.cmd invokes powershell.exe (Windows PowerShell 5.1), not pwsh. Now the key question: does RUN_LOCAL_COMPLETION.ps1 have a UTF-8 BOM? If not, on a Japanese Windows machine (CP932 ANSI), the literal '開発版/...' inside the script is misdecoded → Test-Path fails → TRANSFER_MANIFEST_MISSING. This would explain the three deterministic real-machine entry stops while CI passes (CI likely runs pwsh 7 where UTF-8 no-BOM is default, or parse job checks something else).
+Check local-completion-runner-syntax.yml (the "parse" check?) — the failing check on PR #29 was named "parse" in run 42254032080. Let's fetch local-completion-runner-syntax.yml and also try to determine BOM. Can I detect BOM? open_url returns text content — likely stripped. Alternative: the workflow might explicitly test parsing under both powershell and pwsh, which would be good design. The PR #29 parse failure might be precisely a Windows PowerShell 5.1 parse error of the modified .ps1! That would be strong evidence: the new code fails on Windows PowerShell 5.1. Let's fetch that workflow and try to see the failure log.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pageraw.githubusercontent.com
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Parse job failed on PR #29 head — likely at one of the contract-test steps (which run under PS 5.1). Which step failed? Log truncated. Possibly the "Parse" step failed or a contract test. Note: main's push version of this workflow ran on 17f6f9b (RUN_LOCAL_COMPLETION.ps1 changed in PR #28 push to main) — check whether it passed on main. Search check runs of main commit. Use pull_request_read get_check_runs? That's for PR head. Could list workflow runs — need another tool. Let me check if there's a list_workflow_runs function.
+Also key: parse job on main push 17f6f9b: if it passed there, then PR #29's change broke a PS5.1 contract test. Let me try search_tool_functions for actions runs.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Found relevant tools
+
+
+
+
+
+
+
+
+
+
+
+Thought
+No workflow-run listing tool. Try open_url on the actions runs page for the main push of the syntax workflow. Search GitHub actions page: https://github.com/th060316-lgtm/fullautoQA/actions/workflows/local-completion-runner-syntax.yml — open it. Also want to see whether main's run for 17f6f9b passed. Also determine BOM: I could check by opening raw URL — content is stripped. Alternative: the parse workflow itself parses the file with PS5.1 Parser::ParseFile, which respects BOM/encoding detection same as execution. If the file were UTF-8 without BOM, PS5.1 would still "parse" (mojibake but syntactically fine) and contract tests would pass if they don't touch the CJK path... but the repository-discovery contract test might touch '開発版/...' paths and would fail on CP932 misdecode. Actually wait — GitHub runners have system locale en-US (CP1252), not CP932. Misdecoded UTF-8 bytes in CP1252 produce different mojibake; Test-Path fails equally. So if any contract test exercised the transfer manifest path under PS5.1, CI would catch it... unless tests use manifest discovery relative to test fixtures, or the tests didn't cover the transfer-manifest path (PR #29 adds it).
+But the deeper question: has the file a BOM? If the file had a UTF-8 BOM, PS5.1 decodes correctly on any machine, and TRANSFER_MANIFEST_MISSING wouldn't be an encoding issue. Given 3 failures on the user's real machine with a fresh full extraction, and the file present in the repo, encoding or extraction is the prime suspect. Which step in the parse job failed on PR #29? Could be the Parse step itself (e.g., PS5.1 can't parse something like -not ($manifest.latest_complete_candidate -or ... — that's fine). Hmm, PR #29 diff added a line with backtick? The failure is at 20s, right after checkout — probably the "Parse with Windows PowerShell 5.1" step. Actually can't be sure which step. Let me open the job page fully to see which step failed. Earlier the content showed steps but truncated logs. The failed step is usually annotated "failed". Let me grep for "failed" in the fetched page.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+Logs truncated/not accessible anonymously. Fine — I know the parse job failed on PR #29 head; that's enough to note PR #29 currently red on the one check that exercises Windows PowerShell 5.1 — ironically the exact environment of the real machine.
+Now, remaining checks I'd like:
+Does main (17f6f9b) pass the syntax workflow? Check the actions workflow page.
+PR #27's remaining files (new script source_tree_immutability.py and SOURCE_TREE_FINGERPRINT changes) — got the workflow patches; remaining truncated. Get full file list of PR 27.
+Issue #1 checked items possibly over-claimed — the 22 unchecked listed; the false-positive audit: among 127 checked, candidates like "A-3 Windows完全オフライン…維持" unchecked actually; C-3 管理者権限要求がないこと is CHECKED (with evidence from run 20261105T133102Z_d018dc3c) — that run is hosted Windows, not real machine... Actually it was a "標準ユーザー実機Run"? Issue #1 text says "標準ユーザー実機Run 20261105T133102Z_d018dc3c". Hmm—earlier runs were GitHub-hosted? The 基準点 says that run did donor JOIN→Candidate build→Source regression→fresh selftest→実Godot起動. It was labeled 実機. But recent machine runs stopped at handoff. There is an inconsistency worth noting: an earlier real-machine run passed through the same manifest check (TRANSFER_MANIFEST_MISSING didn't fire then?) — actually the earlier route was Actions-triggered? Uncertain. Careful.
+Let me fetch PR #27 full file list and the workflow page for syntax runs on main. Also fetch Issue #1 checklist checked items relevant to over-claiming — I have the full body; checked items include things like "Source unit tests全PASS", "Windows JOIN実行 PASS", "Windows fresh extract acceptance PASS"? Those are in section G. Let me quickly scan which G items are checked. From the unchecked list, Management Gate PASS, Sales Gate PASS, Rollback可能 are unchecked; other G items presumably checked (Windows JOIN PASS, 実ゲームE2E 3/3 PASS, A-B-A差替え PASS...). Wait — Final A-B-A 3/3 PASS was claimed on the Final Candidate 1609669c… in the 基準点. But that Candidate predates PR #26 restructure (prepared source fingerprint binding, route restructure). New Candidate = new bytes → old A-B-A not reusable → per their own rule, "実ゲームE2E 3/3 PASS" and "A-B-A差替え PASS" checked items reference a Candidate that is no longer the final candidate. This is a key false-positive/over-claim finding: the checked E2E/A-B-A items were checked against a superseded candidate, and the current route requires re-freeze and re-run — so those checkboxes describe evidence that cannot be reused.
+Also "Windows JOIN実行 PASS" — hosted Windows. "Hosted Windows ≠ ユーザーPC完全offline" acknowledged in body. Section C-3 "管理者権限要求がないこと" checked based on run 20261105T133102Z (which the body calls 標準ユーザー実機Run). OK.
+Also "Stable tree... 受入済みStable実行物は存在確認できず" — Rollback可能 unchecked, fine.
+Let me fetch PR #27 files full list quickly and the syntax workflow run history on main.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+27
+method
+"get_files"
+
+
+Response
+
+
+0
+{
+  "filename": ".github/workflows/phase2-source-tests.yml",
+  "status": "modified",
+  "additions": 27,
+  "changes": 27,
+  "patch": "@@ -41,6 +41,12 @@ jobs:\n           \"SOURCE_ROOT=$sourceRoot\" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append\n           \"ACCEPTANCE_ROOT=$((Resolve-Path './開発版/acceptance_targets').Path)\" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append\n \n+      - name: Snapshot reconstructed Source before regression\n+        shell: pwsh\n+        run: |\n+          python -B \"$env:SOURCE_ROOT/scripts/source_tree_immutability.py\" snapshot --root \"$env:SOURCE_ROOT\" --output \"$env:GITHUB_WORKSPACE/SOURCE_TREE_BEFORE.json\"\n+          if ($LASTEXITCODE -ne 0) { throw \"SOURCE_TREE_SNAPSHOT_FAILED:$LASTEXITCODE\" }\n+\n       - name: Compile reconstructed Python source\n         shell: pwsh\n         run: python -m compileall -q \"$env:SOURCE_ROOT/CORE\" \"$env:SOURCE_ROOT/TESTS\"\n@@ -50,6 +56,27 @@ jobs:\n         run: python -m unittest discover -s \"$env:SOURCE_ROOT/TESTS\" -v\n \n \n+      - name: Verify Source regression did not mutate its input\n+        shell: pwsh\n+        run: |\n+          Get-ChildItem -LiteralPath \"$env:SOURCE_ROOT\" -Directory -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force\n+          python -B \"$env:SOURCE_ROOT/scripts/source_tree_immutability.py\" compare --root \"$env:SOURCE_ROOT\" --before \"$env:GITHUB_WORKSPACE/SOURCE_TREE_BEFORE.json\" --output \"$env:GITHUB_WORKSPACE/SOURCE_TREE_MUTATION.json\"\n+          if ($LASTEXITCODE -ne 0) {\n+            Get-Content -LiteralPath \"$env:GITHUB_WORKSPACE/SOURCE_TREE_MUTATION.json\"\n+            throw \"SOURCE_REGRESSION_MUTATED_INPUT\"\n+          }\n+\n+      - name: Upload Source immutability evidence\n+        if: always()\n+        uses: actions/upload-artifact@v4\n+        with:\n+          name: Source-Immutability-${{ runner.os }}-${{ github.run_id }}-Attempt-${{ github.run_attempt }}\n+          path: |\n+            SOURCE_TREE_BEFORE.json\n+            SOURCE_TREE_MUTATION.json\n+          if-no-files-found: warn\n+          retention-days: 14\n+\n       - name: Parse Windows PowerShell scripts\n         if: runner.os == 'Windows'\n         shell: powershell"
+}
+1
+{
+  "filename": ".github/workflows/phase3-windows-candidate-build.yml",
+  "status": "modified",
+  "additions": 7,
+  "changes": 7,
+  "patch": "@@ -112,6 +112,8 @@ jobs:\n           $preparedFingerprint = Get-TreeFingerprint $sourceRoot\n           if ([string]::IsNullOrWhiteSpace($preparedFingerprint)) { throw 'PREPARED_SOURCE_FINGERPRINT_FAILED' }\n           \"PREPARED_SOURCE_FINGERPRINT=$preparedFingerprint\" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append\n+          python -B \"$sourceRoot/scripts/source_tree_immutability.py\" snapshot --root \"$sourceRoot\" --output \"$env:BUILD_OUT/SOURCE_TREE_BEFORE.json\"\n+          if ($LASTEXITCODE -ne 0) { throw \"SOURCE_TREE_SNAPSHOT_FAILED:$LASTEXITCODE\" }\n \n       - name: Compile and run complete Source regression before donor JOIN\n         id: source_tests\n@@ -122,6 +124,11 @@ jobs:\n           python -B -m unittest discover -s \"$env:SOURCE_ROOT/TESTS\" -v 2>&1 | Tee-Object -FilePath \"$env:BUILD_OUT/SOURCE_TESTS.log\"\n           if ($LASTEXITCODE -ne 0) { throw \"SOURCE_REGRESSION_FAILED:$LASTEXITCODE\" }\n           Get-ChildItem -LiteralPath \"$env:SOURCE_ROOT\" -Directory -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force\n+          python -B \"$env:SOURCE_ROOT/scripts/source_tree_immutability.py\" compare --root \"$env:SOURCE_ROOT\" --before \"$env:BUILD_OUT/SOURCE_TREE_BEFORE.json\" --output \"$env:BUILD_OUT/SOURCE_TREE_MUTATION.json\"\n+          if ($LASTEXITCODE -ne 0) {\n+            Get-Content -LiteralPath \"$env:BUILD_OUT/SOURCE_TREE_MUTATION.json\"\n+            throw \"SOURCE_REGRESSION_MUTATED_INPUT\"\n+          }\n \n       - name: Parse Windows PowerShell scripts before expensive build\n         id: parse"
+}
+2
+{
+  "filename": "開発版/source/scripts/SOURCE_TREE_FINGERPRINT.ps1",
+  "status": "added",
+  "additions": 64,
+  "changes": 64,
+  "patch": "@@ -0,0 +1,64 @@\n+# Canonical FullAutoQA Source-tree fingerprint.\n+# The result is independent of PowerShell culture/version and host newline.\n+[CmdletBinding()]\n+param(\n+  [Parameter(Mandatory=$true)][string]$Root,\n+  [string]$ManifestOut=''\n+)\n+Set-StrictMode -Version Latest\n+$ErrorActionPreference='Stop'\n+\n+function Get-SHA256([string]$Path) {\n+  $stream=[IO.File]::OpenRead($Path)\n+  $hash=[Security.Cryptography.SHA256]::Create()\n+  try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }\n+  finally { $hash.Dispose(); $stream.Dispose() }\n+}\n+\n+$rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)\n+if (-not (Test-Path -LiteralPath $rootFull -PathType Container)) { throw 'SOURCE_FINGERPRINT_ROOT_MISSING' }\n+$prefix=$rootFull+[IO.Path]::DirectorySeparatorChar\n+$records=New-Object 'System.Collections.Generic.List[object]'\n+foreach($file in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File)) {\n+  $relative=$file.FullName.Substring($prefix.Length).Replace([IO.Path]::DirectorySeparatorChar,'/')\n+  $records.Add([pscustomobject]@{\n+    path=$relative\n+    size=[long]$file.Length\n+    sha256=Get-SHA256 $file.FullName\n+  })\n+}\n+$byPath=@{}\n+$paths=New-Object 'System.Collections.Generic.List[string]'\n+foreach($record in $records) {\n+  $byPath[[string]$record.path]=$record\n+  $paths.Add([string]$record.path)\n+}\n+$pathArray=$paths.ToArray()\n+[Array]::Sort($pathArray,[StringComparer]::Ordinal)\n+$rows=New-Object 'System.Collections.Generic.List[string]'\n+foreach($path in $pathArray) {\n+  $record=$byPath[$path]\n+  $rows.Add(($path + [char]9 + [string]$record.size + [char]9 + [string]$record.sha256))\n+}\n+$array=$rows.ToArray()\n+$payload=[string]::Join([char]10,$array)\n+$bytes=[Text.Encoding]::UTF8.GetBytes($payload)\n+$alg=[Security.Cryptography.SHA256]::Create()\n+try { $fingerprint=([BitConverter]::ToString($alg.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() }\n+finally { $alg.Dispose() }\n+\n+if (-not [string]::IsNullOrWhiteSpace($ManifestOut)) {\n+  $manifest=[ordered]@{\n+    schema_version=1\n+    algorithm='relative-path-tab-size-tab-sha256; rows ordinal; LF; UTF-8'\n+    root=$rootFull\n+    fingerprint=$fingerprint\n+    file_count=$array.Length\n+    files=@($pathArray | ForEach-Object {\n+      $record=$byPath[$_]\n+      [ordered]@{path=$record.path;size=$record.size;sha256=$record.sha256}\n+    })\n+  }\n+  $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ManifestOut -Encoding UTF8\n+}\n+[Console]::Out.WriteLine($fingerprint)"
+}
+3
+{
+  "filename": "開発版/source/scripts/source_tree_immutability.py",
+  "status": "added",
+  "additions": 102,
+  "changes": 102,
+  "patch": "@@ -0,0 +1,102 @@\n+\"\"\"Fail-closed audit that Source regression does not modify its input tree.\n+\n+The Candidate builder binds an exact prepared-source fingerprint.  Tests may\n+create transient bytecode caches, but after those are removed the actual Source\n+files must be byte-for-byte identical to the pre-test snapshot.\n+\"\"\"\n+from __future__ import annotations\n+\n+import argparse\n+import hashlib\n+import json\n+from pathlib import Path\n+\n+\n+def sha256(path: Path) -> str:\n+    h = hashlib.sha256()\n+    with path.open(\"rb\") as stream:\n+        for chunk in iter(lambda: stream.read(1024 * 1024), b\"\"):\n+            h.update(chunk)\n+    return h.hexdigest()\n+\n+\n+def eligible(path: Path, root: Path) -> bool:\n+    rel = path.relative_to(root)\n+    if \"__pycache__\" in rel.parts:\n+        return False\n+    if path.suffix.lower() in {\".pyc\", \".pyo\"}:\n+        return False\n+    return path.is_file()\n+\n+\n+def snapshot(root: Path) -> dict:\n+    root = root.resolve()\n+    files = {}\n+    for path in sorted(root.rglob(\"*\"), key=lambda p: p.as_posix().casefold()):\n+        if not eligible(path, root):\n+            continue\n+        rel = path.relative_to(root).as_posix()\n+        files[rel] = {\"size\": path.stat().st_size, \"sha256\": sha256(path)}\n+    rows = [\n+        f\"{rel}\\t{record['size']}\\t{record['sha256']}\"\n+        for rel, record in sorted(files.items())\n+    ]\n+    fingerprint = hashlib.sha256(\"\\n\".join(rows).encode(\"utf-8\")).hexdigest()\n+    return {\"schema_version\": 1, \"root\": str(root), \"fingerprint\": fingerprint, \"files\": files}\n+\n+\n+def compare(before: dict, after: dict) -> dict:\n+    a = before.get(\"files\") or {}\n+    b = after.get(\"files\") or {}\n+    added = sorted(set(b) - set(a))\n+    removed = sorted(set(a) - set(b))\n+    changed = sorted(\n+        name for name in set(a) & set(b)\n+        if a[name] != b[name]\n+    )\n+    return {\n+        \"schema_version\": 1,\n+        \"status\": \"PASS\" if not (added or removed or changed) else \"FAIL\",\n+        \"before_fingerprint\": before.get(\"fingerprint\"),\n+        \"after_fingerprint\": after.get(\"fingerprint\"),\n+        \"added\": added,\n+        \"removed\": removed,\n+        \"changed\": changed,\n+        \"change_count\": len(added) + len(removed) + len(changed),\n+    }\n+\n+\n+def write(path: Path, value: dict) -> None:\n+    path.parent.mkdir(parents=True, exist_ok=True)\n+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding=\"utf-8\")\n+\n+\n+def main() -> int:\n+    ap = argparse.ArgumentParser()\n+    sub = ap.add_subparsers(dest=\"command\", required=True)\n+    s = sub.add_parser(\"snapshot\")\n+    s.add_argument(\"--root\", required=True)\n+    s.add_argument(\"--output\", required=True)\n+    c = sub.add_parser(\"compare\")\n+    c.add_argument(\"--root\", required=True)\n+    c.add_argument(\"--before\", required=True)\n+    c.add_argument(\"--output\", required=True)\n+    args = ap.parse_args()\n+\n+    root = Path(args.root)\n+    if args.command == \"snapshot\":\n+        value = snapshot(root)\n+        write(Path(args.output), value)\n+        print(\"SOURCE_TREE_SNAPSHOT=\" + value[\"fingerprint\"])\n+        return 0\n+\n+    before = json.loads(Path(args.before).read_text(encoding=\"utf-8-sig\"))\n+    after = snapshot(root)\n+    result = compare(before, after)\n+    write(Path(args.output), result)\n+    print(json.dumps(result, ensure_ascii=False))\n+    return 0 if result[\"status\"] == \"PASS\" else 2\n+\n+\n+if __name__ == \"__main__\":\n+    raise SystemExit(main())"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pagegithub.com
+
+
+
+
+
+
+
+
+
+
+
+Thought
+So on main (17f6f9b, PR #28) the syntax workflow passed, including the repository-discovery contract test under PS 5.1. That means the file parses and contract tests pass under PS 5.1 on an en-US runner. Yet on the user's Japanese machine, the full fresh extraction yields TRANSFER_MANIFEST_MISSING. Encoding hypothesis: en-US runner is CP1252; if the .ps1 is UTF-8 no-BOM, the '開発版' literal is mojibake there too — repository-discovery contract test would fail there if it checks that path... unless contract tests don't reference 開発版/transfer. But the contract tests pass on runner, and the real machine fails. Since runner is not Japanese, encoding alone can't explain both pass (runner) and fail (user) unless the contract test doesn't cover the manifest path. Actually — if mojibake happens on both, and the repository-discovery test does touch manifest... unknown.
+Alternative root cause: extraction. The user extracted "fullautoQA-final-issue25-real-machine-freeze-20261107" — a branch ZIP download. GitHub branch ZIP includes all tracked files... unless the repo exceeds limits or LFS. Do they use Git LFS for the 128 donor blocks (~1GB)? If tracked normally, the repo is ~1GB+. If LFS, zipball contains pointers for LFS files (actually GitHub archives: zipballs include LFS pointer files, not content — that would break donor JOIN with a different error, not manifest missing).
+Hmm, but wait — the third failure was from the frozen self-contained branch fresh extraction. If files like 開発版/transfer/TRANSFER_MANIFEST.json were included, Test-Path should succeed. Unless... PowerShell 5.1 + path with Japanese chars + [IO.Path]::GetFullPath($PSScriptRoot) — fine. Or the repo zip uses UTF-8 filenames and Windows Explorer extracts Japanese names fine on a Japanese system.
+Actually another candidate: Set-StrictMode + $PSScriptRoot etc fine.
+Wait — maybe the branch ZIP download has the manifest file but the extraction tool (e.g., built-in Explorer) skipped files with paths >260 chars; the manifest is at short path though. But do the deeper files matter? The check is just for the manifest — short path, would extract.
+Hmm. Could the user's extraction have been into OneDrive-controlled Downloads with on-demand placeholders? C:\Users\th060\Downloads — not OneDrive by default.
+Alternatively: the repo zip's root folder is "fullautoQA-<branch>"; the user ran RUN_LOCAL_COMPLETION.cmd from there; $PSScriptRoot resolves; manifest at '開発版/transfer/TRANSFER_MANIFEST.json'. If the .ps1 has no BOM and the machine codepage is CP932, mojibake → missing. And on the GitHub runner (CP1252), the repository-discovery contract test — I need to see what it does. If it exists, it presumably tests Resolve-RepositoryRelativePath with synthetic paths, not the actual manifest. And the parse test just parses. So both can pass on CP1252 while the real route fails on any ANSI codepage. This is the most consistent hypothesis. But is the file BOM-less? I need to determine. The raw fetch content — let me check if there's a BOM by fetching via a service that shows bytes... open_url gives text; BOM likely stripped by the tool. Hmm.
+Look for evidence in the repo: maybe an earlier commit mentions "encoding-safe" — PR #19 "Make local completion path discovery encoding-safe"! That suggests they hit encoding issues before and fixed discovery. So encoding is a known defect class in this project. PR #19 merged Nov 5. Its approach: maybe avoid non-ASCII literals by discovery. Then PR #26 moved to declared repo-relative paths including '開発版/...' literals — reintroducing non-ASCII literals in the .ps1! That's a very strong structural finding: Route B (manifest-declared paths) reintroduced CJK literals into a PS5.1-executed script, and the real-machine entry fails exactly at the first CJK path lookup. Let me verify PR #19's change to see what "encoding-safe" meant.
+Also verify whether RUN_LOCAL_COMPLETION.ps1 is committed with BOM: I can check the blob via github html "raw" — can't see bytes. Alternatively check for a test asserting BOM. Search repo code for "BOM" via github code search tool. Let me use github_app.search_code maybe exists.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Found relevant tools
+
+
+
+
+
+
+
+
+
+
+
+GitHub • Pull Request Read
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}Arguments
+
+
+owner
+"th060316-lgtm"
+repo
+"fullautoQA"
+pullNumber
+19
+method
+"get"
+
+
+Response
+
+
+number
+19
+title
+Make local completion path discovery encoding-safe
+body
+Fixes the local completion failure reproduced in LOCAL_FINAL_ACCEPTANCE_20261105T102125Z_4058f307. The failure occurred before donor JOIN because Windows PowerShell 5.1 misread non-ASCII path literals in UTF-8 scripts. This change removes non-ASCII path literals from the local completion runner, PREPARE_SOURCE.ps1, and PHASE3_OVERLAY_REBUILD.ps1. Required inputs are discovered by file/sibling structure, the current source root is derived from script location, and local evidence records a source-tree fingerprint rather than a stale embedded commit. Existing CORE, target snapshots, acceptance order, Candidate integrity checks, and gates are unchanged.
+state
+closed
+draft
+false
+merged
+true
+mergeable_state
+unknown
+html_url
+https://github.com/th060316-lgtm/fullautoQA/pull/19
+user
+{
+  "login": "th060316-lgtm",
+  "id": 334371505,
+  "profile_url": "https://github.com/th060316-lgtm",
+  "avatar_url": "https://avatars.githubusercontent.com/u/334371505?v=4"
+}
+merged_by
+th060316-lgtm
+head
+{
+  "ref": "work/ascii-path-discovery-20261105",
+  "sha": "7b2cb4e1ac27e7ec38f48f2d598662ca7d3a97a6",
+  "repo": {
+    "full_name": "th060316-lgtm/fullautoQA",
+    "description": "完全自動QAシステム作成"
+  }
+}
+base
+{
+  "ref": "main",
+  "sha": "c176b979db8fadd2c7215081b1f395e6077cbf8c",
+  "repo": {
+    "full_name": "th060316-lgtm/fullautoQA",
+    "description": "完全自動QAシステム作成"
+  }
+}
+additions
+49
+deletions
+9
+changed_files
+3
+commits
+3
+created_at
+2026-11-05T10:27:01Z
+updated_at
+2026-11-05T10:27:38Z
+closed_at
+2026-11-05T10:27:38Z
+merged_at
+2026-11-05T10:27:38Z
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thought
+CONFIRMED root cause hypothesis with hard evidence: PR #19 (merged Nov 5) explicitly fixed "Windows PowerShell 5.1 misread non-ASCII path literals in UTF-8 scripts" by removing non-ASCII path literals and using discovery. Then PR #26 (Route B restructure) switched to "declared repo-relative paths" — reading from TRANSFER_MANIFEST.json... but the literal '開発版/transfer/TRANSFER_MANIFEST.json' itself is non-ASCII in the script. So PR #26 reintroduced the exact defect class PR #19 had fixed. The manifest path literal is non-ASCII, misread under PS5.1 on the user's ANSI-codepage machine → TRANSFER_MANIFEST_MISSING, deterministically, three times. On GitHub runner, contract tests pass — likely because the syntax workflow's discovery contract test perhaps uses ASCII paths, and no CI job actually exercises the real transfer manifest path under PS 5.1. Also, the file may lack BOM. Let me verify that '開発版/transfer/TRANSFER_MANIFEST.json' literal is in current main RUN_LOCAL_COMPLETION.ps1 — yes, we saw it in the frozen-branch copy: Relative '開発版/transfer/TRANSFER_MANIFEST.json'. Also PHASE3/PREPARE_SOURCE may also have CJK literals (PR #26 "live local routeのJOIN / PREPARE / FINAL_SERIES_PLANをdeclared repo-relative pathへ変更" — FINAL_SERIES_PLAN path '開発版/acceptance_targets/FINAL_SERIES_PLAN.json' also CJK, in the PR #29 preflight list).
+Also check whether main's parse workflow's repository-discovery contract test would catch this. The contract test presumably tests Resolve-RepositoryRelativePath function, which is ASCII-safe; the CJK literal is data. And crucially, no CI runs the full Assert-RealMachineHandoff against a real tree under PS5.1. PR #29's preflight still uses the CJK literal → will fail again the same way (it will report TRANSFER_MANIFEST_MISSING again from the preflight — aggregated but still the same mojibake path). So PR #29 as written will likely reproduce the identical stop on the real machine, unless encoding is fixed. That's the central audit finding!
+Verify: does RUN_LOCAL_COMPLETION.ps1 contain non-ASCII literals beyond the manifest? From PR #29 diff: the required-files list includes '開発版/source/scripts/PREPARE_SOURCE.ps1' etc. — CJK. And from the main body earlier: preflight PR #29 passes CI (source-tests pass; parse failed though — interesting, why did parse fail on PR #29? Possibly a PS5.1 parse error in the new code... e.g., $manifest.latest_complete_candidate.blocks_required fine... maybe -not (Test-Path -LiteralPath $blocks -PathType Container) fine. Perhaps the failure is one of the contract tests due to schema change (summary schema_version 6?). Native-process contract test might fail because $Summary changed? Unclear — mark unconfirmed: which step failed is unverified (logs truncated/anon access).
+Also verify the PS5.1 misread claim details: PR #19 says scripts are UTF-8, PS5.1 misreads non-ASCII literals. So files are UTF-8 (no BOM presumably; with BOM PS5.1 would decode fine). So confirmed defect class.
+One more check: is '開発版' literal present in RUN_LOCAL_COMPLETION.ps1 on main now (we saw yes, from frozen branch fetch). Also check PHASE3/PREPARE on main for CJK literals quickly? Enough evidence already.
+Additional audit items to verify quickly:
+PR #27: source_tree_immutability.py new script; check its content briefly for soundness.
+Candidate freeze timing, etc. are design judgments.
+Let me fetch the immutability script and check the phase3 workflow skip conditions (candidate/final-series skipped in PR #27 checks — because workflow_dispatch only?). The skip pattern: "candidate-inputs success, build-candidate skipped" — likely gated on labels or workflow inputs. Fine.
+Also want to double check Issue #1 checked items for over-claim: from body, checked includes "管理者権限要求がないこと" (C-3) citing run 20261105T133102Z_d018dc3c — that run, per 基準点, was hosted? It says "標準ユーザー実機Run". Hmm, the 基準点 calls it "最新実機Run" — but then later the route says hosted Windows ≠ user machine. This run is ambiguous; per Issue #1's own annotation it's a real-machine run that reached fresh START_QA selftest and real Godot. But wait — that run is from PR #23-era code (Nov 5, 13:31Z). Under the current restructured route, that evidence belongs to the superseded route; can't be reused for the new Candidate. So C-3 checkbox evidence is tied to a superseded candidate too.
+Also potential false positives: "Windows JOIN実行 PASS" and "Windows fresh extract acceptance PASS" (G section) — checked based on hosted Actions. The issue body itself acknowledges hosted ≠ user real machine, yet those G checkboxes are checked based on hosted evidence. Over-claim per their own standard? G says "Windows JOIN実行 PASS" — arguably hosted Windows JOIN is acceptable evidence for JOIN itself; but "実ゲームE2E 3/3 PASS" was on Final Candidate 1609669c which is now superseded (post-restructure new Candidate required). So the E2E 3/3 and A-B-A checks are stale relative to the current main. Let me confirm which G items are checked by scanning the full issue body section G. From unchecked list, G unchecked are only Management/Sales/Rollback. So "実ゲームE2E 3/3 PASS" and "A-B-A差替え PASS" are CHECKED — anchored to Candidate 1609669c, which is no longer the current Source's Candidate (main has since changed: PR #26/#28, and a new Candidate must be re-frozen). Their own rule: "過去のFinal Candidate / A-B-A成功は、変更後CandidateのFinal受入証拠へ自動再利用しない" → these two checkboxes are now effectively stale/over-claimed relative to current main. Good finding.
+Let me quickly verify the immutability script content, and then also check whether the PR #27 checks on head included phase3 candidate build (skipped). Then write the audit. Also verify run_series.py / FINAL_SERIES_PLAN exist (referenced in preflight). Not necessary.
+One more: PR #29 "parse" failure — worth verifying which step. Try the API checks via open_url on api? rate-limited. Skip; mark unconfirmed.
+Also check: does RUN_LOCAL_COMPLETION.ps1 include the CJK literal also inside Assert (PR29) - yes.
+Now also examine "prepared source fingerprint changed 53fe→e496" (PR #27 motivation): regression mutating input — likely pycache (they strip it) or the fingerprint including evidence outputs written into source tree. PR #27 snapshots before regression, removes bytecode caches, compares. Reasonable.
+Let me fetch source_tree_immutability.py briefly.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Opened pageraw.githubusercontent.com
+
+
+
+
+
+
+
+
+
+Thought for 30s
+I now have enough for the audit. Let me also quickly verify a couple of remaining claims I might reference:
+The workflow "phase3-windows-candidate-build" — the "candidate" checks skipped on PR #27 head. That means on PR #27 the actual candidate build path (Phase 3) was NOT run — only Phase-2 source tests. So PR #27's invariant is CI-tested in Phase-2 fast path, and Phase-3 wiring is unverified until a real candidate build. Check why skipped: probably requires workflow_dispatch or labels. Mark as fact: candidate-build job skipped on PR head; PR #27's Phase-3 additions are not yet executed evidence.
+
+Verify whether OCR remains unimplemented (issue #25 comment confirms as of Nov 6: "OCRは現物Recovery Sourceでも既知未実装"). Good — cite as repo-confirmed.
+
+Issue #1 checked-item count 127/22 = 149? Body says 127 checked / 22 unchecked.
+
+Now, response language: the user wrote in Japanese → respond in Japanese.
+Now compose the audit. Structure A–K per request. Keep reasonably dense but organized. Include links to sources (GitHub URLs). Format citations as markdown links. Since these are GitHub items, I can link directly to the issue/PR URLs. Use inline links.
+Key findings to deliver:
+Root cause (structural, highest-value): The repeated TRANSFER_MANIFEST_MISSING entry stops are, with high confidence, the PS 5.1 non-ASCII literal misread defect class that PR #19 already identified and fixed (UTF-8 no-BOM script + Windows PowerShell 5.1 + ANSI codepage → '開発版' literal mojibake → Test-Path fails). PR #26's Route B reintroduced non-ASCII repo-relative literals ('開発版/transfer/TRANSFER_MANIFEST.json', '開発版/source/scripts/PREPARE_SOURCE.ps1', etc.) into the runner. Evidence: manifest exists in frozen branch (verified via raw fetch), fresh extraction still failed, PR #19 body explicitly documents this exact failure mode ("misread non-ASCII path literals in UTF-8 scripts" causing pre-JOIN stop), and current main's runner contains those CJK literals. This is inference (high confidence) — not directly measured; the stopped-run logs would confirm (mojibake in error message or summary path). PR #29 does NOT fix this: Assert-RealMachineHandoff uses the same CJK literals, so on the user machine it will likely report TRANSFER_MANIFEST_MISSING again from preflight. Also PR #29's parse check currently fails (unverified which step) — under the very PS5.1 workflow designed to gate this file.
+Note: I must be careful: it's possible the file has BOM and something else is the cause (extraction, path). Mark as "最有力仮説(未実証)" with the verification step: dump the exact bytes of the path the failing Test-Path used / check BOM of the .ps1 in the user's extraction; have the preflight print the resolved path bytes. PR #29's aggregation would help, but it should also print the resolved candidate path and the directory listing of the repo root. Actually a simpler permanent fix: make all handoff entry ASCII (either rename 開発版 → ASCII, or resolve the manifest by structural discovery like PR #19, or add BOM to .ps1 and enforce in CI, or run under pwsh). Structural recommendation: (1) commit .ps1 as UTF-8 with BOM and add a CI assertion for BOM; (2) avoid CJK literals at the entry boundary via discovery or via a single ASCII-named pointer file (e.g., HANDOFF_ROOT.txt) — but renames would churn; discovery was PR #19's approach and worked. Best: BOM enforcement + PS5.1 contract test that actually resolves the real manifest path on a checked-out tree (CI does check out the repo with real CJK dirs, so a contract test asserting Assert-RealMachineHandoff passes against the repo checkout under PS5.1 would have caught this — on en-US runner it fails the same way since mojibake occurs regardless of codepage when no BOM. Wait — does it? If UTF-8 no BOM, PS5.1 reads using ANSI codepage; on en-US CP1252 the CJK chars become different mojibake, Test-Path still fails. So yes, a CI test exercising the real path under PS5.1 would catch it on any runner. The current syntax workflow's discovery contract test evidently does not exercise the actual CJK manifest path → that's the CI boundary gap.
+Actually hold on — why does main's syntax workflow (run #97) pass? Because its three contract tests (native-process, evidence-export, repository-discovery) don't touch the real 開発版 tree (sparse checkout only includes RUN_LOCAL_COMPLETION files! sparse-checkout only RUN_LOCAL_COMPLETION.ps1/cmd). So the repo tree with 閔発版 isn't even present. Definite CI gap: the only PS5.1 job uses a sparse checkout without the CJK directories, so the entry-path defect is structurally invisible to CI. Excellent, that's confirmed from the workflow YAML.
+Verdict: RESTRUCTURE (current strategy already restructured; but I'd say: ACCEPT the Route B direction with one specific structural repair — or "RESTRUCTURE" with the note that the current restructure is directionally right but contains a self-reintroduced defect). Given options ACCEPT CURRENT STRATEGY / RESTRUCTURE / REPLACE: I'd say RESTRUCTURE (targeted): the 6-stage semantics and route B are sound; the entry boundary defect is a regression of a known defect class; PR #29 is diagnosis-only and currently red; PR #27 adopt. Confidence ~0.7.
+Completion-route defects (G):
+CI boundary gap: PS5.1 syntax job sparse-checkouts only the runner files → cannot catch entry-path/encoding defects; skipped candidate jobs on PRs → heavy path unexercised until real machine.
+Known defect class regression: Route B replaced PR #19's encoding-safe discovery with CJK literals without an encoding contract.
+Handoff boundary not proven before real-machine consumption: user machine used as the first place the entry path ever executes end-to-end (violates Issue #25's own "user real-machine runを開発ループとして使わない" rule — actually they did say they'd stop that, but runs #2/#3 happened after PR #26 with no CI job reproducing the full entry).
+Evidence reuse discipline is good, but checkbox anchoring: E2E 3/3, A-B-A checked against superseded Candidate 1609669c — per their own no-reuse rule these are stale until new freeze; also Windows JOIN / fresh extract checked on hosted runners.
+Observer-unprovable requirements: Registry "no persistent change" only covers PATH snapshot; complete registry write audit absent (PR #28 admits). "完全offline" via adapter enumeration; "ネット接続要求がないこと" - network snapshot NOT_MEASURED in 3rd run due PS argument bug — actually their own comment says network observation failed due PowerShell argument-type mismatch. So offline evidence capability is itself broken on the target env — another PS5.1/PS7 compat class issue (Get-NetAdapter vs argument type). Hmm — Get-NetIPAddress etc fine; the "argument-type mismatch" they observed. Whatever — noted as: the offline observer itself is not yet proven to run on the user machine.
+PR #27 audit: adopt. It closes a real provenance hole (fingerprint mismatch 53fe→e496 observed post-#26). Caveats: only Phase-2 path runs in CI (phase-3 candidate job skipped on the PR), so Phase-3 wiring remains unexercised until next candidate build; snapshot cost is fine. Also the invariant should be added to the local RUN_LOCAL_COMPLETION route too (it currently only patches CI workflows) — partial adoption recommendation: also wire into RUN_LOCAL_COMPLETION.ps1 stage 2/3.
+PR #29 audit: partial adopt. Aggregated preflight is right; but as written it (a) re-uses the same CJK literals → likely reproduces TRANSFER_MANIFEST_MISSING on the user machine rather than revealing the true missing-input state; (b) its parse check currently FAILS (which step unverified) → not mergeable as-is; (c) it's primarily diagnostic improvement, not completion-route improvement — it does not make the handoff correct, it makes failure legible. Adopt after: encoding fix, PS5.1 contract test with full checkout that executes Assert-RealMachineHandoff against the repo tree, and preflight logging of resolved absolute path + first-level directory listing on failure.
+RUN_LOCAL_COMPLETION as center: yes for technical acceptance, but only after entry-boundary proof moves into CI (hosted preflight executes the same entry code against full tree). Real machine = acceptance stage, not first execution — consistent with their own rule.
+Candidate freeze timing: freeze once, after (i) PR #27 invariants merged and CI green, (ii) entry-boundary defect class fixed and proven under PS5.1 CI contract test, (iii) Source-side resolvable 22-item gaps (matrix tests, sales/management evaluators wiring, OCR decision). Freeze AFTER those; not now, and not after further real-machine debug loops.
+False positives (C):
+"実ゲームE2E 3/3 PASS" & "A-B-A差替え PASS" (G) checked on Candidate 1609669c — superseded by post-#26 main changes; per own no-reuse rule stale.
+"Windows JOIN実行 PASS" / "Windows fresh extract acceptance PASS" — hosted Windows evidence; issue itself disclaims hosted ≠ user machine, but the checkbox doesn't distinguish; borderline over-claim.
+"管理者権限要求がないこと" (C-3) checked via run 20261105T133102Z — that run belongs to superseded route/candidate (PR #23-era), so evidence stale for current route.
+"Stable tree不変/旧Stable未上書き" fine.
+Source363件 PASS claims — verified via Actions run IDs; can't independently re-run; treat as confirmed-by-artifact-reference but unverified by me.
+Remaining-gap audit (D) — map the 22 unchecked per Issue #25's own re-classification plus my verification:
+OCR: confirmed unimplemented (repo comment).
+Windows offline/Registry/PATH: partially implemented observers (PATH snapshot, adapter enumeration), but registry audit incomplete (PR #28 admits), offline observer broke on real machine (NOT_MEASURED).
+Management/Sales gates: evaluators exist (Phase 2 MiniMax) but MANAGEMENT_SIGNAL_ABSENT/SALES_OBSERVATION_INCOMPLETE in final runs → evidence pipeline not producing signals; gate wiring exists, evaluation runs absent. So "implemented but evidence absent" — plus the question whether Management/Sales gates can ever PASS from an automated run: MANAGEMENT_SIGNAL_ABSENT suggests the evaluator requires inputs the current A-B-A runs don't emit. That's a route defect: no defined evidence producer for Management/Sales gates in the Final series.
+Human/Product evidence 30s/5min: proxy evaluation contracts exist; Human NOT_RUN by design → these cannot close without a human protocol. Current design has no defined human-run procedure → "証明不能" unless a concrete human protocol with recording is added.
+Rollback: PR #28 added rollback stage to real-machine run; unexecuted.
+Low-burden intake, generic profiles, storage lifecycle: source tests exist; final evidence pending.
+One-pass completion sequence (I):
+0. Fix entry-boundary encoding defect class + PS5.1 full-checkout contract test (CI proves handoff preflight passes under PS5.1 before any user run).
+Merge PR #27 (with local-runner wiring), keep PR #29 revised.
+Define Management/Sales gate evidence producers and wire them into the Final series plan so their gates produce signals, not MANAGEMENT_SIGNAL_ABSENT.
+Decide OCR: implement minimal OCR path or explicitly contract NOT_RUN (no fake).
+Freeze Candidate once.
+Hosted preflight: full 6-stage dry structure where possible.
+One real-machine run of RUN_LOCAL_COMPLETION (7-stage). If preflight fails → evidence bundle, no code change until root cause identified from bundle.
+Human evidence collection (30s/5min/product test) — separate human protocol.
+Management/Sales readbacks → Product → Stable votes.
+Stop conditions (J):
+Third entry-boundary stop already reached → no more user runs until CI reproduces the entry under PS5.1 full checkout.
+No new real-machine run before preflight PASS proven in CI on the same commit.
+If the next preflight fails with the same class → stop route, replace entry design.
+No Candidate re-freeze loop: freeze once; any post-freeze Source change → documented re-freeze decision, not silent.
+Cap: if two consecutive full real-machine runs fail at different stages post-preflight, escalate to route redesign rather than local patch.
+K: single next internal action: close the CI/real-machine boundary gap: add a PS5.1 full-checkout contract test executing Assert-RealMachineHandoff (post encoding fix) — i.e., fix the encoding defect class and prove entry in CI before any further user run. That's the one thing.
+Now write final answer in Japanese, sections A–K. Include citations: PR #19 body, workflow YAML sparse checkout, frozen branch manifest, Issue #25 comments. Keep moderate length — this is a big deliverable; be thorough but tight. Probably no canvas needed (report in chat). The user asked for audit output in specific format — chat answer.
+Confidence: RESTRUCTURE ~0.72.
+
+
+
+
+
+
+
+
+
+
+
+
+
+外部独立QA監査報告 — FullAutoQA Issue #1 完成ルート
+監査範囲:  Issue #1、 Issue #25、 PR #27、 PR #29、main 17f6f9b / PR #26/#28 merge履歴、workflow定義、frozen branchの実ファイル。read-onlyのみ実施。以下はすべて未検証候補であり、私自身は何も「正式採用/PASS」と認定しない。
+A. Overall verdict
+RESTRUCTURE（限定的・方向は維持、入口境界の再構成必須） — confidence 0.72
+Route B系（ PR #26）の物理分離・manifest-declared input・prepared source fingerprint結合は、Issue #1のDoDを弱めず、方向として妥当。
+ただし現行ルートは「実機入口」で3回連続停止しており、その再発メカニズムが現行コード内で特定可能である（後述B/E/F/G）。ここを閉じない限り、どの完成順序設計も最初のStage 0で立ち往生する。
+REPLACE（runner全面廃棄）の根拠はない。6-stage意味論・run_series.pyのfreeze/A-B-A規律は構造資産として保持すべき。
+B. Evidence integrity findings
+確認済み事実（外部観測で直接確認）
+frozen branch final/issue25-real-machine-freeze-20261107（= main 17f6f9b）に 開発版/transfer/TRANSFER_MANIFEST.json は実在する（raw contentを直接取得し、donor宣言・recovery_source SHA-256を確認済み）。3回目の実機停止時にファイルがgit上に存在しなかった可能性は排除できる。
+ PR #19（merged, Nov 5）の本文は、同一プロジェクト内で過去に全く同じ症状が起き、原因が特定されていたことを記録している:「Windows PowerShell 5.1 misread non-ASCII path literals in UTF-8 scripts … failure occurred before donor JOIN」。
+現行 main の RUN_LOCAL_COMPLETION.ps1 には '開発版/transfer/TRANSFER_MANIFEST.json' 等の非ASCIIパスリテラルが復活している（PR #26の「declared repo-relative path」移行、および PR #29 の preflight必須ファイル群）。PR #26は Route B移行の過程で PR #19が除去した欠陥クラスを再導入した。
+RUN_LOCAL_COMPLETION.cmd は powershell.exe（= Windows PowerShell 5.1）で起動する。唯一 PS5.1 を使うCIジョブ（local-completion-runner-syntax.yml）は sparse-checkout が RUN_LOCAL_COMPLETION.ps1/cmd の2ファイルのみで、開発版/ ツリーを含まない。よってこのCIは入口パス解決を実環境構造に対して一度も実行していない。実機は入口コードが初めて本物のツリーに対して走る場所になっている。
+ PR #28（merged）は rollback を A-B-A 後の Stage 6 へ統合、-RequireOffline を追加。PR #28自身が「complete Registry write auditは未確立」と明記。
+PR #27 head の checks: phase2 source-tests (win/ubuntu) PASS、ただし build-candidate / candidate / final-series / offline-delivery はすべて skipped。PR #27の Phase-3 側追加分は CI上で未実行。
+PR #29 head の checks: parse（PS5.1ジョブ）が failure。source-tests 2件 PASS。どのstepで落ちたかは匿名アクセスではログが切詰められ未確認。PR #29は現状ではPS5.1ゲート自体に赤を出している。
+Issue #1チェックリスト: 127 checked / 22 unchecked（22件の原文は発行体から直接取得・前項分類と一致）。
+Issue #25の戦略コメント内で、OCRは「現物Recovery Sourceでも既知未実装」(ocr=False)、とrepo自身が明示。
+推論（可能性であり実測ではない）
+最有力仮説（confidence ~0.8、未実証）: 3回連続の TRANSFER_MANIFEST_MISSING は PR #19と同一欠陥クラス、すなわち「UTF-8（BOMなし）.ps1 を Windows PowerShell 5.1 がユーザー実機のANSIコードページで読み、開発版 リテラルが化けて Test-Path が偽」による。fresh extractionでも再発する決定論性、frozen branchに実在するファイル、CIのsparse-checkoutでは検出不能、の3点がすべてこの仮説と整合する。ただし私は実機ログを見ていないため断定しない。
+3回目のrunで network_snapshot = NOT_MEASURED（PowerShell引数型不一致）は、offline観測コンポーネント自体が実機環境でまだ一度も動作確認されていないことを意味する。
+未確認
+各実機runの生ログ・summary JSON（LOCAL_FINAL_ACCEPTANCE_20261106T165503Z_fcd800f2 の中身）。
+過去Candidate（1609669c... 等）のActions artifactの実bytes。
+PR #29 parse 失敗の具体的step。
+Issue #1本文に列挙されたActions run ID（41776808108等）の個別jobs成否 — 数字自体はrepoの自己申告。
+C. Issue #1 false-positive audit（checked だが根拠不足が疑われるもの）
+checked 127件のうち、明白な過大認定候補は次の3群。いずれも「チェック自体が嘘」ではなく、証拠の有効期限が切れている問題：
+「実ゲームE2E 3/3 PASS」「A-B-A差替え PASS」 — Candidate 1609669c... にanchorしている。しかし main はその後 PR #26 + PR #28 で変更されており、しかも  Issue #25 自身が「過去のFinal Candidate / A-B-A成功は変更後CandidateのFinal受入証拠へ自動再利用しない」と定めている。自分たちの規則を自分たちのチェックリストに適用すると、この2項は現行mainに対しては未成立であり、checkboxのままだと過大認定になる。再freeze後に再実行されるまで、注記または一時除欄が必要。
+「Windows JOIN実行 PASS」「Windows fresh extract acceptance PASS」 — hosted Windows runner由来。Issue #1本文が「Hosted Windows ≠ ユーザーPC完全offline/非管理者受入」と明記している以上、この2項がhosted証拠でcheckedのまま残るのは表記上の不整合。JOINという技術行為の証拠としては成立するが、「実機受入」欄に隣接して存在すると誤読を誘発する。
+「管理者権限要求がないこと」 — run 20261105T133102Z_d018dc3c を根拠にcheckedだが、このrunは PR #23時代（superseded route）の実行。現行 PR #26/#28 ルートでは未実証であり、上記1と同じく証拠の陳腐化が生じている。
+なお「Stable tree不変」「旧Stable未上書き」等は現時点で矛盾を認めない。
+D. Issue #1 remaining-gap audit（残22項の実態）
+
+  
+    
+      残項目群
+      分類
+      実態
+    
+  
+  
+    
+      Windows完全offline / Registry/PATH恒久変更なし / network不要
+      実装済みだが証拠不足 + 観測自体が実機で未動作
+      PATH snapshot・adapter列挙は実装済み。Registry完全監査は PR #28が未確立と自認。offline観測は3回目runで NOT_MEASURED。実機で観測器が動いた実績がまだない。
+    
+    
+      低負担Target/Profile生成
+      実装済み・受入Evidence待ち
+      target_intake.py + tests。最終評価は新Candidate実運用まで保留が正しい。
+    
+    
+      汎用Profile/Adapter（Godot/Unity/…/EXE）
+      実装済み・matrix test化が PR #26方針として宣言済み、完了未確認
+      「同一data-only Profile contractでmatrix test化」は戦略コメント上の宣言であり、実装の検証は今回の監査範囲外。次のCandidate freeze前にSource testで固定すべき。
+    
+    
+      Black-box OCR
+      本当に未実装
+      repo自身が ocr=False・OculiXはlinkage probeまで、と明示。捏造なしは評価できる。freeze前の決断が必要（最小OCR実装か、Capability NOT_RUN契約化）。
+    
+    
+      Storage lifecycle（保存→変更→再起動→復元 / 破損・旧Version・multi-slot）
+      実装済み・Final Evidence待ち
+      専用testあり（Issue #25分類と一致）。
+    
+    
+      30秒/5分Evidence、操作群確認
+      実装（Sales evaluator contract）・Human評価は設計上まだ手順が存在しない
+      自動Proxy契約はあるが、Human Playtest を「どういう手順・誰が・何を記録するか」が定義されていない。このままでは証明不能であり、要件緩和ではなくHuman protocolの設計が必要（H参照）。
+    
+    
+      Profile順序反転
+      実装済み・Evidence待ち
+      order/binding tests。
+    
+    
+      Cold-start別session / 30秒 / 5分 / 商品説明 / 「何をするゲームか」
+      一部PR #26で追加中、実評価Evidence待ち
+      Evidence-backed audience summary は「追加中」と申报、完了未確認。
+    
+    
+      RESULT/SUMMARY/HTML非技術者可読性
+      Sales communication gateとして契約化済み・Gateが一度も判定を返していない
+      全Final runで SALES_OBSERVATION_INCOMPLETE。
+    
+    
+      Management Gate PASS / Sales Gate PASS
+      設計上の構造問題（G参照）
+      evaluator実装は存在するが、Final seriesが MANAGEMENT_SIGNAL_ABSENT を返し続けている。評価器に入るべき入力をFinal runが生成していない。Gateではなく証拠生産パイプラインが切れている。
+    
+    
+      Rollback可能
+      実装（PR #28で7-stage化）・実行 NOT_RUN
+      Stage 6配置は合理的（A-B-Aをrollback失敗から分離）。実行実績ゼロ。
+    
+  
+
+
+
+
+E. PR #27 audit — 採用（confidence 0.75、条件付き）
+fingerprint不一致（53fe88c4... → e4965d69...）は実測された欠陥であり、prepared sourceの真正性はFinal Candidateのidentity直結項目なので、この不変性契約はFinal Candidate真正性のために必要。単なる診断ではない。
+実装（source_tree_immutability.py）はfail-closed・added/removed/changedを列挙する設計で妥当。__pycache__/.pyc 除外のみを許容する範囲も過剰でない。
+ただし: (1) PR head で build-candidate/final-series が skipped であり、Phase-3側の追加分はCIで一度も実行されていない。mergeはPhase-3 candidate buildが一度greenになるのを確認してから、が本来の順序。(2) CI workflowのみに接続されており、RUN_LOCAL_COMPLETION.ps1 の実機経路に同じ不変性監査が入っていない。実機がprimary acceptance evidenceである以上、ここに入れないとguardの恩恵が実機runに届かない。→ 採用、ただし「local runner側への同契約の組み込み」を併せて条件とする（部分採用的採用）。
+F. PR #29 audit — 部分採用（confidence 0.7）
+aggregated preflight（1つの欠落を次のデバッグ反復にしない）は設計思想として正しい。
+しかし現状のまま実機に載せても同じ境界で止まる可能性が高い: Assert-RealMachineHandoff は '開発版/transfer/TRANSFER_MANIFEST.json' など同じ非ASCIIリテラルで解決しており、B節の仮説が正しければ preflight は実機で再び TRANSFER_MANIFEST_MISSING を報告する。つまり PR #29 は真の入力状態（ファイルはあるがパスが化けている）を明らかにせず、同じ誤報をより整然と出すだけになる。preflight失敗時に「解決済み絶対パスのbytes」「repo root直下の一次階層listing」を出力しない限り、3回目までの失敗と情報量的に変わらない。
+さらに PR #29 head は parse（PS5.1ジョブ）が赤。実機と同じ系のゲートで落ちているPRを実機に送ることは、局所ループの再来そのものである。
+結論: 部分採用 — (a) 失敗時のpath bytes/listing出力を追加、(b) encoding欠陥クラス修正とPS5.1 full-checkout契約テスト（G参照）と同族で統合、(c) parse緑化、の3条件を満たしてから。PR #29は完成経路改善ではなく診断改善である。診断は必要だが、診断だけではIssue #1の残22項は1つも閉じない。
+G. Completion-route defects（構造上の欠陥）
+CI/実機の責任境界に穴がある（最重要）: 唯一のPS5.1 CIは2ファイルsparse-checkoutで実行されるため、入口パス解決が実ツリー構造に対して検証されない。その結果、実機runが「入口コードの初回実行環境」になっている。これは  Issue #25 が自ら禁じた「user real-machine runを開発ループとして使わない」に、意図せず違反している状態。
+欠陥クラスの regression management が存在しない: PR #19が特定・修正した「PS5.1 non-ASCII literal misread」という欠陥クラスを、PR #26が「declared repo-relative path」移行で再導入した。defect-class contract test（Issue #25が宣言したもの）が実際にはこのクラスをカバーしていない。個別の修正は繰り返されているが、修正済み欠陥クラスが再発しない契約が今まで一切の再構成で維持されていない。これが「入口で同じ止まり方を3回」の工程面の根因。
+重いjobがPR上で常に skipped: candidate build / final-series はworkflow gate条件によりPR headで走らない。つまり「Candidate buildに影響する変更」は全て、merge後に初めて実証される。PR #27のPhase-3側がそのまま未実行なのはこの構造の帰結。
+Management/Sales Gateの証拠生産者が不在: evaluatorは存在するのに、Final series runは常に MANAGEMENT_SIGNAL_ABSENT / SALES_OBSERVATION_INCOMPLETE。Gateを要求的側（Issue #1）に置いたまま、証拠を生産する側（Final runのどこにManagement/Salesの入力を記録させるか）が設計されていない。これはGate過剰ではなくパイプライン断絶。
+自己証明の陳腐化がチェックリストに反映されない: C節の通り、superseded Candidateの証拠にanchorしたchecked項がそのまま残る。no-reuse規律は文章としては正しいが、チェックリスト運用に機構化されていない。
+観測器の実機実績ゼロ: offline/network観測コンポーネントは実機で一度も正常動作していない（3回とも入口で停止、3回目は観測自体も失敗）。「完全offline PASS」を閉じる装置の実機動作証明が、実機受入より前に必要。
+H. Recommended final architecture
+text
+Copy
+
+Source (repo) ── freeze ──> Candidate identity
+   │                            │
+   │ CI (hosted): source regression + immutability(PR#27)
+   │            + PS5.1 ENTRY CONTRACT: full checkoutに対し
+   │              Assert-RealMachineHandoffを実行(同じcommitで)
+   ▼                            ▼
+Runner (RUN_LOCAL_COMPLETION, 7-stage)  ← 実行環境はPS5.1契約済みの同一コード
+   │ Stage0 preflight → donor JOIN → build → regression → selftest
+   │ → A-B-A → rollback → environment readback
+   ▼
+Evidence (repo外 sibling, sealed: RunID+manifest SHA)
+   │
+   ├── Management入力: Run単位の資源計測・再現性・運用負担サマリ（Final series planが生成を担う）
+   ├── Sales入力: 30秒/5分Evidence + audience summary（同一Runから機械生成）
+   ▼
+3総本山 Gate（独立・NOT_RUN隠蔽なし）
+   → Product Acceptance（Human protocolの実測を含む）→ Stable
+
+
+
+
+責任分離の要点：
+CI = 証明不能な環境差を潰す場所（encoding, PS5.1, path長, entry解決）。実機は検証環境ではなく受入環境。
+Candidate freeze = identityの一点凍結。freeze後にSourceが変われば再freezeは明示的决策としてのみ行う。
+Evidence = repo外・sealed（PR #26で成立済み、維持）。
+Human = 自動Proxyと別の、手順書化された記録収集（30秒/5分評価の採点者・記録形式・session分離を、機械が撮った録画と紐付ける）。Human未実施を自動PASSにしない現行規律はそのまま。
+I. One-pass completion sequence
+入口境界の封鎖: encoding欠陥クラスの修正（.ps1 のBOM強制 or ASCII-only解決 or PR #19型discoveryの復活）+ PS5.1 full-checkout 契約テスト追加（同commitで Assert-RealMachineHandoff が実ツリーにPASSするまで実機run禁止）。PR #29はここに統合。
+PR #27 をmerge（local runner側にも同不変性監査を接続）。Phase-3 candidate build の skipped問題もこの機会に見直し（PR headでも軽量build-path契約を走らせる）。
+Management/Salesの証拠生産者をFinal series planに接続し、MANAGEMENT_SIGNAL_ABSENT が出ない run をhostedで1回作る。
+OCR決断：最小OCR実装か、Capability NOT_RUN契約の明文化（fake禁止のまま）。
+Candidateを一度だけfreeze（Size/SHA-256/ prepared_source_fingerprint 記録）。
+hosted preflight全緑 → 実機1回だけ RUN_LOCAL_COMPLETION.cmd（offline・非admin・fresh extraction）。preflight失敗時は証拠bundle解析まで一切コード変更しない。
+Human protocol実施（30秒/5分/product test、別session・録画紐付）。
+Management/Sales/Product → Stable 判定 → Issue #1 checklist の checked/unchecked を新Candidate証拠に再anchor。
+J. Stop conditions
+即時停止（既に成立）: 同一実機入口停止が3回。よって「CIで同commitの入口契約が緑になる前の実機run」は今後一切禁止。4回目は根拠なく、必ず同じ結果になる。
+preflight失败時に「原因特定に足る新情報（解決済みpath bytes・listing）が出ないpreflight」を再度実機へ送ることを禁止。
+freeze後のSource変更を伴う修正を、Issue #1完了前に2回以上行った場合 → それは局所ループの再開なので、route再設計に強制昇格。
+実機full runがpreflight後の別stageで2回連続失敗した場合 → stage単位修正ではなくroute単位の分析（Issue #25コメント欄）を必須とする。
+MANAGEMENT_SIGNAL_ABSENT が新Candidateの全runで出続けた場合 → Gate側でなく証拠生産側の設計欠陥として扱う。
+K. Final recommendation — 次の内部作業を一つに絞る
+「実機入口をCIで証明可能にする」一点に絞る: encoding欠陥クラスを修正し、full checkoutした実ツリーに対して Assert-RealMachineHandoff（PR #29のpreflight、失敗時のpath bytes/listing出力を含む）を Windows PowerShell 5.1 で実行するCI契約テストを追加する。これが緑になるまで、実機再走・Candidate再freeze・他Feature作業（OCR等）はすべて後回し。
+理由: 3回の入口停止は偶然ではなく、PR #19が既に特定した欠陥クラスの再発（confidence ~0.8）が最も整合する。この境界はCIなら分単位・無料で反復でき、実機なら1回ごとに人的コストとEvidence混乱を生む。ここを閉じない限り、PR #27/#29含むすべての修正はStage 0に到達できず、Issue #1の残22項は1項も動かない。逆に、ここを閉じれば現行6/7-stage設計は host CI → 実機1回 → 3総本山Gate という本来の受入形に戻り、DoD到達は工程上可能である。
+
+
+
+
