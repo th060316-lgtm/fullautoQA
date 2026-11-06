@@ -13,7 +13,8 @@ import ipaddress
 import subprocess
 from pathlib import Path
 
-from common import archive_eligible, inside, tree_size, write_json
+from common import archive_eligible, inside, read_json, tree_size, write_json
+from audience_summary import build_audience_summary, render_audience_summary
 
 
 def _identity_snapshot(prepared):
@@ -399,7 +400,24 @@ def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
     management = build_management_evidence(
         e=e, sessions=sessions, results=results, run_mode=run_mode, prepared=prepared
     )
+
+    packet_path = Path(e.root) / "player_review_packet.json"
+    if packet_path.is_file():
+        audience = build_audience_summary(read_json(packet_path), "player_review_packet.json")
+    else:
+        audience = build_audience_summary({}, "player_review_packet.json")
+    write_json(Path(e.root) / "audience_summary.json", audience)
+    (Path(e.root) / "AUDIENCE_SUMMARY.txt").write_text(
+        render_audience_summary(audience), encoding="utf-8"
+    )
+
     sales = build_sales_evidence(e=e, sessions=sessions, results=results, run_mode=run_mode)
+    sales["audience_summary"] = audience
+    sales["audience_summary_evidence"] = [
+        "audience_summary.json",
+        "AUDIENCE_SUMMARY.txt",
+    ] if audience.get("status") == "GENERATED" else ["audience_summary.json"]
+
     write_json(Path(e.root) / "management_evidence.json", management)
     write_json(Path(e.root) / "sales_evidence.json", sales)
     return [
@@ -407,4 +425,6 @@ def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
         "phase3_preseal_integrity.json",
         "management_evidence.json",
         "sales_evidence.json",
+        "audience_summary.json",
+        "AUDIENCE_SUMMARY.txt",
     ]
