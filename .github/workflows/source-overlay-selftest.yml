@@ -168,6 +168,14 @@ jobs:
           $integrity=Join-Path $env:DIAG_OUT 'FRESH_PACKAGE_INTEGRITY.json'
           & $python -B -E -s (Join-Path $fresh 'scripts/package_integrity.py') --root $fresh --full-payload --require-fresh-marker --json-out $integrity
           if($LASTEXITCODE -ne 0){throw "FRESH_PACKAGE_INTEGRITY_FAILED:$LASTEXITCODE"}
+
+          # Preserve the native-fixture fault-isolation regression that the old
+          # overlay workflow performed.  The test now runs against the freshly
+          # rebuilt Candidate instead of an expired historical artifact.
+          $nativeEvidence=Join-Path $env:DIAG_OUT 'native_fixture_regression'
+          & $python -B -E -s (Join-Path $fresh 'TESTS/probe_native_fixture_faults.py') --root $fresh --evidence $nativeEvidence
+          if($LASTEXITCODE -ne 0){throw "NATIVE_FIXTURE_FAULT_REGRESSION_FAILED:$LASTEXITCODE"}
+
           Push-Location $fresh
           try{
             & cmd.exe /d /c 'START_QA.cmd -SelfTest' 2>&1 | Tee-Object (Join-Path $env:DIAG_OUT 'SELFTEST.log')
@@ -175,6 +183,22 @@ jobs:
           }finally{Pop-Location}
           "$code" | Set-Content -LiteralPath (Join-Path $env:DIAG_OUT 'SELFTEST_EXIT.txt') -Encoding ASCII
           if($code -ne 0){throw "SELFTEST_REQUIRED_NONPASS:$code"}
+
+          # Also keep the old workflow's bundled-tool regression: the complete
+          # Source suite must pass with the Candidate's own Python and bundled
+          # encoder path, not only with the hosted runner's Python.
+          $ffmpeg=@(Get-ChildItem (Join-Path $fresh 'RUNTIME') -Recurse -Filter ffmpeg.exe)
+          $ffmpegDirs=@($ffmpeg | ForEach-Object { $_.DirectoryName } | Select-Object -Unique)
+          if($ffmpegDirs.Count -eq 0){throw 'BUNDLED_ENCODER_NOT_PREPARED'}
+          $oldPath=$env:PATH
+          try{
+            $env:PATH=($ffmpegDirs -join ';')+';'+$oldPath
+            & $python -B -E -s -m unittest discover -s (Join-Path $fresh 'TESTS') -v 2>&1 | Tee-Object (Join-Path $env:DIAG_OUT 'BUNDLED_SOURCE_TESTS.log')
+            if($LASTEXITCODE -ne 0){throw "BUNDLED_SOURCE_TESTS_FAILED:$LASTEXITCODE"}
+          }finally{
+            $env:PATH=$oldPath
+          }
+
           [ordered]@{
             schema_version=1
             scope='INDEPENDENT_REBUILD_FROM_PRESERVED_DONOR_AND_CURRENT_SOURCE'
@@ -182,7 +206,9 @@ jobs:
             candidate_size=[long]$env:CANDIDATE_SIZE
             candidate_sha256=$env:CANDIDATE_SHA256
             package_integrity='PASS'
+            native_fixture_fault_regression='PASS'
             selftest='PASS'
+            bundled_source_regression='PASS'
             product_acceptance='HOLD'
             stable='HOLD'
             real_game_e2e='NOT_RUN'
@@ -198,6 +224,7 @@ jobs:
             _source_rebuild_diagnostic/*.json
             _source_rebuild_diagnostic/*.log
             _source_rebuild_diagnostic/*.txt
+            _source_rebuild_diagnostic/native_fixture_regression/**
             _source_rebuild_diagnostic/build/PHASE3_CANDIDATE_IDENTITY.json
             _source_rebuild_diagnostic/build/PHASE3_CANDIDATE_BUILD_REPORT.json
           if-no-files-found: warn
