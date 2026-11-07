@@ -7,7 +7,8 @@ param(
   [Parameter(Mandatory=$true)][string]$SourceRoot,
   [Parameter(Mandatory=$true)][string]$OutputDir,
   [string]$CandidateName='FullAutoQA_PHASE3_CANDIDATE.zip',
-  [string]$SourceBaseline=''
+  [string]$SourceBaseline='',
+  [string]$ManifestRegenerator=''
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
@@ -125,7 +126,12 @@ try {
     $overlaid += $_.Name
   }
 
-  $regen=Join-Path $work 'scripts\PHASE3_REGEN_MANIFEST.ps1'
+  if ([string]::IsNullOrWhiteSpace($ManifestRegenerator)) {
+    $regen=Join-Path $work 'scripts\PHASE3_REGEN_MANIFEST.ps1'
+  } else {
+    $regen=[IO.Path]::GetFullPath($ManifestRegenerator)
+  }
+  if (-not (Test-Path -LiteralPath $regen -PathType Leaf)) { throw 'MANIFEST_REGENERATOR_MISSING' }
   & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $regen -Tree $work
   if ($LASTEXITCODE -ne 0) { throw ('MANIFEST_REGEN_FAILED:'+ $LASTEXITCODE) }
 
