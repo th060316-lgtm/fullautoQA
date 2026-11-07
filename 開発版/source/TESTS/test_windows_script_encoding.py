@@ -23,6 +23,7 @@ from pathlib import Path
 #: The repository source-root directory name.  It is deliberately NOT spelled
 #: out here: the point of the contract is that no script may depend on it.
 SOURCE_ROOT_NAME = '開発版'
+HISTORICAL_SNAPSHOT_PARTS = (SOURCE_ROOT_NAME, 'rollback', 'predecessor_23e0f380', 'snapshot')
 
 
 def _find_repository_root():
@@ -39,6 +40,12 @@ def _iter_scripts():
     seen = set()
     for path in REPO_ROOT.rglob('*.ps1'):
         if '.git' in path.parts:
+            continue
+        relative_parts = path.relative_to(REPO_ROOT).parts
+        if relative_parts[:len(HISTORICAL_SNAPSHOT_PARTS)] == HISTORICAL_SNAPSHOT_PARTS:
+            # Exact historical blobs are rollback payload data.  The rollback
+            # entrypoint must execute the current ASCII-safe builder helpers,
+            # never these archived build scripts directly.
             continue
         resolved = path.resolve()
         if resolved in seen:
@@ -89,6 +96,17 @@ class WindowsScriptEncodingContractTests(unittest.TestCase):
                              text,
                              '%s writes the non-ASCII source-root name literally; the source '
                              'root must be discovered structurally' % path.name)
+
+    @unittest.skipIf(REPO_ROOT is None,
+                     'the repository checkout is not present (prepared Source tree)')
+    def test_historical_snapshot_scripts_are_payload_not_host_entrypoints(self):
+        source_root = REPO_ROOT / SOURCE_ROOT_NAME
+        rollback = source_root / 'rollback' / 'RESTORE_PREDECESSOR.ps1'
+        text = rollback.read_text(encoding='utf-8')
+        self.assertIn('$builder=[string]$entries.rebuild_script', text)
+        self.assertIn('-ManifestRegenerator $manifestRegenerator', text)
+        self.assertIn('$fingerprintScript=[string]$entries.fingerprint_script', text)
+        self.assertNotIn("Join-Path $historicalSource 'scripts/PHASE3_OVERLAY_REBUILD.ps1'", text)
 
     @unittest.skipIf(REPO_ROOT is None,
                      'the repository checkout is not present (prepared Source tree)')
