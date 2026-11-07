@@ -16,6 +16,7 @@ param(
   [switch]$RepositoryDiscoveryContractTest,
   [switch]$RepositoryEntryContractTest,
   [switch]$PreparedBaselineContractTest,
+  [switch]$EnvironmentMonitorContractTest,
   [switch]$RequireOffline,
   # Optional cold-start review evidence (human or validated proxy) that the
   # Sales headquarters consumes.  A model proxy is never promoted to a human
@@ -47,9 +48,12 @@ $SelftestRoot = $null
 $ControllerRoot = $null
 $SeriesOut = $null
 $BuildOut = $null
+$EnvironmentMonitor = $null
+$EnvironmentMonitorStartedUtc = $null
+$EnvironmentMonitorFinalized = $false
 
 $Summary = [ordered]@{
-  schema_version = 7
+  schema_version = 8
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
@@ -88,7 +92,12 @@ $Summary = [ordered]@{
   # The current observer is intentionally bounded, so it must not promote its
   # narrower before/after comparison into these Issue #1 claims.
   registry_write_audit = 'NOT_MEASURED'
+  registry_write_audit_method = 'continuous RegNotifyChangeKeyValue on HKCU and HKLM subtrees'
   program_files_write_audit = 'NOT_MEASURED'
+  program_files_write_audit_method = 'recursive FileSystemWatcher on every Program Files root'
+  offline_continuous_audit = $(if ($RequireOffline) {'REQUIRED_NOT_YET_VERIFIED'} else {'NOT_REQUIRED'})
+  environment_change_monitor = 'NOT_RUN'
+  environment_change_monitor_evidence = 'ENVIRONMENT_CHANGE_MONITOR.json'
   registry_environment_audit = 'NOT_RUN'
   program_files_top_level_audit = 'NOT_RUN'
   environment_audit_scope = $null
@@ -258,6 +267,425 @@ function Get-NetworkSnapshot {
     }
   } catch {
     return [ordered]@{status='NOT_MEASURED';reason=$_.Exception.Message;up_adapter_count=$null}
+  }
+}
+
+
+function Initialize-EnvironmentChangeMonitorType {
+  if ($null -ne ('FqaEnvironmentChangeMonitor' -as [type])) { return }
+  $source = @'
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
+using System.Threading;
+using Microsoft.Win32;
+
+public sealed class FqaEnvironmentChangeMonitor : IDisposable
+{
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern int RegNotifyChangeKeyValue(
+        IntPtr hKey, bool watchSubtree, uint notifyFilter, IntPtr hEvent, bool asynchronous);
+
+    private const uint REG_NOTIFY_CHANGE_NAME = 0x00000001;
+    private const uint REG_NOTIFY_CHANGE_ATTRIBUTES = 0x00000002;
+    private const uint REG_NOTIFY_CHANGE_LAST_SET = 0x00000004;
+    private const uint REG_NOTIFY_CHANGE_SECURITY = 0x00000008;
+    private const uint REG_NOTIFY_THREAD_AGNOSTIC = 0x10000000;
+
+    private RegistryKey currentUser;
+    private RegistryKey localMachine;
+    private ManualResetEvent currentUserEvent;
+    private ManualResetEvent localMachineEvent;
+    private readonly List<FileSystemWatcher> fileWatchers = new List<FileSystemWatcher>();
+    private Timer networkTimer;
+    private readonly object networkLock = new object();
+    private volatile bool programFilesChanged;
+    private volatile bool programFilesError;
+    private volatile bool networkSeen;
+    private volatile bool networkError;
+    private long networkSamples;
+    private bool networkSubscribed;
+    private bool disposed;
+
+    public bool RegistryReady { get; private set; }
+    public string RegistryError { get; private set; }
+    public bool ProgramFilesReady { get; private set; }
+    public string ProgramFilesErrorDetail { get; private set; }
+    public int ProgramFilesRootCount { get; private set; }
+    public bool NetworkReady { get; private set; }
+    public string NetworkErrorDetail { get; private set; }
+
+    private FqaEnvironmentChangeMonitor(string[] programFilesRoots, bool includeNetwork)
+    {
+        StartRegistry();
+        StartProgramFiles(programFilesRoots);
+        if (includeNetwork) StartNetwork();
+    }
+
+    public static FqaEnvironmentChangeMonitor Create(string[] programFilesRoots, bool includeNetwork)
+    {
+        return new FqaEnvironmentChangeMonitor(programFilesRoots, includeNetwork);
+    }
+
+    private void StartRegistry()
+    {
+        try
+        {
+            currentUser = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default);
+            localMachine = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default);
+            currentUserEvent = new ManualResetEvent(false);
+            localMachineEvent = new ManualResetEvent(false);
+            uint filter = REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_ATTRIBUTES |
+                          REG_NOTIFY_CHANGE_LAST_SET | REG_NOTIFY_CHANGE_SECURITY |
+                          REG_NOTIFY_THREAD_AGNOSTIC;
+            int userResult = RegNotifyChangeKeyValue(
+                currentUser.Handle, true, filter,
+                currentUserEvent.SafeWaitHandle.DangerousGetHandle(), true);
+            int machineResult = RegNotifyChangeKeyValue(
+                localMachine.Handle, true, filter,
+                localMachineEvent.SafeWaitHandle.DangerousGetHandle(), true);
+            if (userResult != 0 || machineResult != 0)
+                throw new InvalidOperationException("REG_NOTIFY_FAILED:" + userResult + ":" + machineResult);
+            RegistryReady = true;
+        }
+        catch (Exception ex)
+        {
+            RegistryReady = false;
+            RegistryError = ex.GetType().Name + ":" + ex.Message;
+        }
+    }
+
+    private void StartProgramFiles(string[] roots)
+    {
+        try
+        {
+            HashSet<string> unique = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (roots != null)
+            {
+                foreach (string raw in roots)
+                {
+                    if (String.IsNullOrWhiteSpace(raw)) continue;
+                    string root = Path.GetFullPath(raw);
+                    if (!unique.Add(root)) continue;
+                    if (!Directory.Exists(root))
+                        throw new DirectoryNotFoundException(root);
+                    FileSystemWatcher watcher = new FileSystemWatcher(root);
+                    watcher.IncludeSubdirectories = true;
+                    watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName |
+                                           NotifyFilters.Attributes | NotifyFilters.Size |
+                                           NotifyFilters.LastWrite | NotifyFilters.CreationTime |
+                                           NotifyFilters.Security;
+                    watcher.InternalBufferSize = 65536;
+                    watcher.Changed += OnProgramFilesChange;
+                    watcher.Created += OnProgramFilesChange;
+                    watcher.Deleted += OnProgramFilesChange;
+                    watcher.Renamed += OnProgramFilesRename;
+                    watcher.Error += OnProgramFilesError;
+                    watcher.EnableRaisingEvents = true;
+                    fileWatchers.Add(watcher);
+                }
+            }
+            ProgramFilesRootCount = fileWatchers.Count;
+            ProgramFilesReady = ProgramFilesRootCount > 0;
+            if (!ProgramFilesReady)
+                ProgramFilesErrorDetail = "PROGRAM_FILES_ROOTS_UNAVAILABLE";
+        }
+        catch (Exception ex)
+        {
+            ProgramFilesReady = false;
+            ProgramFilesErrorDetail = ex.GetType().Name + ":" + ex.Message;
+        }
+    }
+
+    private void OnProgramFilesChange(object sender, FileSystemEventArgs e)
+    {
+        programFilesChanged = true;
+    }
+
+    private void OnProgramFilesRename(object sender, RenamedEventArgs e)
+    {
+        programFilesChanged = true;
+    }
+
+    private void OnProgramFilesError(object sender, ErrorEventArgs e)
+    {
+        programFilesError = true;
+        Exception ex = e.GetException();
+        ProgramFilesErrorDetail = ex == null ? "FILESYSTEM_WATCHER_ERROR" :
+            ex.GetType().Name + ":" + ex.Message;
+    }
+
+    private void StartNetwork()
+    {
+        try
+        {
+            NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
+            NetworkChange.NetworkAvailabilityChanged += OnNetworkAvailabilityChanged;
+            networkSubscribed = true;
+            networkTimer = new Timer(NetworkTimerCallback, null, 0, 250);
+            NetworkReady = true;
+        }
+        catch (Exception ex)
+        {
+            NetworkReady = false;
+            networkError = true;
+            NetworkErrorDetail = ex.GetType().Name + ":" + ex.Message;
+        }
+    }
+
+    private void OnNetworkAddressChanged(object sender, EventArgs e)
+    {
+        SampleNetwork();
+    }
+
+    private void OnNetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e)
+    {
+        SampleNetwork();
+    }
+
+    private void NetworkTimerCallback(object state)
+    {
+        SampleNetwork();
+    }
+
+    private void SampleNetwork()
+    {
+        if (disposed) return;
+        lock (networkLock)
+        {
+            try
+            {
+                foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (nic.OperationalStatus != OperationalStatus.Up) continue;
+                    IPInterfaceProperties properties = nic.GetIPProperties();
+                    foreach (UnicastIPAddressInformation info in properties.UnicastAddresses)
+                    {
+                        IPAddress ip = info.Address;
+                        if (ip == null) continue;
+                        if (!IPAddress.IsLoopback(ip) &&
+                            !ip.Equals(IPAddress.Any) &&
+                            !ip.Equals(IPAddress.IPv6Any))
+                        {
+                            networkSeen = true;
+                        }
+                    }
+                }
+                Interlocked.Increment(ref networkSamples);
+            }
+            catch (Exception ex)
+            {
+                networkError = true;
+                NetworkErrorDetail = ex.GetType().Name + ":" + ex.Message;
+            }
+        }
+    }
+
+    public bool RegistryChanged
+    {
+        get
+        {
+            if (!RegistryReady || currentUserEvent == null || localMachineEvent == null) return false;
+            return currentUserEvent.WaitOne(0) || localMachineEvent.WaitOne(0);
+        }
+    }
+
+    public bool ProgramFilesChanged { get { return programFilesChanged; } }
+    public bool ProgramFilesError { get { return programFilesError; } }
+    public bool NetworkAddressObserved { get { return networkSeen; } }
+    public bool NetworkError { get { return networkError; } }
+    public long NetworkSampleCount { get { return Interlocked.Read(ref networkSamples); } }
+
+    public void Dispose()
+    {
+        if (disposed) return;
+        disposed = true;
+        if (networkSubscribed)
+        {
+            NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
+            NetworkChange.NetworkAvailabilityChanged -= OnNetworkAvailabilityChanged;
+            networkSubscribed = false;
+        }
+        if (networkTimer != null) { networkTimer.Dispose(); networkTimer = null; }
+        foreach (FileSystemWatcher watcher in fileWatchers)
+        {
+            try { watcher.EnableRaisingEvents = false; } catch { }
+            watcher.Dispose();
+        }
+        fileWatchers.Clear();
+        if (currentUserEvent != null) { currentUserEvent.Dispose(); currentUserEvent = null; }
+        if (localMachineEvent != null) { localMachineEvent.Dispose(); localMachineEvent = null; }
+        if (currentUser != null) { currentUser.Dispose(); currentUser = null; }
+        if (localMachine != null) { localMachine.Dispose(); localMachine = null; }
+    }
+}
+'@
+  Add-Type -TypeDefinition $source -Language CSharp -ErrorAction Stop
+}
+
+function Start-EnvironmentChangeMonitor {
+  Initialize-EnvironmentChangeMonitorType
+  $roots=New-Object 'System.Collections.Generic.List[string]'
+  foreach ($name in @('ProgramFiles','ProgramFiles(x86)','ProgramW6432')) {
+    $value=[Environment]::GetEnvironmentVariable($name)
+    if (-not [string]::IsNullOrWhiteSpace($value) -and -not $roots.Contains($value)) {
+      $roots.Add($value)
+    }
+  }
+  return [FqaEnvironmentChangeMonitor]::Create([string[]]$roots.ToArray(),$true)
+}
+
+function Complete-EnvironmentChangeMonitor {
+  if ($script:EnvironmentMonitorFinalized) { return }
+  $script:EnvironmentMonitorFinalized=$true
+  $ended=[DateTime]::UtcNow.ToString('o')
+  $registryStatus='NOT_MEASURED'
+  $programFilesStatus='NOT_MEASURED'
+  $networkStatus=$(if ($RequireOffline) {'NOT_MEASURED'} else {'NOT_REQUIRED'})
+  $registryReason=$null
+  $programFilesReason=$null
+  $networkReason=$null
+
+  if ($null -eq $script:EnvironmentMonitor) {
+    $registryReason='MONITOR_NOT_STARTED'
+    $programFilesReason='MONITOR_NOT_STARTED'
+    if ($RequireOffline) { $networkReason='MONITOR_NOT_STARTED' }
+  } else {
+    try {
+      if (-not $script:EnvironmentMonitor.RegistryReady) {
+        $registryReason=[string]$script:EnvironmentMonitor.RegistryError
+      } elseif ($script:EnvironmentMonitor.RegistryChanged) {
+        $registryStatus='CHANGED_REQUIRES_REVIEW'
+        $registryReason='REGISTRY_SUBTREE_CHANGE_NOTIFICATION_OBSERVED'
+      } else {
+        $registryStatus='UNCHANGED_CONTINUOUS_HKCU_HKLM_SUBTREE'
+      }
+
+      if (-not $script:EnvironmentMonitor.ProgramFilesReady -or $script:EnvironmentMonitor.ProgramFilesError) {
+        $programFilesReason=[string]$script:EnvironmentMonitor.ProgramFilesErrorDetail
+        if (-not $programFilesReason) { $programFilesReason='PROGRAM_FILES_MONITOR_UNAVAILABLE' }
+      } elseif ($script:EnvironmentMonitor.ProgramFilesChanged) {
+        $programFilesStatus='CHANGED_REQUIRES_REVIEW'
+        $programFilesReason='PROGRAM_FILES_RECURSIVE_CHANGE_EVENT_OBSERVED'
+      } else {
+        $programFilesStatus='UNCHANGED_CONTINUOUS_RECURSIVE_MONITOR'
+      }
+
+      if ($RequireOffline) {
+        if (-not $script:EnvironmentMonitor.NetworkReady -or $script:EnvironmentMonitor.NetworkError) {
+          $networkReason=[string]$script:EnvironmentMonitor.NetworkErrorDetail
+          if (-not $networkReason) { $networkReason='CONTINUOUS_NETWORK_MONITOR_UNAVAILABLE' }
+        } elseif ($script:EnvironmentMonitor.NetworkAddressObserved) {
+          $networkStatus='FAIL_EXTERNAL_ADDRESS_OBSERVED'
+          $networkReason='UP_INTERFACE_WITH_NONLOOPBACK_ADDRESS_OBSERVED'
+        } elseif ([long]$script:EnvironmentMonitor.NetworkSampleCount -le 0) {
+          $networkReason='NO_NETWORK_SAMPLES_RECORDED'
+        } else {
+          $networkStatus='PASS_NO_UP_NONLOOPBACK_ADDRESS_OBSERVED_CONTINUOUSLY'
+        }
+      }
+
+      $evidence=[ordered]@{
+        schema_version=1
+        started_utc=$script:EnvironmentMonitorStartedUtc
+        ended_utc=$ended
+        registry=[ordered]@{
+          status=$registryStatus
+          reason=$registryReason
+          ready=[bool]$script:EnvironmentMonitor.RegistryReady
+          changed=[bool]$(if ($script:EnvironmentMonitor.RegistryReady) {$script:EnvironmentMonitor.RegistryChanged} else {$false})
+          scope='HKEY_CURRENT_USER and HKEY_LOCAL_MACHINE, all subkeys, name/attribute/value/security change notifications'
+          method='RegNotifyChangeKeyValue watchSubtree=true; one observed change is sufficient to fail'
+        }
+        program_files=[ordered]@{
+          status=$programFilesStatus
+          reason=$programFilesReason
+          ready=[bool]$script:EnvironmentMonitor.ProgramFilesReady
+          changed=[bool]$script:EnvironmentMonitor.ProgramFilesChanged
+          watcher_error=[bool]$script:EnvironmentMonitor.ProgramFilesError
+          root_count=[int]$script:EnvironmentMonitor.ProgramFilesRootCount
+          scope='all discovered Program Files roots, recursive filesystem notifications'
+          method='FileSystemWatcher IncludeSubdirectories=true; buffer/error is fail-closed'
+        }
+        network=[ordered]@{
+          status=$networkStatus
+          reason=$networkReason
+          required=[bool]$RequireOffline
+          ready=[bool]$script:EnvironmentMonitor.NetworkReady
+          address_observed=[bool]$script:EnvironmentMonitor.NetworkAddressObserved
+          monitor_error=[bool]$script:EnvironmentMonitor.NetworkError
+          sample_count=[long]$script:EnvironmentMonitor.NetworkSampleCount
+          scope='all local network interfaces for the monitored local-completion interval'
+          method='NetworkChange events plus 250ms NetworkInterface polling; any up non-loopback address fails'
+        }
+      }
+      if ($OutRoot) {
+        $evidence | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $OutRoot 'ENVIRONMENT_CHANGE_MONITOR.json') -Encoding UTF8
+      }
+      $script:Summary.registry_write_audit=$registryStatus
+      $script:Summary.program_files_write_audit=$programFilesStatus
+      $script:Summary.offline_continuous_audit=$networkStatus
+      $script:Summary.environment_change_monitor=$(if (
+        $registryStatus -eq 'UNCHANGED_CONTINUOUS_HKCU_HKLM_SUBTREE' -and
+        $programFilesStatus -eq 'UNCHANGED_CONTINUOUS_RECURSIVE_MONITOR' -and
+        ((-not $RequireOffline) -or $networkStatus -eq 'PASS_NO_UP_NONLOOPBACK_ADDRESS_OBSERVED_CONTINUOUSLY')
+      ) {'PASS'} elseif (
+        $registryStatus -eq 'NOT_MEASURED' -or
+        $programFilesStatus -eq 'NOT_MEASURED' -or
+        ($RequireOffline -and $networkStatus -eq 'NOT_MEASURED')
+      ) {'NOT_MEASURED'} else {'FAIL_OR_REVIEW'})
+    } catch {
+      $script:Summary.registry_write_audit='NOT_MEASURED'
+      $script:Summary.program_files_write_audit='NOT_MEASURED'
+      if ($RequireOffline) { $script:Summary.offline_continuous_audit='NOT_MEASURED' }
+      $script:Summary.environment_change_monitor='NOT_MEASURED'
+      if ($OutRoot) {
+        [ordered]@{
+          schema_version=1
+          started_utc=$script:EnvironmentMonitorStartedUtc
+          ended_utc=$ended
+          status='NOT_MEASURED'
+          reason=('MONITOR_READBACK_FAILED:'+$_.Exception.GetType().Name)
+        } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $OutRoot 'ENVIRONMENT_CHANGE_MONITOR.json') -Encoding UTF8
+      }
+    } finally {
+      try { $script:EnvironmentMonitor.Dispose() } catch {}
+      $script:EnvironmentMonitor=$null
+    }
+  }
+}
+
+function Invoke-EnvironmentMonitorContractTest {
+  if ($env:OS -ne 'Windows_NT') { throw 'ENVIRONMENT_MONITOR_CONTRACT_REQUIRES_WINDOWS' }
+  Initialize-EnvironmentChangeMonitorType
+  $root=Join-Path ([IO.Path]::GetTempPath()) ('fqa_env_monitor_'+[Guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -LiteralPath $root -Force | Out-Null
+  $monitor=$null
+  try {
+    $monitor=[FqaEnvironmentChangeMonitor]::Create([string[]]@($root),$true)
+    if (-not $monitor.RegistryReady) { throw ('REGISTRY_MONITOR_NOT_READY:'+$monitor.RegistryError) }
+    if (-not $monitor.ProgramFilesReady) { throw ('FILESYSTEM_MONITOR_NOT_READY:'+$monitor.ProgramFilesErrorDetail) }
+    $probe=Join-Path $root 'probe.txt'
+    Set-Content -LiteralPath $probe -Value 'probe' -Encoding ASCII
+    $deadline=[DateTime]::UtcNow.AddSeconds(5)
+    while (-not $monitor.ProgramFilesChanged -and [DateTime]::UtcNow -lt $deadline) {
+      Start-Sleep -Milliseconds 50
+    }
+    if (-not $monitor.ProgramFilesChanged) { throw 'FILESYSTEM_MONITOR_DID_NOT_OBSERVE_CHANGE' }
+    $deadline=[DateTime]::UtcNow.AddSeconds(5)
+    while ([long]$monitor.NetworkSampleCount -le 0 -and [DateTime]::UtcNow -lt $deadline) {
+      Start-Sleep -Milliseconds 50
+    }
+    if (-not $monitor.NetworkReady -or [long]$monitor.NetworkSampleCount -le 0) {
+      throw ('NETWORK_MONITOR_NOT_READY:'+$monitor.NetworkErrorDetail)
+    }
+    Write-Host 'ENVIRONMENT_MONITOR_CONTRACT_PASS'
+  } finally {
+    if ($null -ne $monitor) { $monitor.Dispose() }
+    Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
   }
 }
 
