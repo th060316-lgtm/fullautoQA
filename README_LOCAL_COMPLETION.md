@@ -15,7 +15,7 @@ Optionally, pass the path of a cold-start review file as the first argument:
 
 The file is ingested by the Sales headquarters. A model proxy is never promoted to a human, and a missing or unreadable file is reported as such and never read as a pass.
 
-The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. It does not permanently change PATH or Registry values.
+The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. The route does not intentionally require persistent PATH or Registry changes; acceptance of the stronger "no persistent change" claims depends on the recorded environment evidence and is never inferred from design intent alone.
 
 ## Handoff preflight
 
@@ -55,9 +55,10 @@ A local technical PASS now requires: standard-user execution, Candidate/source/s
 
 - `management_gate` and `sales_gate`: the verdicts of the Management and Sales headquarters, evaluated over the complete A-B-A series. The Management gate needs evidence that the *same target* behaved reproducibly across two independent fresh extractions; a single run can only observe its own seed replay, and the evaluator still refuses that narrower scope. The Sales gate stays NOT_RUN unless a review was ingested; a proxy review adds observations but never sets the human test.
 - `independent_hq_final_verdict`: the combined series-level verdict of those two domains.
-- `registry_write_audit` and `program_files_write_audit`: the persistent-environment observation before and after the series. The scope is stated in the evidence: the Registry observation covers the per-user and machine `Environment` keys only, and the Program Files observation covers the top level of each Program Files root only. A measurement that did not happen is reported as `NOT_MEASURED` and is never reported as unchanged.
+- `registry_write_audit` and `program_files_write_audit`: the unqualified Issue #1 claims. They remain `NOT_MEASURED` unless evidence with the corresponding complete scope exists. The current automated observer deliberately does **not** promote its narrower measurements into these fields.
+- `registry_environment_audit` and `program_files_top_level_audit`: the bounded before/after observations currently implemented. The Registry observation covers the per-user/machine Environment keys and the Program Files observation covers only the top level of each Program Files root. Their exact scope is also recorded in `environment_audit_scope`. A measurement that did not happen is reported as `NOT_MEASURED` and is never reported as unchanged.
 
-`product_acceptance` and `stable` remain `HOLD`, and `human_test` remains `NOT_RUN`, whatever those two gates report.
+`product_acceptance` and `stable` remain `HOLD` throughout this pre-freeze route. `human_test` remains `NOT_RUN` unless validated review evidence identifies a real human reviewer, records a cold-start session with provenance, and the Sales evaluator accepts that evidence. A model/proxy review can never set `human_test=PASS`.
 
 ## Offline observation
 
