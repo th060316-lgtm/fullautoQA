@@ -1,14 +1,36 @@
 # FullAutoQA local final-completion runner.
 # Repository input, transient workspace, and preserved evidence are separate roots.
 # Temporary drive mappings keep operational paths short without requiring fixed drive letters.
+#
+# ASCII-only invariant: this file must never contain a byte above 0x7F.
+# Windows PowerShell 5.1 decodes a BOM-less script with the system ANSI code
+# page, so a non-ASCII literal here is mojibake on a real machine while a
+# hosted PowerShell 7 run still passes.  Every declared input is therefore
+# resolved through the shared entry contract in
+# <source root>/source/scripts/REPOSITORY_ENTRY.ps1, which discovers the
+# source root structurally instead of by a hard-coded directory name.
 [CmdletBinding()]
-param([switch]$NativeProcessContractTest,[switch]$EvidenceExportContractTest,[switch]$RepositoryDiscoveryContractTest,[switch]$RequireOffline)
+param(
+  [switch]$NativeProcessContractTest,
+  [switch]$EvidenceExportContractTest,
+  [switch]$RepositoryDiscoveryContractTest,
+  [switch]$RepositoryEntryContractTest,
+  [switch]$PreparedBaselineContractTest,
+  [switch]$RequireOffline,
+  # Optional cold-start review evidence (human or validated proxy) that the
+  # Sales headquarters consumes.  A model proxy is never promoted to a human
+  # and the absence of the file is never read as a pass.
+  [string]$SalesReviewEvidence=''
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$PhysicalRepoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
+# Captured before the shared contract is dot-sourced: dot-sourcing assigns the
+# dot-sourced script's own $PSScriptRoot into the caller's scope.
+$RunnerDirectory = $PSScriptRoot
+$PhysicalRepoRoot = [IO.Path]::GetFullPath($RunnerDirectory)
 $RunTag = ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '_' + [Guid]::NewGuid().ToString('N').Substring(0,8))
 $SubstExe = Join-Path ([Environment]::GetFolderPath('System')) 'subst.exe'
 $MappedDrive = $null
@@ -27,11 +49,13 @@ $SeriesOut = $null
 $BuildOut = $null
 
 $Summary = [ordered]@{
-  schema_version = 5
+  schema_version = 6
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
+  source_tree_fingerprint_algorithm = 'relative-path-tab-size-tab-sha256; rows ordinal; LF; UTF-8; excludes __pycache__ and .pyc/.pyo'
   prepared_source_fingerprint = $null
+  handoff_preflight = 'NOT_RUN'
   purpose = 'Local Windows Candidate rebuild, selftest, Source regression and fresh A-B-A acceptance without GitHub Actions artifact transfer'
   physical_repository_root = $PhysicalRepoRoot
   logical_repository_root = $null
@@ -40,6 +64,10 @@ $Summary = [ordered]@{
   workspace_drive = $null
   workspace_root = $null
   started_utc = [DateTime]::UtcNow.ToString('o')
+  updated_utc = $null
+  completed_utc = $null
+  failed_utc = $null
+  evidence_export_error = $null
   non_admin_session = $null
   network_snapshot = $null
   network_snapshot_end = $null
@@ -56,6 +84,12 @@ $Summary = [ordered]@{
   persistent_path_status = 'NOT_MEASURED'
   workspace_cleanup = 'NOT_RUN'
   offline_internet_status = $(if ($RequireOffline) {'REQUIRED_NOT_YET_VERIFIED'} else {'USER_MUST_RUN_WITH_EXTERNAL_NETWORK_DISCONNECTED'})
+  registry_write_audit = 'NOT_RUN'
+  program_files_write_audit = 'NOT_RUN'
+  management_gate = 'NOT_RUN'
+  sales_gate = 'NOT_RUN'
+  sales_review_evidence = $null
+  independent_hq_final_verdict = 'NOT_RUN'
   human_test = 'NOT_RUN'
   product_acceptance = 'HOLD'
   stable = 'HOLD'
@@ -65,26 +99,42 @@ $Summary = [ordered]@{
   error = $null
 }
 
-function Get-SHA256([string]$Path) {
-  $stream = [IO.File]::OpenRead($Path)
-  $hash = [Security.Cryptography.SHA256]::Create()
-  try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
-  finally { $hash.Dispose(); $stream.Dispose() }
+function Find-RepositoryEntryModule([string]$Root) {
+  # Bounded, one-level structural discovery of the shared entry contract.
+  # The source root is never named literally, so this works with a non-ASCII
+  # source-root directory name on Windows PowerShell 5.1.
+  $found=New-Object 'System.Collections.Generic.List[string]'
+  foreach($dir in @(Get-ChildItem -LiteralPath $Root -Directory -Force)) {
+    if ($dir.Name -eq '.git') { continue }
+    $candidate=Join-Path $dir.FullName ('source/scripts/REPOSITORY_ENTRY.ps1')
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) { $found.Add($candidate) }
+  }
+  if ($found.Count -ne 1) { throw ('REPOSITORY_ENTRY_MODULE_DISCOVERY_FAILED:'+$found.Count) }
+  return $found[0]
 }
 
-function Resolve-RepositoryRelativePath([string]$Root,[string]$Relative) {
-  if ([string]::IsNullOrWhiteSpace($Relative)) { throw 'DECLARED_REPOSITORY_PATH_EMPTY' }
-  $normalized=$Relative.Replace('/',[IO.Path]::DirectorySeparatorChar)
-  if ([IO.Path]::IsPathRooted($normalized) -or $normalized -match '(^|[\\/])\.\.([\\/]|$)') {
-    throw ('DECLARED_REPOSITORY_PATH_INVALID:'+ $Relative)
-  }
-  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
-  $candidate=[IO.Path]::GetFullPath((Join-Path $rootFull $normalized))
-  if (-not ($candidate.Equals($rootFull,[StringComparison]::OrdinalIgnoreCase) -or
-            $candidate.StartsWith($rootFull+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase))) {
-    throw ('DECLARED_REPOSITORY_PATH_ESCAPE:'+ $Relative)
-  }
-  return $candidate
+$RepositoryEntryModule = Find-RepositoryEntryModule -Root $PhysicalRepoRoot
+. $RepositoryEntryModule
+
+function Get-SHA256([string]$Path) {
+  # The hashing itself lives in the shared entry contract; this keeps the
+  # historical call sites without a second implementation.
+  return (Get-Sha256File -Path $Path)
+}
+
+function Get-SourceTreeFingerprint([string]$Root,[string]$ManifestOut='') {
+  # ONE canonical Source-tree fingerprint implementation
+  # (<source root>/source/scripts/SOURCE_TREE_FINGERPRINT.ps1) is used by the
+  # runner, by the Candidate builder and by CI, so the baseline the runner
+  # binds can never disagree with the tree the builder hashes.
+  $script=Get-SourceTreeFingerprintScript
+  $arguments=@('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$script,'-Root',$Root)
+  if (-not [string]::IsNullOrWhiteSpace($ManifestOut)) { $arguments += @('-ManifestOut',$ManifestOut) }
+  $output=& (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') @arguments
+  if ($LASTEXITCODE -ne 0) { throw ('SOURCE_TREE_FINGERPRINT_FAILED:'+$LASTEXITCODE) }
+  $value=([string](@($output | Where-Object { $_.Trim() })[-1])).Trim().ToLowerInvariant()
+  if ($value -notmatch '^[0-9a-f]{64}$') { throw ('SOURCE_TREE_FINGERPRINT_INVALID:'+$value) }
+  return $value
 }
 
 function Write-Summary {
@@ -116,21 +166,49 @@ function Get-PathSnapshot {
 }
 
 function Get-NetworkSnapshot {
+  # Fail-closed offline observation.
+  #
+  # An address query that fails must never look like "no external address".
+  # Silently continuing on Get-NetIPAddress produced an empty address list,
+  # which was counted as zero up adapters and therefore reported the machine
+  # as offline even though nothing had been observed.  A failed observation is
+  # NOT_MEASURED; it is never a PASS and never an offline claim.
   try {
     $active=New-Object 'System.Collections.Generic.List[object]'
+    $failures=New-Object 'System.Collections.Generic.List[string]'
     foreach ($adapter in @(Get-NetAdapter -IncludeHidden -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' })) {
-      $addresses=@(Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue | ForEach-Object { [string]$_.IPAddress })
+      $addresses=@()
+      $queryFailed=$false
+      try {
+        # Windows PowerShell 5.1 refuses -InterfaceIndex with an Int32 value
+        # ("Argument types do not match"), so the index is cast explicitly.
+        $index=[uint32]$adapter.ifIndex
+        $addresses=@(Get-NetIPAddress -InterfaceIndex $index -ErrorAction Stop | ForEach-Object { [string]$_.IPAddress })
+      } catch {
+        # Only a genuine "this interface has no address" is tolerated, and it
+        # is recognised by the error CATEGORY, which is not localised.  Any
+        # other failure means the observation did not happen and must not be
+        # reported as an offline machine.
+        if ($_.CategoryInfo -and $_.CategoryInfo.Category -eq [Management.Automation.ErrorCategory]::ObjectNotFound) {
+          $addresses=@()
+        } else {
+          $queryFailed=$true
+          $failures.Add('ADDRESS_QUERY_FAILED:'+[string]$adapter.Name)
+        }
+      }
+      if ($queryFailed) { continue }
       $usable=$false
       foreach ($raw in $addresses) {
         $candidate=([string]$raw).Split('%')[0]
         $ip=$null
-        if ([Net.IPAddress]::TryParse($candidate,[ref]$ip)) {
-          if (-not [Net.IPAddress]::IsLoopback($ip) -and
-              -not $ip.Equals([Net.IPAddress]::Any) -and
-              -not $ip.Equals([Net.IPAddress]::IPv6Any)) {
-            $usable=$true
-            break
-          }
+        # [Net.IPAddress]::TryParse with a $null [ref] target raises
+        # "Argument types do not match" under Windows PowerShell 5.1.
+        try { $ip=[Net.IPAddress]::Parse($candidate) } catch { $ip=$null }
+        if ($ip -and -not [Net.IPAddress]::IsLoopback($ip) -and
+            -not $ip.Equals([Net.IPAddress]::Any) -and
+            -not $ip.Equals([Net.IPAddress]::IPv6Any)) {
+          $usable=$true
+          break
         }
       }
       if ($usable) {
@@ -141,6 +219,15 @@ function Get-NetworkSnapshot {
         })
       }
     }
+    if ($failures.Count -gt 0) {
+      return [ordered]@{
+        status='NOT_MEASURED'
+        reason='NETWORK_ADDRESS_QUERY_FAILED'
+        failed_queries=@($failures)
+        up_adapter_count=$null
+        method='windows_powershell_up_adapters_with_nonloopback_ip'
+      }
+    }
     return [ordered]@{
       status='MEASURED'
       up_adapter_count=$active.Count
@@ -148,7 +235,7 @@ function Get-NetworkSnapshot {
       method='windows_powershell_up_adapters_with_nonloopback_ip'
     }
   } catch {
-    return [ordered]@{status='NOT_MEASURED';reason=$_.Exception.Message}
+    return [ordered]@{status='NOT_MEASURED';reason=$_.Exception.Message;up_adapter_count=$null}
   }
 }
 
@@ -211,20 +298,6 @@ function Find-RepositoryFile([string]$Root,[string]$Name,[string[]]$RequiredSibl
 
   if ($matches.Count -ne 1) { throw ('REPOSITORY_FILE_DISCOVERY_FAILED:'+ $Name +':'+ $matches.Count) }
   return $matches[0].FullName
-}
-
-function Get-TreeFingerprint([string]$Root) {
-  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
-  $prefix=$rootFull+[IO.Path]::DirectorySeparatorChar
-  $rows=New-Object 'System.Collections.Generic.List[string]'
-  foreach ($file in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File | Sort-Object FullName)) {
-    $relative=$file.FullName.Substring($prefix.Length).Replace([IO.Path]::DirectorySeparatorChar,'/')
-    $rows.Add(($relative + [char]9 + $file.Length + [char]9 + (Get-SHA256 $file.FullName)))
-  }
-  $bytes=[Text.Encoding]::UTF8.GetBytes(($rows -join [Environment]::NewLine))
-  $alg=[Security.Cryptography.SHA256]::Create()
-  try { return ([BitConverter]::ToString($alg.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() }
-  finally { $alg.Dispose() }
 }
 
 function Copy-TopLevelFiles([string]$Source,[string]$Destination,[switch]$SkipArchives) {
@@ -401,33 +474,125 @@ function Invoke-RepositoryDiscoveryContractTest {
       throw ('REPOSITORY_DISCOVERY_SELECTED_TRANSIENT_TREE:' + $found)
     }
 
-    $source=Get-Content -LiteralPath $PSCommandPath -Raw
-    if ($source -match 'Get-ChildItem\s+-LiteralPath\s+\$rootFull\s+-Recurse\s+-File\s+-Filter') {
-      throw 'REPOSITORY_DISCOVERY_RECURSIVE_PREFILTER_REGRESSION'
-    }
-    $normalizedSource=$source.Replace("`r`n","`n")
-    $mainNeedle="try {`n  if (`$env:OS -ne 'Windows_NT')"
-    $mainIndex=$normalizedSource.IndexOf($mainNeedle,[StringComparison]::Ordinal)
-    if ($mainIndex -lt 0) { throw 'STRATEGIC_ROUTE_MAIN_BLOCK_NOT_FOUND' }
-    $live=$normalizedSource.Substring($mainIndex)
-    if ($live.Contains("Join-Path `$RepoRoot ('.fqa_work_'") -or
-        $live.Contains("Join-Path `$RepoRoot ('LOCAL_FINAL_ACCEPTANCE_'")) {
-      throw 'STRATEGIC_ROUTE_REPOSITORY_OUTPUT_REGRESSION'
-    }
-    if (-not $live.Contains("`$PhysicalWorkRoot = Join-Path ([IO.Path]::GetTempPath())") -or
-        -not $live.Contains("`$WorkDrive = New-RepoDrive `$PhysicalWorkRoot") -or
-        -not $live.Contains("`$WorkRoot = (`$WorkDrive + '\')")) {
-      throw 'STRATEGIC_ROUTE_WORKSPACE_ISOLATION_MISSING'
-    }
-    if ($live.Contains('Find-RepositoryFile -Root $RepoRoot')) {
-      throw 'STRATEGIC_ROUTE_LIVE_REPOSITORY_DISCOVERY_REGRESSION'
-    }
-    if (-not $live.Contains('開発版/transfer/TRANSFER_MANIFEST.json') -or
-        -not $live.Contains('prepared_source_fingerprint') -or
-        -not $live.Contains("'-SourceBaseline',`$Summary.prepared_source_fingerprint")) {
-      throw 'STRATEGIC_ROUTE_DECLARED_INPUT_OR_PROVENANCE_MISSING'
+    # Behavioural entry-contract check on a tree whose source-root directory
+    # name is NOT ASCII.  A hard-coded non-ASCII literal is mojibake under
+    # Windows PowerShell 5.1 (BOM-less scripts are read with the system ANSI
+    # code page), so the source root must be resolved structurally.  The
+    # characters are built from code points so that this test file itself
+    # stays ASCII-only.
+    $nonAsciiName=([string][char]0x958B)+([string][char]0x767A)+([string][char]0x7248)
+    $nonAsciiRoot=Join-Path $testRoot $nonAsciiName
+    New-Item -ItemType Directory -Path (Join-Path $nonAsciiRoot 'source/scripts') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $nonAsciiRoot 'transfer') -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $nonAsciiRoot 'source/scripts/REPOSITORY_ENTRY.ps1') -Value '# contract' -Encoding ASCII
+    Set-Content -LiteralPath (Join-Path $nonAsciiRoot 'transfer/TRANSFER_MANIFEST.json') -Value '{"schema_version":1}' -Encoding ASCII
+    $module=Find-RepositoryEntryModule -Root $testRoot
+    $expectedModule=[IO.Path]::GetFullPath((Join-Path $nonAsciiRoot 'source/scripts/REPOSITORY_ENTRY.ps1'))
+    if ([IO.Path]::GetFullPath($module) -ne $expectedModule) {
+      throw ('REPOSITORY_ENTRY_MODULE_DISCOVERY_SELECTED_WRONG_TREE:' + $module)
     }
     Write-Host 'REPOSITORY_DISCOVERY_CONTRACT_TEST_PASS'
+  } finally {
+    if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue }
+  }
+}
+
+function Initialize-PreparedSource {
+  <#
+    .SYNOPSIS
+      Reconstruct the prepared Source, overlay the acceptance bundle and bind
+      the canonical baseline fingerprint.
+    .DESCRIPTION
+      The baseline MUST be the fingerprint of the real prepared tree AFTER
+      every overlay, because that is the tree the Candidate builder hashes.
+      Hashing before the acceptance bundle is copied in made the runner bind a
+      tree the builder never sees, which fails the SOURCE_BASELINE_MISMATCH
+      check for a reason unrelated to the Source itself.
+
+      The function is shared by the live route and by the behavioural
+      contract, so the contract really exercises the live ordering.
+  #>
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory=$true)][string]$RepositoryRoot,
+    [Parameter(Mandatory=$true)][string]$WorkRoot,
+    [Parameter(Mandatory=$true)][string]$PrepareScript,
+    [Parameter(Mandatory=$true)][string]$AcceptancePlan,
+    [Parameter(Mandatory=$true)][string]$RecoveryArchive,
+    [Parameter(Mandatory=$true)][string]$RecoverySha256
+  )
+  $sourceDestination = Join-Path $WorkRoot 'prepared'
+  $sourceRoot = & $PrepareScript -RepositoryRoot $RepositoryRoot -Destination $sourceDestination -RecoveryArchive $RecoveryArchive -ExpectedRecoverySha256 $RecoverySha256
+  if (-not $sourceRoot -or -not (Test-Path -LiteralPath (Join-Path $sourceRoot 'CORE') -PathType Container)) {
+    throw 'PREPARED_SOURCE_ROOT_INVALID'
+  }
+  $acceptanceSource = Split-Path -Parent $AcceptancePlan
+  $acceptanceDest = Join-Path $sourceRoot 'ACCEPTANCE'
+  if (Test-Path -LiteralPath $acceptanceDest) { Remove-Item -LiteralPath $acceptanceDest -Recurse -Force }
+  Copy-Item -LiteralPath $acceptanceSource -Destination $acceptanceDest -Recurse -Force
+  $baseline = Get-SourceTreeFingerprint $sourceRoot
+  return [ordered]@{
+    source_root = $sourceRoot
+    source_destination = $sourceDestination
+    baseline = $baseline
+  }
+}
+
+function Invoke-RepositoryEntryContractTest {
+  <#
+    .SYNOPSIS
+      Resolve every declared completion-route input against the REAL
+      repository tree, under the interpreter that will run it.
+    .DESCRIPTION
+      This is the behavioural counterpart of the hosted Windows PowerShell 5.1
+      contract job: it proves that the entry contract resolves on the actual
+      checkout - including a source-root directory name that is not ASCII -
+      instead of asserting on the runner's own text.
+  #>
+  if ($env:OS -ne 'Windows_NT') { throw 'REPOSITORY_ENTRY_CONTRACT_TEST_REQUIRES_WINDOWS' }
+  $sourceRootDirectory=Get-RepositorySourceRoot
+  $entries=Get-DeclaredRepositoryEntries -RepositoryRoot $PhysicalRepoRoot -SourceRoot $sourceRootDirectory
+  $problems=Test-DeclaredRepositoryEntries -Entries $entries
+  if ($problems.Count -gt 0) { throw ('REPOSITORY_ENTRY_CONTRACT_FAILED:'+($problems -join ',')) }
+  $actual=Get-Sha256File -Path $entries.recovery_source
+  if ($actual -ne ([string]$entries.recovery_source_sha256).ToLowerInvariant()) {
+    throw ('REPOSITORY_ENTRY_CONTRACT_RECOVERY_SHA_MISMATCH:'+$actual)
+  }
+  $declaredBlocks=$entries.transfer_manifest.latest_complete_candidate.blocks_required
+  if ($declaredBlocks) {
+    $count=@(Get-ChildItem -LiteralPath $entries.donor_blocks -File -ErrorAction Stop).Count
+    if ($count -ne [int]$declaredBlocks) { throw ('REPOSITORY_ENTRY_CONTRACT_DONOR_BLOCK_COUNT:'+$count) }
+  }
+  Write-Host 'REPOSITORY_ENTRY_CONTRACT_TEST_PASS'
+}
+
+function Invoke-PreparedBaselineContractTest {
+  <#
+    .SYNOPSIS
+      Prove that the baseline the runner binds is the fingerprint of the tree
+      the Candidate builder will hash.
+    .DESCRIPTION
+      The contract re-derives the fingerprint of the prepared tree after the
+      acceptance overlay and compares it with the baseline produced by the
+      shared preparation function.  A regression that hashes the tree before
+      the overlay fails this contract instead of failing on the real machine.
+  #>
+  if ($env:OS -ne 'Windows_NT') { throw 'PREPARED_BASELINE_CONTRACT_TEST_REQUIRES_WINDOWS' }
+  $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('fqa prepared baseline ' + [Guid]::NewGuid().ToString('N'))
+  try {
+    New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+    $sourceRootDirectory=Get-RepositorySourceRoot
+    $entries=Get-DeclaredRepositoryEntries -RepositoryRoot $PhysicalRepoRoot -SourceRoot $sourceRootDirectory
+    $prepared=Initialize-PreparedSource -RepositoryRoot $PhysicalRepoRoot -WorkRoot $testRoot `
+      -PrepareScript $entries.prepare_script -AcceptancePlan $entries.acceptance_plan `
+      -RecoveryArchive $entries.recovery_source -RecoverySha256 $entries.recovery_source_sha256
+    $recomputed=Get-SourceTreeFingerprint $prepared.source_root
+    if ($recomputed -ne $prepared.baseline) {
+      throw ('PREPARED_BASELINE_CONTRACT_MISMATCH:bound='+$prepared.baseline+':actual='+$recomputed)
+    }
+    $builderScript=Join-Path $prepared.source_root 'scripts/PHASE3_OVERLAY_REBUILD.ps1'
+    if (-not (Test-Path -LiteralPath $builderScript -PathType Leaf)) { throw 'PREPARED_BASELINE_BUILDER_SCRIPT_MISSING' }
+    Write-Host 'PREPARED_BASELINE_CONTRACT_TEST_PASS'
   } finally {
     if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue }
   }
@@ -604,6 +769,8 @@ function Export-ChatEvidence {
       'EXECUTION_ENVIRONMENT.json',
       'SERIES_RECORDS.json',
       'SERIES_COMPARISON.json',
+      'SERIES_HQ_READBACK.json',
+      'ENVIRONMENT_AUDIT.json',
       'PERSISTENT_ENVIRONMENT_READBACK.json',
       'OPERATION_LOG.json'
     )) {
@@ -650,6 +817,14 @@ if ($RepositoryDiscoveryContractTest) {
   Invoke-RepositoryDiscoveryContractTest
   exit 0
 }
+if ($RepositoryEntryContractTest) {
+  Invoke-RepositoryEntryContractTest
+  exit 0
+}
+if ($PreparedBaselineContractTest) {
+  Invoke-PreparedBaselineContractTest
+  exit 0
+}
 
 try {
   if ($env:OS -ne 'Windows_NT') { throw 'LOCAL_COMPLETION_REQUIRES_WINDOWS' }
@@ -686,25 +861,29 @@ try {
   $Summary.logical_evidence_root = $OutRoot
   $Summary.status = 'RUNNING'
 
+  # --- 0/8 Real-machine handoff preflight -----------------------------------
+  # Every declared input is resolved through the shared entry contract.  The
+  # contract is derived from the repository structure and the transfer
+  # manifest, never from a hard-coded directory name, so it resolves the same
+  # way under Windows PowerShell 5.1 and PowerShell 7.
+  Write-Host '=== 0/8 Real-machine handoff preflight ==='
+  $sourceRootDirectory = Get-RepositorySourceRoot
+  $declaredEntries = Get-DeclaredRepositoryEntries -RepositoryRoot $RepoRoot -SourceRoot $sourceRootDirectory
+  $entryProblems = Test-DeclaredRepositoryEntries -Entries $declaredEntries
+  if ($entryProblems.Count -gt 0) {
+    throw ('REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:' + ($entryProblems -join ','))
+  }
+  $transfer = $declaredEntries.transfer_manifest
+  $Summary.handoff_preflight = 'PASS'
+  Write-Summary
+
   $Summary.network_snapshot = Get-NetworkSnapshot
   $PathBefore = Get-PathSnapshot
   Write-Summary
 
-  $transferManifestPath=Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
-  if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
-  $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-
-  Write-Host '=== 1/7 Reconstruct preserved v0.3.3 donor ==='
-  if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {
-    throw 'DONOR_DECLARATION_MISSING'
-  }
-  $complete = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative ([string]$transfer.latest_complete_candidate.path)
-  $join = Join-Path $complete 'JOIN_COMPLETE.ps1'
-  if (-not (Test-Path -LiteralPath $join -PathType Leaf) -or
-      -not (Test-Path -LiteralPath (Join-Path $complete 'manifest.json') -PathType Leaf) -or
-      -not (Test-Path -LiteralPath (Join-Path $complete 'blocks') -PathType Container)) {
-    throw 'DECLARED_DONOR_INPUT_INVALID'
-  }
+  Write-Host '=== 1/8 Reconstruct preserved v0.3.3 donor ==='
+  $complete = $declaredEntries.donor_root
+  $join = $declaredEntries.donor_join
   $donorRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$join) -WorkingDirectory $complete -LogPath (Join-Path $OutRoot 'DONOR_JOIN.log')
   $donorCode=$donorRun.ExitCode
   if ($donorCode -ne 0) { throw ('DONOR_JOIN_FAILED:' + $donorCode) }
@@ -717,40 +896,22 @@ try {
   $Summary.donor_join='PASS'
   Write-Summary
 
-  Write-Host '=== 2/7 Reconstruct current Source and build Candidate ==='
-  $sourceDestination = Join-Path $WorkRoot 'prepared'
-  $prepare = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/source/scripts/PREPARE_SOURCE.ps1'
-  $rebuildDeclared = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/source/scripts/PHASE3_OVERLAY_REBUILD.ps1'
-  if (-not (Test-Path -LiteralPath $prepare -PathType Leaf) -or -not (Test-Path -LiteralPath $rebuildDeclared -PathType Leaf)) {
-    throw 'DECLARED_SOURCE_BUILD_INPUT_INVALID'
-  }
+  Write-Host '=== 2/8 Reconstruct current Source and build Candidate ==='
+  $prepare = $declaredEntries.prepare_script
+  $rebuildDeclared = $declaredEntries.rebuild_script
+  $plan = $declaredEntries.acceptance_plan
   $checkedOutSourceRoot = Split-Path -Parent (Split-Path -Parent $prepare)
   if (-not (Test-Path -LiteralPath (Join-Path $checkedOutSourceRoot 'CORE') -PathType Container)) { throw 'CHECKED_OUT_SOURCE_ROOT_INVALID' }
-  $Summary.source_tree_fingerprint = Get-TreeFingerprint $checkedOutSourceRoot
+  $Summary.source_tree_fingerprint = Get-SourceTreeFingerprint $checkedOutSourceRoot
   Write-Summary
 
-  if (-not $transfer.recovery_source -or [string]::IsNullOrWhiteSpace([string]$transfer.recovery_source.path) -or
-      [string]::IsNullOrWhiteSpace([string]$transfer.recovery_source.sha256)) {
-    throw 'RECOVERY_SOURCE_DECLARATION_MISSING'
-  }
-  $recoverySource = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative ([string]$transfer.recovery_source.path)
-  $sourceRoot = & $prepare -RepositoryRoot $RepoRoot -Destination $sourceDestination -RecoveryArchive $recoverySource -ExpectedRecoverySha256 ([string]$transfer.recovery_source.sha256)
-  if (-not $sourceRoot -or -not (Test-Path -LiteralPath (Join-Path $sourceRoot 'CORE') -PathType Container)) {
-    throw 'PREPARED_SOURCE_ROOT_INVALID'
-  }
-  $Summary.prepared_source_fingerprint = Get-TreeFingerprint $sourceRoot
+  $recoverySource = $declaredEntries.recovery_source
+  $prepared = Initialize-PreparedSource -RepositoryRoot $RepoRoot -WorkRoot $WorkRoot `
+    -PrepareScript $prepare -AcceptancePlan $plan `
+    -RecoveryArchive $recoverySource -RecoverySha256 $declaredEntries.recovery_source_sha256
+  $sourceRoot = $prepared.source_root
+  $Summary.prepared_source_fingerprint = $prepared.baseline
   Write-Summary
-
-  $plan = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/acceptance_targets/FINAL_SERIES_PLAN.json'
-  if (-not (Test-Path -LiteralPath $plan -PathType Leaf) -or
-      -not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $plan) 'run_series.py') -PathType Leaf) -or
-      -not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $plan) 'RUN_FINAL_ACCEPTANCE.cmd') -PathType Leaf)) {
-    throw 'DECLARED_FINAL_SERIES_INPUT_INVALID'
-  }
-  $acceptanceSource = Split-Path -Parent $plan
-  $acceptanceDest = Join-Path $sourceRoot 'ACCEPTANCE'
-  if (Test-Path -LiteralPath $acceptanceDest) { Remove-Item -LiteralPath $acceptanceDest -Recurse -Force }
-  Copy-Item -LiteralPath $acceptanceSource -Destination $acceptanceDest -Recurse -Force
 
   $BuildOut = Join-Path $WorkRoot 'build'
   New-Item -ItemType Directory -Path $BuildOut -Force | Out-Null
@@ -788,7 +949,7 @@ try {
   $candidate=$persistedCandidate
   Write-Summary
 
-  Write-Host '=== 3/7 Fresh Candidate Source regression ==='
+  Write-Host '=== 3/8 Fresh Candidate Source regression ==='
   $SelftestRoot = Join-Path $WorkRoot 'selftest'
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   $bundledPython = Join-Path $SelftestRoot 'RUNTIME\python\python.exe'
@@ -805,7 +966,7 @@ try {
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$SelftestRoot)
   Set-Content -LiteralPath (Join-Path $SelftestRoot 'PHASE3_FRESH_EXTRACTION.marker') -Value ([Guid]::NewGuid().ToString('N')) -Encoding ASCII
 
-  Write-Host '=== 4/7 Fresh Candidate START_QA selftest ==='
+  Write-Host '=== 4/8 Fresh Candidate START_QA selftest ==='
   $selfRun=Invoke-NativeLogged -FilePath (Join-Path $env:SystemRoot 'System32\cmd.exe') -Arguments @('/d','/c','START_QA.cmd','-SelfTest') -WorkingDirectory $SelftestRoot -LogPath (Join-Path $OutRoot 'START_QA_SELFTEST.log')
   $selfCode=$selfRun.ExitCode
   Export-TransientEvidence
@@ -816,13 +977,21 @@ try {
   Remove-Item -LiteralPath $SelftestRoot -Recurse -Force
   $SelftestRoot=$null
 
-  Write-Host '=== 5/7 Fresh PoliticsTrasport -> codegeas -> PoliticsTrasport ==='
+  Write-Host '=== 5/8 Fresh PoliticsTrasport -> codegeas -> PoliticsTrasport ==='
   $ControllerRoot = Join-Path $WorkRoot 'controller'
   [IO.Compression.ZipFile]::ExtractToDirectory($candidate,$ControllerRoot)
   $controllerPython = Join-Path $ControllerRoot 'RUNTIME\python\python.exe'
   $seriesScript = Join-Path $ControllerRoot 'ACCEPTANCE\run_series.py'
   $SeriesOut = Join-Path $WorkRoot 'series'
   $seriesArgs=@('-B','-E','-s',$seriesScript,'--candidate',$candidate,'--expected-sha',$candidateSha,'--output',$SeriesOut)
+  if (-not [string]::IsNullOrWhiteSpace($SalesReviewEvidence)) {
+    $reviewPath=[IO.Path]::GetFullPath($SalesReviewEvidence)
+    if (-not (Test-Path -LiteralPath $reviewPath -PathType Leaf)) {
+      throw ('SALES_REVIEW_EVIDENCE_MISSING:'+$reviewPath)
+    }
+    $seriesArgs += @('--review-evidence',$reviewPath)
+    $Summary.sales_review_evidence=$reviewPath
+  }
   $seriesRun=Invoke-NativeLogged -FilePath $controllerPython -Arguments $seriesArgs -WorkingDirectory $ControllerRoot -LogPath (Join-Path $OutRoot 'ABA_SERIES.log')
   $seriesCode=$seriesRun.ExitCode
   if (Test-Path -LiteralPath $SeriesOut -PathType Container) {
@@ -847,10 +1016,45 @@ try {
       $Summary.offline_internet_status='NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_ALL_FINAL_RUNS'
     }
   }
+
+  # The series-level headquarters readback.  The per-run domains cannot see
+  # that the same target ran twice, so the Management gate is decided over
+  # the whole A-B-A series and the Sales gate over the ingested review
+  # evidence.  Both verdicts are REPORTED here; they never promote the
+  # technical gate, and Product Acceptance / Stable stay HOLD.
+  $hqReadbackPath=Join-Path $SeriesOut 'SERIES_HQ_READBACK.json'
+  if (Test-Path -LiteralPath $hqReadbackPath -PathType Leaf) {
+    $hqReadback=Get-Content -LiteralPath $hqReadbackPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($hqReadback.PSObject.Properties.Name -contains 'management' -and $hqReadback.management) {
+      $Summary.management_gate=[string]$hqReadback.management.status
+    }
+    if ($hqReadback.PSObject.Properties.Name -contains 'sales' -and $hqReadback.sales) {
+      $Summary.sales_gate=[string]$hqReadback.sales.status
+    }
+    if ($hqReadback.PSObject.Properties.Name -contains 'human_test' -and $hqReadback.human_test) {
+      $Summary.human_test=[string]$hqReadback.human_test
+    }
+    if ($hqReadback.PSObject.Properties.Name -contains 'status') {
+      $Summary.independent_hq_final_verdict=[string]$hqReadback.status
+    }
+  }
+
+  # Persistent-environment audit: Registry environment values and the top
+  # level of every Program Files root, before and after the series.  A
+  # measurement that did not happen is reported as NOT_MEASURED and is never
+  # reported as unchanged.
+  $environmentAuditPath=Join-Path $SeriesOut 'ENVIRONMENT_AUDIT.json'
+  if (Test-Path -LiteralPath $environmentAuditPath -PathType Leaf) {
+    $environmentAudit=Get-Content -LiteralPath $environmentAuditPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($environmentAudit.PSObject.Properties.Name -contains 'comparison' -and $environmentAudit.comparison) {
+      $Summary.registry_write_audit=[string]$environmentAudit.comparison.registry_environment_status
+      $Summary.program_files_write_audit=[string]$environmentAudit.comparison.program_files_status
+    }
+  }
   Write-Summary
 
-  Write-Host '=== 6/7 Fresh preserved predecessor rollback qualification ==='
-  $rollbackScript = Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/rollback/RESTORE_PREDECESSOR.ps1'
+  Write-Host '=== 6/8 Fresh preserved predecessor rollback qualification ==='
+  $rollbackScript = $declaredEntries.rollback_script
   if (-not (Test-Path -LiteralPath $rollbackScript -PathType Leaf)) {
     throw 'ROLLBACK_ENTRYPOINT_MISSING'
   }
@@ -893,7 +1097,7 @@ try {
   }
   Write-Summary
 
-  Write-Host '=== 7/7 Local environment readback ==='
+  Write-Host '=== 7/8 Local environment readback ==='
   $Summary.network_snapshot_end=Get-NetworkSnapshot
   $PathAfter=Get-PathSnapshot
   $Summary.persistent_path_status = if ((ConvertTo-Json $PathBefore -Depth 8 -Compress) -eq (ConvertTo-Json $PathAfter -Depth 8 -Compress)) {'UNCHANGED'} else {'CHANGED_REQUIRES_REVIEW'}
