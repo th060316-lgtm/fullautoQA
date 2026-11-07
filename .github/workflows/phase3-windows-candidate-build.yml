@@ -60,7 +60,12 @@ jobs:
     needs: candidate-inputs
     outputs:
       candidate_artifact: ${{ steps.prepare.outputs.candidate_artifact }}
-    if: needs.candidate-inputs.outputs.changed == 'true' && github.event_name != 'pull_request'
+    # Candidate inputs must be executable before merge as well as after it.
+    # The candidate-inputs job already suppresses PR synchronizations that did
+    # not change Source/acceptance/donor/manifest/this workflow, so allowing
+    # PR execution here does not turn every documentation commit into a 1 GB
+    # rebuild.
+    if: needs.candidate-inputs.outputs.changed == 'true'
     runs-on: windows-latest
     timeout-minutes: 120
     env:
