@@ -115,7 +115,7 @@ SIGNAL_GATES = (
      'fail_reason': MANAGEMENT_PERFORMANCE_REGRESSION_DETECTED},
     {'gate': 'management.reproducibility', 'metric': 'reproducibility', 'required': True,
      'expect': 'true', 'aliases': ('reproducibility', 'reproducible', 'repeat_run_identical'),
-     'meaning': 'PASS means the run was reproduced identically',
+     'meaning': 'PASS means the same target under the same Candidate produced the same Required outcomes across independent fresh runs',
      'fail_reason': 'MANAGEMENT_REPRODUCIBILITY_NOT_ESTABLISHED'},
     {'gate': 'management.fresh_run', 'metric': 'fresh_run', 'required': True, 'expect': 'true',
      'meaning': 'PASS means a fresh run was evidenced',

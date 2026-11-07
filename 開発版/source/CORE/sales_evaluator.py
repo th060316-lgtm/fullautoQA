@@ -640,9 +640,10 @@ def evaluate_sales(context):
     human_evidence = False
     if reviewer_kind == 'human':
         present, value = lookup(bundle, ['human_test_performed', 'human_test_evidence'])
-        human_evidence = truthiness(value) is True or truthiness(value) is None
-        if present and truthiness(value) is False:
-            human_evidence = False
+        # Human identity alone is not evidence that a human test occurred.
+        # The performed flag must be present and explicitly true; missing or
+        # indeterminate evidence stays NOT_RUN.
+        human_evidence = bool(present and truthiness(value) is True)
     if reviewer_kind == 'model_proxy':
         human_row = _row('sales.human_test', 'NOT_RUN', SALES_MODEL_PROXY_IS_NOT_HUMAN_TEST,
                          detail='the review was produced by a model proxy; a model proxy is '

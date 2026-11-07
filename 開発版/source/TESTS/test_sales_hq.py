@@ -44,6 +44,7 @@ def complete_bundle(**overrides):
     bundle = {
         'evidence_kind': 'real_human',
         'reviewer': {'kind': 'human', 'id': 'reviewer-1'},
+        'human_test_performed': True,
         'audience_summary': {
             'schema_version': 1,
             'status': 'GENERATED',
@@ -203,6 +204,19 @@ class SalesHumanVersusProxyTest(unittest.TestCase):
         bundle = complete_bundle()
         bundle.pop('reviewer')
         bundle['evidence_kind'] = 'unknown_kind'
+        report = evaluate(bundle)
+        self.assertFalse(report.readback['human_test_performed'])
+        self.assertEqual(gate(report.readback, 'sales.human_test')['status'], 'NOT_RUN')
+
+    def test_human_identity_without_explicit_performed_flag_is_not_a_human_test(self):
+        bundle = complete_bundle()
+        bundle.pop('human_test_performed')
+        report = evaluate(bundle)
+        self.assertFalse(report.readback['human_test_performed'])
+        self.assertEqual(gate(report.readback, 'sales.human_test')['status'], 'NOT_RUN')
+
+    def test_explicit_false_human_test_flag_is_not_a_human_test(self):
+        bundle = complete_bundle(human_test_performed=False)
         report = evaluate(bundle)
         self.assertFalse(report.readback['human_test_performed'])
         self.assertEqual(gate(report.readback, 'sales.human_test')['status'], 'NOT_RUN')

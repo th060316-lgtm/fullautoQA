@@ -50,11 +50,15 @@ except ImportError:  # pragma: no cover - the acceptance targets are not always 
     run_series = None
 
 
-def _record(run_id, target_key='target-1', digest='digest-a', nonpass=()):
+def _record(run_id, target_key='target-1', digest='digest-a', nonpass=(),
+            candidate='candidate-a', target_fingerprint='target-fp', extraction_id=None):
     return {
         'index': 0,
         'run_id': run_id,
+        'fresh_extraction_id': extraction_id or ('fresh-' + run_id),
         'target_key': target_key,
+        'target': {'fingerprint': target_fingerprint},
+        'candidate_sha256': candidate,
         'required_case_digest': digest,
         'required_case_count': 3,
         'required_nonpass': list(nonpass),
@@ -92,6 +96,41 @@ class CrossRunReproducibilityTests(unittest.TestCase):
              _record('a2', nonpass=[{'case': 'x', 'status': 'NOT_RUN'}])])
         self.assertFalse(observation['status'])
         self.assertIn('REQUIRED_CASE_NOT_PASSED', observation['reasons'])
+
+    @unittest.skipIf(run_series is None, 'the acceptance targets are not present')
+    def test_reused_fresh_extraction_is_not_independent(self):
+        observation = run_series.cross_run_reproducibility(
+            [_record('a1', extraction_id='same'), _record('a2', extraction_id='same')])
+        self.assertFalse(observation['status'])
+        self.assertIn('FRESH_EXTRACTION_NOT_INDEPENDENT', observation['reasons'])
+
+    @unittest.skipIf(run_series is None, 'the acceptance targets are not present')
+    def test_candidate_divergence_blocks_reproducibility(self):
+        observation = run_series.cross_run_reproducibility(
+            [_record('a1', candidate='candidate-a'), _record('a2', candidate='candidate-b')])
+        self.assertFalse(observation['status'])
+        self.assertIn('CANDIDATE_IDENTITY_DIVERGED', observation['reasons'])
+
+    @unittest.skipIf(run_series is None, 'the acceptance targets are not present')
+    def test_target_identity_divergence_blocks_reproducibility(self):
+        observation = run_series.cross_run_reproducibility(
+            [_record('a1', target_fingerprint='target-a'),
+             _record('a2', target_fingerprint='target-b')])
+        self.assertFalse(observation['status'])
+        self.assertIn('TARGET_IDENTITY_DIVERGED', observation['reasons'])
+
+    @unittest.skipIf(run_series is None, 'the acceptance targets are not present')
+    def test_missing_identity_fields_fail_closed(self):
+        first = _record('a1')
+        second = _record('a2')
+        first['fresh_extraction_id'] = None
+        first['candidate_sha256'] = None
+        first['target'] = {}
+        observation = run_series.cross_run_reproducibility([first, second])
+        self.assertFalse(observation['status'])
+        self.assertIn('FRESH_EXTRACTION_ID_ABSENT', observation['reasons'])
+        self.assertIn('CANDIDATE_IDENTITY_ABSENT', observation['reasons'])
+        self.assertIn('TARGET_IDENTITY_ABSENT', observation['reasons'])
 
     @unittest.skipIf(run_series is None, 'the acceptance targets are not present')
     def test_a_single_run_produces_no_cross_run_observation(self):

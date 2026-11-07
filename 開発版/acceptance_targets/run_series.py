@@ -88,8 +88,26 @@ def cross_run_reproducibility(records):
             reasons.append('REQUIRED_CASE_DIGEST_DIVERGED')
         nonpass=list(first.get('required_nonpass') or [])+list(last.get('required_nonpass') or [])
         if nonpass:reasons.append('REQUIRED_CASE_NOT_PASSED')
-        if first.get('run_id')==last.get('run_id'):
+        first_run,last_run=first.get('run_id'),last.get('run_id')
+        if not first_run or not last_run or first_run==last_run:
             reasons.append('CROSS_RUN_SAMPLE_INSUFFICIENT')
+        first_extraction,last_extraction=first.get('fresh_extraction_id'),last.get('fresh_extraction_id')
+        if not first_extraction or not last_extraction:
+            reasons.append('FRESH_EXTRACTION_ID_ABSENT')
+        elif first_extraction==last_extraction:
+            reasons.append('FRESH_EXTRACTION_NOT_INDEPENDENT')
+        first_candidate,last_candidate=first.get('candidate_sha256'),last.get('candidate_sha256')
+        if not first_candidate or not last_candidate:
+            reasons.append('CANDIDATE_IDENTITY_ABSENT')
+        elif first_candidate!=last_candidate:
+            reasons.append('CANDIDATE_IDENTITY_DIVERGED')
+        first_target=first.get('target') if isinstance(first.get('target'),dict) else {}
+        last_target=last.get('target') if isinstance(last.get('target'),dict) else {}
+        first_target_fp,last_target_fp=first_target.get('fingerprint'),last_target.get('fingerprint')
+        if not first_target_fp or not last_target_fp:
+            reasons.append('TARGET_IDENTITY_ABSENT')
+        elif first_target_fp!=last_target_fp:
+            reasons.append('TARGET_IDENTITY_DIVERGED')
         return {'status':not reasons,'scope':'cross_run_same_target','source':'series_records',
                 'target_key':key,'run_ids':[first.get('run_id'),last.get('run_id')],
                 'required_case_count':first.get('required_case_count'),
