@@ -1,10 +1,10 @@
-  parse:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            RUN_LOCAL_COMPLETION.ps1
-            RUN_LOCAL_COMPLETION.cmd
-            開発版/source
-          sparse-checkout-cone-mode: false
+      - name: Parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $tokens=$null
+          $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1'),[ref]$tokens,[ref]$errors) | Out-Null
+          if($errors.Count){ throw ($errors | Out-String) }
+          Write-Host 'RUN_LOCAL_COMPLETION.ps1 parse PASS'
+      - name: Run native-process contract test on Windows PowerShell 5.1
+        shell: powershell
