@@ -6,12 +6,14 @@ on:
     paths:
       - 'RUN_LOCAL_COMPLETION.ps1'
       - '開発版/source/**'
+      - '開発版/rollback/**'
       - '.github/workflows/local-completion-runner-syntax.yml'
   push:
     branches: [main]
     paths:
       - 'RUN_LOCAL_COMPLETION.ps1'
       - '開発版/source/**'
+      - '開発版/rollback/**'
       - '.github/workflows/local-completion-runner-syntax.yml'
 
 permissions:
@@ -38,6 +40,27 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1'),[ref]$tokens,[ref]$errors) | Out-Null
           if($errors.Count){ throw ($errors | Out-String) }
           Write-Host 'RUN_LOCAL_COMPLETION.ps1 parse PASS'
+      - name: Parse every executable repository PowerShell script with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $snapshotSegment=[IO.Path]::Combine('rollback','predecessor_23e0f380','snapshot')
+          $scripts=@(Get-ChildItem -LiteralPath $PWD -Recurse -File -Filter '*.ps1' | Where-Object {
+            $_.FullName.IndexOf($snapshotSegment,[StringComparison]::OrdinalIgnoreCase) -lt 0
+          })
+          if($scripts.Count -eq 0){throw 'NO_POWERSHELL_SCRIPTS_FOUND'}
+          $allErrors=New-Object 'System.Collections.Generic.List[string]'
+          foreach($script in $scripts){
+            $tokens=$null
+            $errors=$null
+            [System.Management.Automation.Language.Parser]::ParseFile($script.FullName,[ref]$tokens,[ref]$errors) | Out-Null
+            foreach($error in @($errors)){
+              $allErrors.Add(($script.FullName+':'+$error.Extent.StartLineNumber+':'+$error.Message))
+            }
+          }
+          if($allErrors.Count){throw ($allErrors -join [Environment]::NewLine)}
+          Write-Host ('POWERSHELL51_PARSE_ALL_PASS count='+$scripts.Count)
+
       - name: Run native-process contract test on Windows PowerShell 5.1
         shell: powershell
         run: |
