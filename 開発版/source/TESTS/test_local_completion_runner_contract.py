@@ -53,6 +53,20 @@ class LocalCompletionRunnerContractTests(unittest.TestCase):
         self.assertNotContains('$Summary.program_files_write_audit=[string]$environmentAudit.comparison.program_files_status',
                                'bounded Program Files observation must not be promoted to the full write-audit claim')
 
+    def test_the_full_environment_claims_require_continuous_monitors(self):
+        self.assertContains('RegNotifyChangeKeyValue',
+                            'complete Registry evidence must come from a subtree change monitor')
+        self.assertContains('IncludeSubdirectories = true',
+                            'Program Files monitoring must be recursive')
+        self.assertContains('OFFLINE_CONTINUOUS_REQUIREMENT_NONPASS',
+                            'requested offline acceptance must require the continuous monitor')
+        self.assertContains('REGISTRY_WRITE_AUDIT_NONPASS',
+                            'the full Registry claim must block the local acceptance gate')
+        self.assertContains('PROGRAM_FILES_WRITE_AUDIT_NONPASS',
+                            'the full Program Files claim must block the local acceptance gate')
+        self.assertContains('ENVIRONMENT_CHANGE_MONITOR.json',
+                            'the continuous monitor must leave a preserved evidence artifact')
+
     def test_the_runner_resolves_its_inputs_through_the_shared_entry_contract(self):
         self.assertContains('REPOSITORY_ENTRY.ps1',
                             'the runner must dot-source the shared entry contract')
