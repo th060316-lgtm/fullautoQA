@@ -39,6 +39,20 @@ class LocalCompletionRunnerContractTests(unittest.TestCase):
     def assertNotContains(self, needle, message):
         self.assertTrue(needle not in self.text, message)
 
+    def test_bounded_environment_observations_do_not_become_full_write_audits(self):
+        self.assertContains("registry_write_audit = 'NOT_MEASURED'",
+                            'complete Registry write audit must stay NOT_MEASURED without complete evidence')
+        self.assertContains("program_files_write_audit = 'NOT_MEASURED'",
+                            'complete Program Files write audit must stay NOT_MEASURED without complete evidence')
+        self.assertContains('$Summary.registry_environment_audit=',
+                            'the bounded Registry observation must keep its own field')
+        self.assertContains('$Summary.program_files_top_level_audit=',
+                            'the bounded Program Files observation must keep its own field')
+        self.assertNotContains('$Summary.registry_write_audit=[string]$environmentAudit.comparison.registry_environment_status',
+                               'bounded Registry observation must not be promoted to the full write-audit claim')
+        self.assertNotContains('$Summary.program_files_write_audit=[string]$environmentAudit.comparison.program_files_status',
+                               'bounded Program Files observation must not be promoted to the full write-audit claim')
+
     def test_the_runner_resolves_its_inputs_through_the_shared_entry_contract(self):
         self.assertContains('REPOSITORY_ENTRY.ps1',
                             'the runner must dot-source the shared entry contract')
