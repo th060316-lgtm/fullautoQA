@@ -223,14 +223,31 @@ def validate_result_zip(path,require_manifest=False,expected_run_id=None):
                 if len(content)!=row['size'] or hashlib.sha256(content).hexdigest()!=row['sha256']:raise OSError('EVIDENCE_HASH_MISMATCH:'+row['file'])
         elif require_manifest:raise OSError('EVIDENCE_MANIFEST_MISSING')
         refs=[]
-        for row in data.get('results',[]):refs+=row.get('evidence',[])
+        def add_refs(value):
+            if isinstance(value,str):
+                if value:refs.append(value.replace('\\','/'))
+            elif isinstance(value,(list,tuple,set)):
+                for item in value:add_refs(item)
+        for row in data.get('results',[]):add_refs(row.get('evidence',[]))
         if 'events.jsonl' in names:
             for line in z.read('events.jsonl').decode('utf-8',errors='replace').splitlines():
                 try:event=json.loads(line)
                 except ValueError:continue
-                refs+=event.get('evidence',[])
-                if event.get('file'):refs.append(event['file'])
-        for ref in refs:
+                add_refs(event.get('evidence',[]))
+                if event.get('file'):add_refs(event['file'])
+        readbacks=[]
+        for key in ('management_readback','sales_readback'):
+            if isinstance(data.get(key),dict):readbacks.append(data[key])
+        hq=data.get('headquarters')
+        if isinstance(hq,dict) and isinstance(hq.get('readbacks'),dict):
+            readbacks.extend(value for value in hq['readbacks'].values() if isinstance(value,dict))
+        for readback in readbacks:
+            for key in ('gate_status','gates'):
+                rows=readback.get(key)
+                if isinstance(rows,list):
+                    for row in rows:
+                        if isinstance(row,dict):add_refs(row.get('evidence',[]))
+        for ref in sorted(set(refs)):
             if ref not in names:raise OSError('REFERENCED_EVIDENCE_MISSING:'+ref)
         return {'entries':len(names),'manifest_entries':len(manifest or []),'overall':data.get('overall')}
 

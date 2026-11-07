@@ -242,6 +242,11 @@ def series_hq_readback(records,output,expected_count=None):
     sales_runs=[]
     for row in records:
         archive=Path(row['evidence_root'])/'RESULT_FOR_CHATGPT.zip'
+        try:
+            with zipfile.ZipFile(archive) as result_zip:
+                sales_inventory=result_zip.namelist()
+        except Exception:
+            sales_inventory=[]
         base={'index':row.get('index'),'target_key':row.get('target_key'),'run_id':row.get('run_id')}
 
         management_bundle=_read_zip_json(archive,'management_evidence.json')
@@ -262,8 +267,10 @@ def series_hq_readback(records,output,expected_count=None):
                                'reason_code':'SALES_EVIDENCE_BUNDLE_UNAVAILABLE',
                                'human_test_performed':False})
         else:
-            context=CoordinatorContext(root=str(output),evidence_root=str(output),results=[],
-                                       identity=None,extras={'sales_evidence':dict(sales_bundle)})
+            context=CoordinatorContext(
+                root=str(output),evidence_root=str(output),results=[],identity=None,
+                extras={'sales_evidence':dict(sales_bundle),
+                        'sales_evidence_inventory':sales_inventory})
             report=evaluate_sales(context)
             payload=_domain_payload(report);payload.update(base)
             sales_readback=getattr(report,'readback',None) or {}
