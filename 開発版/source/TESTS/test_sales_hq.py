@@ -27,9 +27,38 @@ from sales_evaluator import (SALES_BLOCKING_FINDINGS_RECORDED,  # noqa: E402
 BUNDLE_NAME = 'sales_evidence.json'
 
 
+def materialize_bundle_evidence(root, bundle):
+    root = Path(root)
+    refs = []
+    source = bundle.get('review_evidence_source') if isinstance(bundle, dict) else None
+    if source:
+        refs.append(source)
+    audience = bundle.get('audience_summary_evidence') if isinstance(bundle, dict) else None
+    if isinstance(audience, str):
+        refs.append(audience)
+    elif isinstance(audience, (list, tuple)):
+        refs.extend(audience)
+    for session in (bundle.get('sessions') or []) if isinstance(bundle, dict) else []:
+        if not isinstance(session, dict):
+            continue
+        for record in (session.get('phases') or {}).values():
+            if isinstance(record, dict):
+                value = record.get('evidence')
+                if isinstance(value, str):
+                    refs.append(value)
+                elif isinstance(value, (list, tuple)):
+                    refs.extend(value)
+    for ref in refs:
+        path = root / str(ref)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            path.write_bytes(b'test-evidence')
+
+
 def write_bundle(root, bundle):
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
+    materialize_bundle_evidence(root, bundle)
     (root / BUNDLE_NAME).write_text(json.dumps(bundle), encoding='utf-8')
     return root
 
@@ -142,7 +171,9 @@ class SalesRobustnessTest(unittest.TestCase):
 
     def test_evidence_from_context_extras_is_used(self):
         with tempfile.TemporaryDirectory() as tmp:
-            report = evaluate_sales(context(tmp, extras={'sales_evidence': complete_bundle()}))
+            bundle = complete_bundle()
+            materialize_bundle_evidence(tmp, bundle)
+            report = evaluate_sales(context(tmp, extras={'sales_evidence': bundle}))
         self.assertEqual(report.status, 'PASS')
         self.assertTrue(report.readback['human_test_performed'])
 
@@ -229,6 +260,15 @@ class SalesHumanVersusProxyTest(unittest.TestCase):
         self.assertFalse(report.readback['human_test_performed'])
         self.assertEqual(gate(report.readback, 'sales.human_test')['status'], 'NOT_RUN')
 
+    def test_missing_preserved_review_source_blocks_human_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = complete_bundle()
+            write_bundle(tmp, bundle)
+            (Path(tmp) / 'review_evidence' / 'sales_review.json').unlink()
+            report = evaluate_sales(context(tmp))
+        self.assertFalse(report.readback['human_test_performed'])
+        self.assertEqual(gate(report.readback, 'sales.human_test')['status'], 'NOT_RUN')
+
 
 class SalesPhaseSeparationTest(unittest.TestCase):
     def test_30_second_and_5_minute_gates_are_separate(self):
@@ -279,6 +319,17 @@ class SalesPhaseSeparationTest(unittest.TestCase):
         entry = gate(report.readback, 'sales.first_30_seconds')
         self.assertEqual(entry['status'], 'NOT_RUN')
         self.assertEqual(entry['reason_code'], 'SALES_PHASE_EVIDENCE_MISSING')
+
+    def test_positive_phase_with_missing_evidence_file_is_not_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = complete_bundle()
+            write_bundle(tmp, bundle)
+            (Path(tmp) / 'rec30.mp4').unlink()
+            report = evaluate_sales(context(tmp))
+        entry = gate(report.readback, 'sales.first_30_seconds')
+        self.assertEqual(entry['status'], 'NOT_RUN')
+        self.assertEqual(entry['reason_code'], 'SALES_PHASE_EVIDENCE_MISSING')
+        self.assertNotEqual(report.status, 'PASS')
 
 
 class SalesCertificationTest(unittest.TestCase):

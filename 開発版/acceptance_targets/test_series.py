@@ -4,6 +4,31 @@ from run_series import (OPERATION_LOG,_series_review_payload,_stage_review_paylo
                         compare_records,cross_run_reproducibility,extract,origin_record,
                         run_logged,series_hq_readback,summarize_execution_environment)
 
+def write_sales_zip_evidence(archive, payload):
+    archive.writestr('sales_evidence.json', json.dumps(payload))
+    refs = []
+    if isinstance(payload, dict) and payload.get('review_evidence_source'):
+        refs.append(payload['review_evidence_source'])
+    audience = payload.get('audience_summary_evidence') if isinstance(payload, dict) else None
+    if isinstance(audience, str):
+        refs.append(audience)
+    elif isinstance(audience, (list, tuple)):
+        refs.extend(audience)
+    for session in (payload.get('sessions') or []) if isinstance(payload, dict) else []:
+        if not isinstance(session, dict):
+            continue
+        for record in (session.get('phases') or {}).values():
+            if not isinstance(record, dict):
+                continue
+            value = record.get('evidence')
+            if isinstance(value, str):
+                refs.append(value)
+            elif isinstance(value, (list, tuple)):
+                refs.extend(value)
+    for ref in sorted(set(str(item).replace('\\', '/') for item in refs if str(item))):
+        archive.writestr(ref, b'test-evidence')
+
+
 class SeriesIntegrityTests(unittest.TestCase):
     def setUp(self):
         self.plan={'series':['A','B','A'],'historical_run_ids':['old']}
@@ -209,7 +234,7 @@ class SeriesIntegrityTests(unittest.TestCase):
                 fp='fp-a' if label=='A' else 'fp-b'
                 with zipfile.ZipFile(slot/'RESULT_FOR_CHATGPT.zip','w') as z:
                     z.writestr('management_evidence.json',json.dumps(management(fp,offline=(index!=2))))
-                    z.writestr('sales_evidence.json',json.dumps(sales(human=(index!=2))))
+                    write_sales_zip_evidence(z,sales(human=(index!=2)))
                 records.append({'index':index,'target_key':label,'run_id':'run'+str(index),
                     'fresh_extraction_id':'fresh'+str(index),'candidate_sha256':'candidate',
                     'required_case_digest':'same','required_case_count':3,'required_nonpass':[],
@@ -257,7 +282,7 @@ class SeriesIntegrityTests(unittest.TestCase):
                 human=index in (1,2)
                 with zipfile.ZipFile(slot/'RESULT_FOR_CHATGPT.zip','w') as z:
                     z.writestr('management_evidence.json',json.dumps(management(fp)))
-                    z.writestr('sales_evidence.json',json.dumps(sales(human)))
+                    write_sales_zip_evidence(z,sales(human))
                 records.append({'index':index,'target_key':label,'run_id':'run'+str(index),
                     'fresh_extraction_id':'fresh'+str(index),'candidate_sha256':'candidate',
                     'required_case_digest':'same','required_case_count':3,'required_nonpass':[],

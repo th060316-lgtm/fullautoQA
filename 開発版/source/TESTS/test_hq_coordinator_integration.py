@@ -107,6 +107,30 @@ def sales_bundle(reviewer='human'):
 def write(root, name, payload):
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
+    if name == SALES_EVIDENCE and isinstance(payload, dict):
+        refs = []
+        if payload.get('review_evidence_source'):
+            refs.append(payload['review_evidence_source'])
+        audience = payload.get('audience_summary_evidence')
+        if isinstance(audience, str):
+            refs.append(audience)
+        elif isinstance(audience, (list, tuple)):
+            refs.extend(audience)
+        for session in payload.get('sessions') or []:
+            if not isinstance(session, dict):
+                continue
+            for record in (session.get('phases') or {}).values():
+                if isinstance(record, dict):
+                    value = record.get('evidence')
+                    if isinstance(value, str):
+                        refs.append(value)
+                    elif isinstance(value, (list, tuple)):
+                        refs.extend(value)
+        for ref in refs:
+            target = root / str(ref)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_bytes(b'test-evidence')
     (root / name).write_text(json.dumps(payload), encoding='utf-8')
     return root
 
