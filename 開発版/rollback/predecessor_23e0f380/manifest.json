@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "purpose": "offline functional rollback to the last verified predecessor Candidate source contract",
   "predecessor": {
     "source_commit": "23e0f3809ecb0da2ab68d62ffee443c68e68e408",
@@ -17,21 +17,2127 @@
   "donor": {
     "size": 1099679545,
     "sha256": "8858cd388d283a294e13ed3e9d9e87e930b26d84bd83fe548dba10883007816c",
-    "path": "開発版/complete_v033"
+    "path_from_transfer_manifest": true
   },
   "recovery_source": {
-    "path": "開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip",
-    "sha256": "bfd9dc6942f6fe4cd8204bedb3d115b2db54cab1ac760729db1e0ad313e4084f"
+    "sha256": "bfd9dc6942f6fe4cd8204bedb3d115b2db54cab1ac760729db1e0ad313e4084f",
+    "path_from_transfer_manifest": true
   },
   "snapshot": {
     "source_path": "snapshot/source",
     "acceptance_path": "snapshot/acceptance_targets",
     "source_file_count": 95,
     "acceptance_file_count": 255,
-    "storage": "Git tree reuses the exact historical blob objects; no Actions artifact is required."
+    "file_count": 350,
+    "storage": "Git tree reuses the exact historical blob objects; no Actions artifact is required.",
+    "hash_contract": "Each file is verified as a Git blob: SHA1('blob '+decimal_size+'\\0'+raw_bytes).",
+    "files": [
+      {
+        "path": "acceptance_targets/codegeas/observer.gd",
+        "git_blob_sha1": "085d18a80a2fd2bf0d4fe0af2f10c0cc1d707200",
+        "size": 1397,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/prepare_target.py",
+        "git_blob_sha1": "96523d19af2c21d7cfdbfb58fe8ff24b1524dd30",
+        "size": 3739,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/profile.json",
+        "git_blob_sha1": "459c9f9014640c0688ee8d315b73626bcc62ad73",
+        "size": 6268,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/run_target.py",
+        "git_blob_sha1": "e47f9882cc6b17a68218462c7e1924f07c29cd12",
+        "size": 2965,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/save_observer.gd",
+        "git_blob_sha1": "795076f89af66abf1fd5215e43e8516b83281f2f",
+        "size": 347,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/snapshot.json",
+        "git_blob_sha1": "ba867456cc79db920b2013936f268936b29b9121",
+        "size": 294,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/.gitignore",
+        "git_blob_sha1": "b326f4b9d4577b0c4cf56f674ed4e35bb7f90266",
+        "size": 39,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/autoload/SocialManager.gd",
+        "git_blob_sha1": "3a4aac4e2851f4a020d33170941220911c6070b2",
+        "size": 7996,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/camera/CameraManager.gd",
+        "git_blob_sha1": "9585b8985d6d20a779703306e5ca64a9177f71cd",
+        "size": 12810,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/CombatManager.gd",
+        "git_blob_sha1": "6859d2e6624d02a6ad9d167d0040a5a65c1d248d",
+        "size": 14592,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/CombatManagerLegacy.gd",
+        "git_blob_sha1": "223bac48dc5f60342e15e92b2e35f636617ff6ba",
+        "size": 5117,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/core/BaselineTactics.gd",
+        "git_blob_sha1": "1cb26ecaa566d6ea1bc3a3dad3e12b141eb572f2",
+        "size": 4472,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/core/Combatant.gd",
+        "git_blob_sha1": "8a5aa4b9a5df3349a5aa992e73445c245dd1453f",
+        "size": 2342,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/core/CombatBalance.gd",
+        "git_blob_sha1": "f03bb8576bcec77531d86437beef5ba7cad9803b",
+        "size": 3332,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/core/CombatCore.gd",
+        "git_blob_sha1": "36b79fc6b262b9fbcf9c19c8486a11153922abd1",
+        "size": 11407,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/core/CombatEvent.gd",
+        "git_blob_sha1": "2b15221875736714dd8b6920abe589069b2c6068",
+        "size": 2268,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/core/CombatFeedback.gd",
+        "git_blob_sha1": "d40b288ae7e96b0ba94ee957bafc7da0d9291c63",
+        "size": 2218,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/core/PartEffects.gd",
+        "git_blob_sha1": "d96d1367f645554065ea9663c502d2242a2ca14c",
+        "size": 3370,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/combat/core/TacticsInterface.gd",
+        "git_blob_sha1": "3773ed3e7a873ff9e1e4f5ed4dfb399774995985",
+        "size": 1655,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/core/EventBus.gd",
+        "git_blob_sha1": "e2017cff9940d310642ac1aa00039309653d71b5",
+        "size": 2944,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/core/GameState.gd",
+        "git_blob_sha1": "546c579f04bc6b83678168c6d3f254fdd4be98b4",
+        "size": 14012,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/core/InputRouter.gd",
+        "git_blob_sha1": "e8c227c88bd5437aeb317b555416af999839585f",
+        "size": 7006,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/core/PlayAreaBounds.gd",
+        "git_blob_sha1": "720d0dda0d03a478539a02ca033327f05f2e729c",
+        "size": 3545,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/core/RngService.gd",
+        "git_blob_sha1": "395f2d9c951111407d4d3fd2a10839ab9c98e214",
+        "size": 1757,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/data/core/.gitkeep",
+        "git_blob_sha1": "7e198fcfec890c966057c469bde592f21546b656",
+        "size": 24,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/data/social/npc_relationships.gd",
+        "git_blob_sha1": "a41690f5a4a1ac27ea06e37f60ad0e3e14914746",
+        "size": 1076,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/day1/Day1ConsequenceSystem.gd",
+        "git_blob_sha1": "f4ea556418ea006d5845482acecb5822e5b0f60c",
+        "size": 20505,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/day1/Day1Controller.gd",
+        "git_blob_sha1": "2660b1f470352607cb812307b44cc980df285822",
+        "size": 20534,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/day1/Day1ControllerLegacy.gd",
+        "git_blob_sha1": "0c24a8437d17fb942515ebcf97b194f63989a2db",
+        "size": 46544,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/day1/Day1InformationSystem.gd",
+        "git_blob_sha1": "4242e5ee926055c06522914300e10b1a5cc2fab3",
+        "size": 688,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/day1/Day1InformationSystemLegacy.gd",
+        "git_blob_sha1": "d5d3b613829e0d47051ec2aac3c2ecd33e202447",
+        "size": 34304,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/day1/Day1SummarySystem.gd",
+        "git_blob_sha1": "f41a4840d9929669b958abe9af067b84aa538018",
+        "size": 15835,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ai/CompanionRoleAI.gd",
+        "git_blob_sha1": "f33d748fe3d6918ce87db3c4dcc78799abbb8ac1",
+        "size": 4167,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ai/EnemyPatrolAI.gd",
+        "git_blob_sha1": "7f94c20b0e61d8258d488dd9e032c1cafa6d5497",
+        "size": 3119,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/actors/friendly_human.svg",
+        "git_blob_sha1": "8dc48e0a7dd521fa971f67bdd74dcb78ba980add",
+        "size": 575,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/actors/hostile_human.svg",
+        "git_blob_sha1": "5a14b5de113210acaefac638021ea8ad5f9ee3b4",
+        "size": 573,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ASSET_SOURCES.md",
+        "git_blob_sha1": "afc9cefb99a88bb74e1cd1ea1fa25a312b179824",
+        "size": 4405,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/environment/hospital.svg",
+        "git_blob_sha1": "d0c592bd2f042c6d79717604871d0b4fd2cf08f6",
+        "size": 1237,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/environment/rubble.svg",
+        "git_blob_sha1": "d85f2da1e8741a0fa25ac2b3e515f6222be673d3",
+        "size": 663,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/kmf/friendly_kmf.svg",
+        "git_blob_sha1": "d8e9cd02ac05e08fe0ec39928c95575912547c02",
+        "size": 664,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/kmf/hostile_kmf.svg",
+        "git_blob_sha1": "1ede286f17cd93d040d28a071b8eacf7e8ff08f2",
+        "size": 668,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/confirmed_hostile.svg",
+        "git_blob_sha1": "10b0834d4d843eca0db7f04d491bc9f802bc2f58",
+        "size": 200,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/estimated.svg",
+        "git_blob_sha1": "4cf092e91bba0ed22ff665d22f7374c7facc8760",
+        "size": 269,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/extraction.svg",
+        "git_blob_sha1": "3c8d07c7f986b4b4e87858edd0df9a4c2ce6bcf1",
+        "size": 231,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/human_damage.svg",
+        "git_blob_sha1": "fad86d70a028301f58f143ca2eb4d92f913ff944",
+        "size": 414,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/intel.svg",
+        "git_blob_sha1": "7154a69c634b98efc1d0e262a9a26b568a66b035",
+        "size": 372,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/kmf_damage.svg",
+        "git_blob_sha1": "cc804ec16a423a4357e00bec34b8965dc7804065",
+        "size": 523,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/loot.svg",
+        "git_blob_sha1": "38e20ed9d8cbf493ffba30c57d4068d6501f11fb",
+        "size": 328,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/medical_rescue.svg",
+        "git_blob_sha1": "4bd98ed93cd6bbc06f072009447952065cbed3fd",
+        "size": 236,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/sensor.svg",
+        "git_blob_sha1": "bb56c9555c084b00c4827f54381f069014ba758c",
+        "size": 284,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/assets/ui/unknown.svg",
+        "git_blob_sha1": "0e88cc6b96b534d4f7ddd0fb4f943fd5f756cf92",
+        "size": 364,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ExpeditionArena.gd",
+        "git_blob_sha1": "381d623a3aefd62f10b0d540ec7faf3f302bae0c",
+        "size": 16973,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ExpeditionCamera.gd",
+        "git_blob_sha1": "8acaede9d70917348eea9420ad464ca757f8c5b1",
+        "size": 1835,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ExpeditionController.gd",
+        "git_blob_sha1": "2fb827a5e56c220a6e1e194e82e521b354981296",
+        "size": 49146,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ExpeditionFixture.gd",
+        "git_blob_sha1": "1f596937b86f1245ca77d0c9128c8d77fe2d6c50",
+        "size": 2318,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ExpeditionPrototypeLab.tscn",
+        "git_blob_sha1": "8fc14c2ca437be53745b1495c0d5506b594093d5",
+        "size": 761,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/README.md",
+        "git_blob_sha1": "3770e5e7e04fcfbbdb83acfc7da8e144d3a404af",
+        "size": 1981,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/state/AreaKnowledge.gd",
+        "git_blob_sha1": "2e2fb1767d330d8581929b99353ad91d5052622b",
+        "size": 2768,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/state/ExpeditionState.gd",
+        "git_blob_sha1": "2d71c58ba7a1dd06c84b6f2c4cf6b875f3aa1eaf",
+        "size": 5654,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/state/KnowledgeState.gd",
+        "git_blob_sha1": "2cb52395e43dedf8fd34e5d9a5d76adc62e1329d",
+        "size": 1954,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/state/OrderState.gd",
+        "git_blob_sha1": "67dff668e22f6572fe81178a7e6648263f60427d",
+        "size": 1492,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/systems/AutoPauseSystem.gd",
+        "git_blob_sha1": "4f278e10367133c908ffdb91e7846f0f96178f3b",
+        "size": 641,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/systems/ExtractionSystem.gd",
+        "git_blob_sha1": "53afcc16e23d37aa0e2a2ad1a981d036f48ea2d8",
+        "size": 2168,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/systems/IntentSystem.gd",
+        "git_blob_sha1": "752e0e1e6d5057fb538b1a2f4e8c1161ea1f70c9",
+        "size": 5451,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/systems/InteractionSystem.gd",
+        "git_blob_sha1": "5e0402dc366ff37644f45b54fd8af7bc9fe30b97",
+        "size": 3827,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/systems/OrderSystem.gd",
+        "git_blob_sha1": "d9e97979147756e0b83cdd5e219c5ab33b51ee43",
+        "size": 8769,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/systems/PerceptionSystem.gd",
+        "git_blob_sha1": "1bd9542da8abb642a066ec8765943c6885910dd9",
+        "size": 4095,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/systems/SoundEventSystem.gd",
+        "git_blob_sha1": "ddcc446d5545b0e2086ed7c6f8fc3b131265d358",
+        "size": 1295,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/systems/TacticalEquipmentSystem.gd",
+        "git_blob_sha1": "8baf6989c3a551b362cbdf40d8d021b12e516459",
+        "size": 6379,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ui/ContextCommandMenu.gd",
+        "git_blob_sha1": "a6c97adfa4c896b4bf1e16f6307a723ee165dc74",
+        "size": 3814,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ui/ExpeditionHUD.gd",
+        "git_blob_sha1": "f1fc895b5482cea3ea50783865e6bdd3bdb2e0fa",
+        "size": 19005,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ui/IntelMarker.gd",
+        "git_blob_sha1": "dd229a507766e8163f58996bc428dd3b2ecdf99d",
+        "size": 516,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ui/TacticalMiniMap.gd",
+        "git_blob_sha1": "1b727c50c5b3a42fb95701014217d7025e811466",
+        "size": 3782,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/expedition_lab/ui/UnitStatusPanel.gd",
+        "git_blob_sha1": "79319984bced3a4fadbaaad32fcdaad14f6cc779",
+        "size": 4045,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/icon.svg",
+        "git_blob_sha1": "f8351185f10bafa3f8f39c6feb125c530d3406c2",
+        "size": 198,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/interaction/InteractionService.gd",
+        "git_blob_sha1": "cd682abeb9e7ef91f255c1c82fb3f7bc776b6fe4",
+        "size": 8702,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/kmf/KmfSystem.gd",
+        "git_blob_sha1": "ff3ef30f8bcf80faf2ce4ecb49661426bac3ea48",
+        "size": 1094,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/kmf/KmfSystemLegacy.gd",
+        "git_blob_sha1": "c73c3d94fe7765efc33f247e26a1717984990e59",
+        "size": 1670,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/kmf/OwnedKMFMarker.gd",
+        "git_blob_sha1": "5587c14524aafbdd64226796adb84d8e096f8e96",
+        "size": 1172,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/CombatExplorationLab.gd",
+        "git_blob_sha1": "a27a11f06e59403e7c0f7b43777101744ddab114",
+        "size": 46846,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/CombatExplorationLab.tscn",
+        "git_blob_sha1": "14369d3dd53f1631c31959fd1e02b3efbb140172",
+        "size": 634,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/CombatMode.gd",
+        "git_blob_sha1": "35ec05b4717e2de03629be61f382cac4ea9e834b",
+        "size": 6520,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/LabArena.gd",
+        "git_blob_sha1": "8100d1b2b193d22aa3d57a3a9045cde7153f3bd9",
+        "size": 8129,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/LabFixture.gd",
+        "git_blob_sha1": "d01df430c85290a645b1e93db9b7ffac0449d614",
+        "size": 7775,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/LabHud.gd",
+        "git_blob_sha1": "5fb0e2b2c49e43fbdc51a4dc47830bd35debbe9b",
+        "size": 8740,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/LabMetrics.gd",
+        "git_blob_sha1": "d9018045b80c2bc3bbd08cd1996a591de663de08",
+        "size": 5388,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/prototypes/command_pause/CommandPauseCombatMode.gd",
+        "git_blob_sha1": "d2abf25324c9579467ae6724a90a65d62beeccb9",
+        "size": 3455,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/prototypes/decision_point/DecisionPointCombatMode.gd",
+        "git_blob_sha1": "85a5f51ec3f680e4f12bf974a1113867a4f95102",
+        "size": 2760,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/prototypes/realtime/RealtimeCombatMode.gd",
+        "git_blob_sha1": "cc94e555758854b85ef0e9b5fc546fb183077eb0",
+        "size": 1173,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/prototypes/tactical_pause/TacticalPauseCombatMode.gd",
+        "git_blob_sha1": "fc3da9fa0280e1c543160853899da2515bb723c7",
+        "size": 4126,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/lab/prototypes/wego/WegoCombatMode.gd",
+        "git_blob_sha1": "ad589e7473546e59dd286e415df115ce03d12871",
+        "size": 5116,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/map/MapManager.gd",
+        "git_blob_sha1": "ce4cba951058c6c8fb677f9e4f777034d53d18fe",
+        "size": 538,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/map/MapManagerLegacy.gd",
+        "git_blob_sha1": "03786ea705f53c0b8880f2d4c212dc3044fbd0fa",
+        "size": 12931,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/memory/memory_system.gd",
+        "git_blob_sha1": "f4ee8102d9c9be1a74ccf86dd46d074c5a1a2338",
+        "size": 13839,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/npc/npc_definitions.gd",
+        "git_blob_sha1": "f52ca0f4cd42e08ded5faa126ca07ca5f425e0d4",
+        "size": 11431,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/npc/npc_manager.gd",
+        "git_blob_sha1": "f53fba3356fd7af5ddb584c2f709747c48bf864a",
+        "size": 10644,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/player/PlayerController.gd",
+        "git_blob_sha1": "23b9f74040835dd75fe651cf7c2b8c159f5ef352",
+        "size": 2283,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/player/PlayerControllerLegacy.gd",
+        "git_blob_sha1": "0e7cc58e11582e247bc8cbd98867cb813e235715",
+        "size": 7862,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/project.godot",
+        "git_blob_sha1": "ccfc815c175c9199c31cd62d158619a0eda55580",
+        "size": 6190,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/quests/quest_manager.gd",
+        "git_blob_sha1": "37a66656d00a21128608340efd47b1df79d30c13",
+        "size": 2401,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/quests/QuestManagerLegacy.gd",
+        "git_blob_sha1": "76671e58abe19ac3454babbd60331b44aad2a050",
+        "size": 11908,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/README.md",
+        "git_blob_sha1": "925697279259108dcef302ab4d0693a1bc3000a2",
+        "size": 2293,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/BaseSystem.gd",
+        "git_blob_sha1": "e8e0f270a9139e0dc1e42686b12807cec837311e",
+        "size": 871,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/CampaignManager.gd",
+        "git_blob_sha1": "a541ce27cd4f1ed59e1378a43289ac034bdaf832",
+        "size": 2948,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/CompanionSystem.gd",
+        "git_blob_sha1": "089ff4f354cf41ec754a54f89d6d77c47ea2fd31",
+        "size": 1512,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/DamageSystem.gd",
+        "git_blob_sha1": "bf943f4c09d68081aa7dff3c701d69e6c350eed9",
+        "size": 2112,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/Day1SandboxBridge.gd",
+        "git_blob_sha1": "ad8ad807f3dc450358744c2582136be1a349af11",
+        "size": 2237,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/ExpeditionSystem.gd",
+        "git_blob_sha1": "6006ef1dd2058be2c262089d5c8571c86a905476",
+        "size": 1449,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/FactionSystem.gd",
+        "git_blob_sha1": "7fef5537901239e3d873031382c91b6dd83e4c01",
+        "size": 931,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/FoundationDefaults.gd",
+        "git_blob_sha1": "70ceaf4a4488349e3b2ccf282b86b9c394043ba6",
+        "size": 3526,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/HospitalDistrictExpeditionAdapter.gd",
+        "git_blob_sha1": "c243adc297ab8da394145926580c3f528a118d85",
+        "size": 11583,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/IncidentSystem.gd",
+        "git_blob_sha1": "32e13edf38f91e5d2717d8a3fc8013858fdf192c",
+        "size": 2696,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/InventorySystem.gd",
+        "git_blob_sha1": "93018435e1f36c2ec12e3032711e76e0bf8784e8",
+        "size": 2434,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/RegionSystem.gd",
+        "git_blob_sha1": "b59353f47873337021dd6d84a1715ea0e48a16f5",
+        "size": 1094,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/sandbox/WorldDirector.gd",
+        "git_blob_sha1": "f18ba7cec9f9723efefacc448c4eb384d8ae147d",
+        "size": 3596,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/save/SaveManager.gd",
+        "git_blob_sha1": "9b4327fd558fc45de4f5f59f8ad2bc50026997c7",
+        "size": 6822,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/scenes/Main.gd",
+        "git_blob_sha1": "0316977ce506ea5cf163200f6269372e1356b436",
+        "size": 7096,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/scenes/Main.tscn",
+        "git_blob_sha1": "aa34a63084fac29c0618d470c505a73cbee489e8",
+        "size": 4488,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/social/emotion_system.gd",
+        "git_blob_sha1": "93182ba3db72bacb8d1b3fef1f70941c8a479de7",
+        "size": 3794,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/social/heroine_system.gd",
+        "git_blob_sha1": "f666bf1f629cdee261fa71e1ed9dc92ec7a46d8f",
+        "size": 16090,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/social/male_friend_estimator.gd",
+        "git_blob_sha1": "b360a5122a5b264af1da5f45a7a1df2212ef6ba6",
+        "size": 7548,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/backend/day1_backend_g1_g6_smoke.gd",
+        "git_blob_sha1": "e0bd72aac28b6736da7d63f4c24f635c5d51f45b",
+        "size": 750,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/ci/day1_acceptance.gd",
+        "git_blob_sha1": "ce23be888a3b9945d6d6c6d0e0088209215b260c",
+        "size": 3771,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/ci/day1_acceptance.tscn",
+        "git_blob_sha1": "4c834bf6fed7f547f9ae046a2ae215e0e9d8c1ef",
+        "size": 179,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/ci/phasea_executive_review.gd",
+        "git_blob_sha1": "3c89a0d01981dd8eaeaec127869b06705be8cfbd",
+        "size": 3570,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/combat_core_acceptance.gd",
+        "git_blob_sha1": "1e6a69818a7c31cd33e969261815eae04e335e58",
+        "size": 12426,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/core/core_regression_runner.gd",
+        "git_blob_sha1": "406a4f8e8d587ce06c668c39abfe8a990488163f",
+        "size": 940,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/core/test_core.gd",
+        "git_blob_sha1": "21ffd2b3a1a01c7b6e75107f37e9cda6a2a63d8b",
+        "size": 3512,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/day1_acceptance.gd",
+        "git_blob_sha1": "8af6e16a1264bf958e772ae686879081588f1421",
+        "size": 3410,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/day1_completion_acceptance.gd",
+        "git_blob_sha1": "460ce66011cb27b6402d10f22503429a5f9bad5d",
+        "size": 7433,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/day1_destructive_qa.gd",
+        "git_blob_sha1": "951a99021ee629d1ffb15748ac3453915ad5f552",
+        "size": 8006,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/day1_mistral_findings_regression.gd",
+        "git_blob_sha1": "72e6a225803a9495c9d6bbd1528f02508dd0471c",
+        "size": 7696,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/day1_nine_round_regression.gd",
+        "git_blob_sha1": "8c509665e3bb7780fa366ffec2e82e3d7fdcdc34",
+        "size": 9952,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/day1_phasea_acceptance.gd",
+        "git_blob_sha1": "2873878e1652a1043b8fd0606c27df9f6405b7d0",
+        "size": 6194,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/debug_hooks.gd",
+        "git_blob_sha1": "ed4687acba58ddb0bfb1b2a1956b85ffee584255",
+        "size": 9907,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/expedition_campaign_bridge_acceptance.gd",
+        "git_blob_sha1": "8b57c35d18ceb06ce4eb994d393feb3e1f258f58",
+        "size": 8967,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/expedition_player_facing_acceptance.gd",
+        "git_blob_sha1": "328ba79cf0ce3ab01481fb25b9ce9dc708fa73dc",
+        "size": 8413,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/expedition_prototype_acceptance.gd",
+        "git_blob_sha1": "332489f4b2c36b20f6ce1c0f1187e5fdcdd77d5d",
+        "size": 11016,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/expedition_takeover_acceptance.gd",
+        "git_blob_sha1": "c603f0272f963ae12972b7faf35d03e073e15a79",
+        "size": 6030,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/first_play_ux_acceptance.gd",
+        "git_blob_sha1": "4beb6e7e843b8cbeaf7216def7eab8a33c315e23",
+        "size": 2867,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/intent_tactical_hospital_acceptance.gd",
+        "git_blob_sha1": "9a4e7ac2f67f658dcfcfb4fd2cb63cc1b03b7f8a",
+        "size": 7322,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/lab_human_input_acceptance.gd",
+        "git_blob_sha1": "f3288fc6670fd72230b1af6afc09793af04f7671",
+        "size": 3290,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/lab_mode_comparison.gd",
+        "git_blob_sha1": "e099eaf3f3f317945399a273ead88bec623b4ba2",
+        "size": 7193,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/lab_reset_reproducibility.gd",
+        "git_blob_sha1": "9e25e072ff8991cf401ecd927f06f00a4f4129e7",
+        "size": 7354,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/minimax_phasea_50_tests.gd",
+        "git_blob_sha1": "6cf95c744c8f16694f5e3eb4ae8c0e119b67bd96",
+        "size": 13720,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/normal_combat_tactics_acceptance.gd",
+        "git_blob_sha1": "034ddbdfd62898ea2728506a1be495361628aa3f",
+        "size": 5179,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/open_gameplay_prototype_acceptance.gd",
+        "git_blob_sha1": "2ce10096cef7379d7e4aeb5687a2b1b3fa87d831",
+        "size": 5209,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/phasea_integrated_acceptance.gd",
+        "git_blob_sha1": "71004ad86ff894d558988303a6ca66ca35be62d4",
+        "size": 5840,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/playable_core_acceptance.gd",
+        "git_blob_sha1": "5bf8f6620b1d59a6e510a08240daf303bc320655",
+        "size": 8201,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/sandbox_foundation_acceptance.gd",
+        "git_blob_sha1": "3a321c77fd3c31ab22708a223e788b8230f69060",
+        "size": 13161,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/tests/three_hq_one_round_playthrough.gd",
+        "git_blob_sha1": "d8d58632dd647cd3ced12e1c3e19c36e4ffaa821",
+        "size": 9574,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/Day1PresentationAdapter.gd",
+        "git_blob_sha1": "0aa4bc6cdcda4fa5c9f549faceab71cc61545aae",
+        "size": 4025,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/hud/HUD.gd",
+        "git_blob_sha1": "85d565c252cf155e1a0cf14a5cd83f17321c5880",
+        "size": 39769,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/hud/InfoPanels.gd",
+        "git_blob_sha1": "8e4da42e443384b92ebc163c4a7a010b284e0adb",
+        "size": 13669,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scenes/NPCListPanel.tscn",
+        "git_blob_sha1": "274b41f35c153102e6bfa4d5002b550bbbfa99e4",
+        "size": 1120,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scripts/debug_qa_panel.gd",
+        "git_blob_sha1": "4e7e6bcc677bb35eb23f052ec34fdcab83b788db",
+        "size": 3290,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scripts/geass_panel.gd",
+        "git_blob_sha1": "0012d9dbd980c354f96471dcc79e98d8f5aeaac2",
+        "size": 4345,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scripts/heroine_analysis_panel.gd",
+        "git_blob_sha1": "55fe388b4b317433dbb1035c9d2291853c653245",
+        "size": 4416,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scripts/male_friend_panel.gd",
+        "git_blob_sha1": "11da2905f8d501a460ffbcec82367134fe35c22c",
+        "size": 2557,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scripts/npc_list_panel.gd",
+        "git_blob_sha1": "a0dc10e9e72c95f6c763c49fa96b02cad380089d",
+        "size": 2997,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scripts/quest_panel.gd",
+        "git_blob_sha1": "14c656151d62f6e8b2d90407c268e2f323530785",
+        "size": 5073,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scripts/relationship_panel.gd",
+        "git_blob_sha1": "21e05c70bc13f30802b33d89d05ee7051886fd60",
+        "size": 2271,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/ui/scripts/rumor_panel.gd",
+        "git_blob_sha1": "744b7fd23722a79b3a6619ca4231aa15cbb30b96",
+        "size": 4449,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/world/ending_system.gd",
+        "git_blob_sha1": "5c6f438fde71de86d62380ef9df9766cbd66901b",
+        "size": 11410,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/world/geass_system.gd",
+        "git_blob_sha1": "50e5b195cc2bd53a3bf078be5b2bb06805708ff4",
+        "size": 11921,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/source/world/world_event_system.gd",
+        "git_blob_sha1": "c2f798db26c6a6d6645a9a3ea27e42e4487e88d1",
+        "size": 12866,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/codegeas/test_driver.py",
+        "git_blob_sha1": "8a19af3918c861332501696646bb90d61319c7be",
+        "size": 1077,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/FINAL_SERIES_PLAN.json",
+        "git_blob_sha1": "7041885d7e670c00463c2210dc458084b7772e71",
+        "size": 1363,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/launch_final_series.ps1",
+        "git_blob_sha1": "6a25443a18cf98ba85b61ef59bc9436e0b844611",
+        "size": 3006,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/acceptance_support/DestructiveTest.gd",
+        "git_blob_sha1": "5ab751b97234ddb1b05de484b408689d864535ca",
+        "size": 4384,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/acceptance_support/FontSupportTest.gd",
+        "git_blob_sha1": "60851bd97a91aecdfab847267e6fa12cd292e520",
+        "size": 1100,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/acceptance_support/inventory.json",
+        "git_blob_sha1": "6fc2f037b8d1c09acd770e540161b5cd68ee99b4",
+        "size": 928,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/acceptance_support/UIInteractionTest.gd",
+        "git_blob_sha1": "ab0b990df045ea6b120c5042d8c106cbce878774",
+        "size": 6745,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/adapter.py",
+        "git_blob_sha1": "9d6a862eb96fa9d714d23dfd5221e4cfc973aeb9",
+        "size": 2953,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/diagnostics/MiniMaxIntegrationTest.json",
+        "git_blob_sha1": "91638f6f689b45c1af5502f3dc2930fda4928c7a",
+        "size": 1336,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/diagnostics/MiniMaxIntegrationTest.log",
+        "git_blob_sha1": "763c0ae4e8f648f56c90b8fb32f1254cd5f9bb41",
+        "size": 17836,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/observer.gd",
+        "git_blob_sha1": "abb407bdc632fb976304cc254355c2900cd3893b",
+        "size": 1667,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/prepare_target.py",
+        "git_blob_sha1": "6e3308e5387a9402754b39f6fbe8b9f1513490ed",
+        "size": 3676,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/profile.json",
+        "git_blob_sha1": "cf6faa4a77deb718a2b8478e435df455144e61a5",
+        "size": 8629,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/snapshot.json",
+        "git_blob_sha1": "db46cf016cd5229a50a865386dc6c1e8b052b247",
+        "size": 352,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source_inventory.json",
+        "git_blob_sha1": "10d2bb3e7f854fe4342279b98306d2450862dbfd",
+        "size": 8578,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/HOLD_RELEASE_REPORT.md",
+        "git_blob_sha1": "d547f5512fe3a238c0c87787ef1ac2cc6ac270b4",
+        "size": 4340,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/icon.svg",
+        "git_blob_sha1": "f0c8b53502eb105e2948b2d62396d650c9e88c01",
+        "size": 391,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/INTEGRATION_NOTES.md",
+        "git_blob_sha1": "8128a5f13e026004063b4ff180f438f5ac5e25e2",
+        "size": 12920,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/project.godot",
+        "git_blob_sha1": "72fdae197ce08cc3f05c4ea4e6702fa9ec6ff8eb",
+        "size": 3037,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/qa/PoliticsTransportQaAdapter.gd",
+        "git_blob_sha1": "7079eac2d965cab4d206f2f09267073640ddbcc7",
+        "size": 11491,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/qa/QaBridge.gd",
+        "git_blob_sha1": "6e1f04265fb68174d3dd003170e1232ba08999f9",
+        "size": 2422,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/README_PLAYTEST.md",
+        "git_blob_sha1": "5836e5fadf005b8f9014f0202b6df5f08c39f5bf",
+        "size": 3902,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scenes/Main.tscn",
+        "git_blob_sha1": "5c106b08a6b12149a2e4e415f30cdb390e8ea9c5",
+        "size": 4004,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/AICompanyBrain.gd",
+        "git_blob_sha1": "9d7f3914fc83f1a8f72db40333bd4e48b4630268",
+        "size": 13246,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/AICompetitionSystem.gd",
+        "git_blob_sha1": "dd77b7b81f3bd35f426eb4e3a5314da368dce9ee",
+        "size": 2386,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/AirSystem.gd",
+        "git_blob_sha1": "ef9f14faa03fe6adc3d4e5cac2e4375340f2581c",
+        "size": 3562,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/CargoRegistry.gd",
+        "git_blob_sha1": "8634fd37977b20e08d9e2d5b47cb7939b7a3c6f6",
+        "size": 6585,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/CompanyLifecycleSystem.gd",
+        "git_blob_sha1": "62b3658f482f4683eeb3e7bfa1806f4bf30c8ab4",
+        "size": 5527,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/CompetitionResolver.gd",
+        "git_blob_sha1": "0569500f8ee88cda43c124bfb1eaea33ddeb40e5",
+        "size": 5399,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/CorporateSystem.gd",
+        "git_blob_sha1": "1c28c76be60a051a6fa8c93ec7a8a4ecb4c3ed30",
+        "size": 7242,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/EconomicCore.gd",
+        "git_blob_sha1": "2fce691d64b94911585a198adf3cd47adc4c98ff",
+        "size": 20173,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/EconomicDiagnostics.gd",
+        "git_blob_sha1": "096f8c9b31a944876d58e9bbb76d6e99b6883a9b",
+        "size": 3625,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/EconomyBridge.gd",
+        "git_blob_sha1": "ef85242dcd943813df687774eb750818add277de",
+        "size": 2408,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/EconomySystem.gd",
+        "git_blob_sha1": "59e6038e18764610ce681421ed86565a5c6c5c41",
+        "size": 3354,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/GameController.gd",
+        "git_blob_sha1": "536fc55ef847dffc3b9a5a5e7e72d6abeb423340",
+        "size": 11295,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/GroundNetwork.gd",
+        "git_blob_sha1": "2c02df3925ff8ef70b377106ed739467bbacebba",
+        "size": 14299,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/GroundTransportAdapter.gd",
+        "git_blob_sha1": "59dd2f2121c762f5feed88366dc3c1440d883d08",
+        "size": 5930,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/IndustryCompany.gd",
+        "git_blob_sha1": "1fc2172881f1dfa470a49916857542a43df8d0cd",
+        "size": 2023,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/IndustryFacility.gd",
+        "git_blob_sha1": "f0c61d151dcc322aa9ac96b06431826e523ec11c",
+        "size": 5478,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/MapView.gd",
+        "git_blob_sha1": "f8776558863dbbe9740237a46d126fcdc89491b6",
+        "size": 8947,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/MarketDemand.gd",
+        "git_blob_sha1": "1d01a6cdcbd9c9ecf8988cf3aa74e5979ffc355b",
+        "size": 3201,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/MiniMaxUI.gd",
+        "git_blob_sha1": "de4993d9e043e6dc16368b4b5b89d24abd70183d",
+        "size": 7568,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/Nation.gd",
+        "git_blob_sha1": "92f11e667d559bb6fb0b0390df47fff255604be5",
+        "size": 4367,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/NationLifecycleSystem.gd",
+        "git_blob_sha1": "03426dacf88843cc82d9722be2ccf775188ee913",
+        "size": 4057,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/PlayerInterventionSystem.gd",
+        "git_blob_sha1": "8555054b00d980a65e4733bf97f5440066d47556",
+        "size": 5006,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/PoliticalLogisticsSystem.gd",
+        "git_blob_sha1": "82070712bdb2d08b45e443840c8b241cbc6b66d2",
+        "size": 3551,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/PoliticalSystem.gd",
+        "git_blob_sha1": "da2c0265c4e8fa6e648d40f1f0884b3b782f7f34",
+        "size": 448,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/RegionalEconomy.gd",
+        "git_blob_sha1": "02c43ceecb1bf7c7cee96c7b3b5c2f0dc0f18dda",
+        "size": 5940,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/Route.gd",
+        "git_blob_sha1": "8bd91aed0ee4acb37ac5287ddbe84d821e991c2a",
+        "size": 2290,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/Settlement.gd",
+        "git_blob_sha1": "e1305edfe9411c97a396164431834bce7cc0d9ec",
+        "size": 3145,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/ShipSystem.gd",
+        "git_blob_sha1": "f590727c22a82d596d7b8fb66cd938ffd13ca083",
+        "size": 4275,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/SimulationDiagnostics.gd",
+        "git_blob_sha1": "8cbef7007c345d05551740869f12bd7c58c4ba19",
+        "size": 2162,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/TransportCompany.gd",
+        "git_blob_sha1": "215ef70839dc0ba57668595c94591386b666b97a",
+        "size": 3159,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/TransportModeConfig.gd",
+        "git_blob_sha1": "cd43bde6339675c209d6efcfd2d0bfe9124f8d47",
+        "size": 3249,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/TransportOverlay.gd",
+        "git_blob_sha1": "eeb52608f953e6fd3a02914456eccaac70788cb9",
+        "size": 3751,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/TransportSystem.gd",
+        "git_blob_sha1": "0a1a1755057b5eb452d279cf325955edae5bce6b",
+        "size": 9394,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/UIController.gd",
+        "git_blob_sha1": "da782184cd8fb1f6f812ee36516343c5b4c2014f",
+        "size": 8199,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/WarFrontSystem.gd",
+        "git_blob_sha1": "6614d6334836efd39e5fcd80423cbcd2c9330142",
+        "size": 4343,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/WarImpactSystem.gd",
+        "git_blob_sha1": "71a389db3fd1075c8619252cb30a39069b7509c4",
+        "size": 4109,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/WarSupplyPolicy.gd",
+        "git_blob_sha1": "11e6754d65c7118fba4a43902e4050dfd13046f7",
+        "size": 10954,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/WarSystem.gd",
+        "git_blob_sha1": "fbfc51b0b5efb8fd3398d5ec2113a45ddef86bb0",
+        "size": 5062,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/WaterMap.gd",
+        "git_blob_sha1": "1810f8daeefd46e099b48e603b9132b7ba97ca72",
+        "size": 5357,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/WorldDynamicsOverlay.gd",
+        "git_blob_sha1": "781d28c378f4e19e00e5efcaea55d3733623e516",
+        "size": 1363,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/WorldDynamicsSystem.gd",
+        "git_blob_sha1": "ace87781f7e5a3f19d0c61f5330c0ff8036191c8",
+        "size": 2402,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/scripts/WorldState.gd",
+        "git_blob_sha1": "6d11d2c6553af3ff60011557fecfd9dea1b8f8ba",
+        "size": 8273,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/TEST_ACCEPTANCE.md",
+        "git_blob_sha1": "c161de5397b1c9d4dda287cfaf829044345978b9",
+        "size": 1161,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/economic_core_selftest.py",
+        "git_blob_sha1": "4dbd3069e3966217a5c146497d679a31ed752703",
+        "size": 12406,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/EconomicCoreIntegrationTest.gd",
+        "git_blob_sha1": "8fcb821c2db803e3a0ab1a703baaebcc3224b4fc",
+        "size": 3854,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/FullIntegrationTest.gd",
+        "git_blob_sha1": "f1c0379cdc8d2eb8c5466fb296057aa11519a20c",
+        "size": 10138,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/GameBootSmokeTest.gd",
+        "git_blob_sha1": "f092023fb616364e9216b5045bd4058d92cd09ec",
+        "size": 5356,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/HoldReleaseAcceptanceTest.gd",
+        "git_blob_sha1": "62e2c44c40ff7da6fa5b53bfb5e33acb9fc74bda",
+        "size": 7336,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/IntegratedAcceptanceTest.gd",
+        "git_blob_sha1": "f1c0379cdc8d2eb8c5466fb296057aa11519a20c",
+        "size": 10138,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/LongRunProfile.gd",
+        "git_blob_sha1": "26d8feafae332617778768d995fb1b05d125b07e",
+        "size": 7113,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/MiniMaxIntegrationTest.gd",
+        "git_blob_sha1": "7a822a01ff001258ec4918c80d63ecd00f2ddb11",
+        "size": 30445,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/MockGroundProvider.gd",
+        "git_blob_sha1": "3f0bb956ebbebdf57d440fcb52030f01a6e67868",
+        "size": 886,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/prestable_autoplay_suite.py",
+        "git_blob_sha1": "39925f56862c39a8180b969e1b4c2483158ba34f",
+        "size": 2308,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/prestable_evidence_audit.py",
+        "git_blob_sha1": "e1cabbd5b4befbc7d2e612bf3ccc8286748e75ed",
+        "size": 2564,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/WorkCompletionAcceptanceTest.gd",
+        "git_blob_sha1": "c427341d7695e6965c8fb8cf7b73120d24d234df",
+        "size": 8026,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/tests/WorldDynamicsAcceptanceTest.gd",
+        "git_blob_sha1": "bdd5b9ff07e286d5a6667a40dc71c50741d18e84",
+        "size": 7027,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/source/WORK_ISSUES_8_15_INTEGRATION.md",
+        "git_blob_sha1": "7492e63d963a5dd2054d84287c1813276a6e95fd",
+        "size": 4749,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/test_coordinate_mapping.py",
+        "git_blob_sha1": "7a2d728567a24e60d76a1d46ff6d03b829423e41",
+        "size": 1647,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/politicstrasport/test_final_contract.py",
+        "git_blob_sha1": "c22e536f7675202af354d6cd99493f5e72c5c376",
+        "size": 1609,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/README_FINAL_ACCEPTANCE.md",
+        "git_blob_sha1": "d0590e72bf5f965ca8bbd0bc5dcacfd96d07535c",
+        "size": 1915,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/RUN_FINAL_ACCEPTANCE.cmd",
+        "git_blob_sha1": "ef34ddabaec38b7edd4e2f472e22c3e12f8d6912",
+        "size": 215,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/run_series.py",
+        "git_blob_sha1": "227736960674f0b4bca8817115e94d1ab0b014e5",
+        "size": 14699,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/run_target.py",
+        "git_blob_sha1": "7ce0a5ecbd2890411cd15547cf1ff708076bcae0",
+        "size": 2966,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/split_candidate.py",
+        "git_blob_sha1": "b615960cfdf39b9c18b696b2ca0aa8fcc949bba3",
+        "size": 1601,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/test_candidate_export.py",
+        "git_blob_sha1": "f58c86c937b60887c9f7267c969817821cdca227",
+        "size": 1324,
+        "mode": "100644"
+      },
+      {
+        "path": "acceptance_targets/test_series.py",
+        "git_blob_sha1": "f82cb3d633a57886419c6685ebdea69571e9d9c3",
+        "size": 3458,
+        "mode": "100644"
+      },
+      {
+        "path": "source/APPLY_REWORK.cmd",
+        "git_blob_sha1": "ab01faba22dd6d0f170058e96e8115bdf9eb097a",
+        "size": 166,
+        "mode": "100644"
+      },
+      {
+        "path": "source/APPLY_REWORK.ps1",
+        "git_blob_sha1": "9e40e699dd58db07f7d9cdc76a9c022da572685f",
+        "size": 2713,
+        "mode": "100644"
+      },
+      {
+        "path": "source/BOOTSTRAP.ps1",
+        "git_blob_sha1": "a5c1965d3ede58e78ebe9dc447fa5ee1103a2eb0",
+        "size": 11746,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/adapters.py",
+        "git_blob_sha1": "e57aa035017bd1e0b492c66dbeb68b8b09edea8a",
+        "size": 5381,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/agents.py",
+        "git_blob_sha1": "a8fd7124a2248368846da74769f20689645d5c00",
+        "size": 11628,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/assets.py",
+        "git_blob_sha1": "c8ecc7eb8f027c7dcdcacfe0ed1c3817f60851ce",
+        "size": 2794,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/backends.py",
+        "git_blob_sha1": "746a46bf8884422d9be0cbb61ee640dfeacbf9e0",
+        "size": 12966,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/browser_backend.py",
+        "git_blob_sha1": "c006f05a8390da403ddf04de18bc5011a557e89e",
+        "size": 4495,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/campaigns.py",
+        "git_blob_sha1": "10121a9a9ce3ef9f51c922d7a05d8e9ab6773fe2",
+        "size": 5564,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/capability_contract.py",
+        "git_blob_sha1": "6a35fc6feeb4c21d210252d6e7bfe66c42fe6a0d",
+        "size": 9872,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/common.py",
+        "git_blob_sha1": "403f7a6bb27ef7e2fccf0a48914a3e2b11a26fed",
+        "size": 13067,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/contracts.py",
+        "git_blob_sha1": "79218b1833e6d456d1d81ecf115be4e6cef0612c",
+        "size": 5116,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/coordinator.py",
+        "git_blob_sha1": "3edf1f70ce76b228b4a853fa65206fc1fbc75c65",
+        "size": 21320,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/finalize.py",
+        "git_blob_sha1": "0436ea6755b646b959e7b3d3d209f9bba7bbbddb",
+        "size": 7349,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/harness_probe.py",
+        "git_blob_sha1": "839a57b69aa11643bcc3f4e51f066d6417905ede",
+        "size": 552,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/headquarters.py",
+        "git_blob_sha1": "355cb6d89ee1469eb0929a69f42f7ddb80f3b626",
+        "size": 6698,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/host_runner.py",
+        "git_blob_sha1": "4ce826b9578b6f362e7adcb3c7827642bfa691fe",
+        "size": 25782,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/hq_evidence.py",
+        "git_blob_sha1": "5d2a17ba5760bca3ad10c119be2bd5dc1970c7c9",
+        "size": 20785,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/hq_report.py",
+        "git_blob_sha1": "bb8a485960fb19cfb52fd38658aa3e7e56f17b7f",
+        "size": 4891,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/management_evaluator.py",
+        "git_blob_sha1": "8cde9f87adfc1c13d6e7773780d06b141cf52952",
+        "size": 36043,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/phase3_run_evidence.py",
+        "git_blob_sha1": "293deb1ea182751986fd618ad6708618684a3b4b",
+        "size": 11237,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/plans.py",
+        "git_blob_sha1": "ea6e6650162f8096d1d7a53f6b9456edc4c215cb",
+        "size": 1047,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/profile.py",
+        "git_blob_sha1": "018e34bd8ca5f85ea1941f5fde826afb6993abde",
+        "size": 2567,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/recording.py",
+        "git_blob_sha1": "70bbb50bfa015f56eef1ccf7ede5982a7157647e",
+        "size": 10957,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/regression.py",
+        "git_blob_sha1": "4df4262eef274c5da8a4d0573dcc95fb7d94d835",
+        "size": 6681,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/release_manifest.py",
+        "git_blob_sha1": "3e0f83c0365663daa098987289177a4e736b6886",
+        "size": 1122,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/replay.py",
+        "git_blob_sha1": "bb916bf1107332316411cfae453e2f4717eb96de",
+        "size": 1813,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/runner.py",
+        "git_blob_sha1": "de9288a4650a4192c48eca9ad3647439bb553cad",
+        "size": 1265,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/sales_evaluator.py",
+        "git_blob_sha1": "82d73e22d4a073f0385b251afbb9ba397f92ac35",
+        "size": 28962,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/selftest.py",
+        "git_blob_sha1": "f31b44a79bd612550c50b2decaf549de13bc2abf",
+        "size": 6405,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/session_validation.py",
+        "git_blob_sha1": "71ee555a7a5cca773f1c407367a38bac8554ba45",
+        "size": 8194,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/storage_qa.py",
+        "git_blob_sha1": "1e89dd7291802a8ba133c498a69d6fc012aa7f49",
+        "size": 11187,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/stream_video.py",
+        "git_blob_sha1": "2ec938c7036d3cbe688671b79ae1b2ae04122ccf",
+        "size": 2800,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/supporting_diagnostics.py",
+        "git_blob_sha1": "cc3d2be9826fcc4bb3bf5caa3676402aff0fb64e",
+        "size": 1323,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/target_identity.py",
+        "git_blob_sha1": "f60ef9ff507dc48a667c6b24e0c677c3d1d90682",
+        "size": 11868,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/target_intake.py",
+        "git_blob_sha1": "5cebafc6a918bc933f77019bd1b6512edd500766",
+        "size": 5040,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/targets.py",
+        "git_blob_sha1": "b09583be5925c0a8c26be7707330944018c27c0f",
+        "size": 7589,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/tools.py",
+        "git_blob_sha1": "3381fc3c4f5aaf3bd4b8c73a7009e52fdbe1a877",
+        "size": 12373,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/windows_runner.py",
+        "git_blob_sha1": "b7bf64dff871f1f901523ffe58ec0f6d428d4e25",
+        "size": 59194,
+        "mode": "100644"
+      },
+      {
+        "path": "source/CORE/windows.py",
+        "git_blob_sha1": "1a02c8a7ffcd2aeec9bd65dd02f7f85461103e74",
+        "size": 12238,
+        "mode": "100644"
+      },
+      {
+        "path": "source/DEVELOPER/build_versioned_zip.py",
+        "git_blob_sha1": "48096820d7c7a16e79525ce703f46786d602a952",
+        "size": 1477,
+        "mode": "100644"
+      },
+      {
+        "path": "source/DEVELOPER/PHASE1_INTEGRATION.md",
+        "git_blob_sha1": "5dd23afe3c36d2a3bfd88e080cd4db7da5d25e3d",
+        "size": 4264,
+        "mode": "100644"
+      },
+      {
+        "path": "source/GAME/fixtures/fixture.gd",
+        "git_blob_sha1": "6876374551505fe8a46e78935b1e090dbfb190dc",
+        "size": 4772,
+        "mode": "100644"
+      },
+      {
+        "path": "source/GAME/virtual/display.py",
+        "git_blob_sha1": "20089c4f107a74405822502f7f2f02ab66dd735b",
+        "size": 6179,
+        "mode": "100644"
+      },
+      {
+        "path": "source/GAME/virtual/grid.py",
+        "git_blob_sha1": "e6488865403d64e627a30bba19d2cc6d140dd73b",
+        "size": 864,
+        "mode": "100644"
+      },
+      {
+        "path": "source/GAME/virtual/procedural.py",
+        "git_blob_sha1": "a11789e068d654222eb727c5062197a84d4735b8",
+        "size": 563,
+        "mode": "100644"
+      },
+      {
+        "path": "source/GAME/virtual/realtime.py",
+        "git_blob_sha1": "5006bbb663f5fc9d2b30460d99f7ed73bbe53098",
+        "size": 955,
+        "mode": "100644"
+      },
+      {
+        "path": "source/GAME/virtual/story.py",
+        "git_blob_sha1": "0b776a03c113ca77b592e1775eb7b30332631667",
+        "size": 858,
+        "mode": "100644"
+      },
+      {
+        "path": "source/GAME/virtual/workshop.py",
+        "git_blob_sha1": "d790fe125835509ea23da49f490a0fd88f755781",
+        "size": 1127,
+        "mode": "100644"
+      },
+      {
+        "path": "source/PROFILES/fixture_grid.json",
+        "git_blob_sha1": "90a4966c53d11353590dde3e97713fccb6ca5064",
+        "size": 30823,
+        "mode": "100644"
+      },
+      {
+        "path": "source/PROFILES/fixture_management.json",
+        "git_blob_sha1": "585c0b8566dc9b0b4cb2c8f304d34d3cb83a9b36",
+        "size": 30586,
+        "mode": "100644"
+      },
+      {
+        "path": "source/PROFILES/fixture_narrative.json",
+        "git_blob_sha1": "1c85332590667ab3bf986d048e55b8b09ec3c523",
+        "size": 30526,
+        "mode": "100644"
+      },
+      {
+        "path": "source/PROFILES/fixture_procedural.json",
+        "git_blob_sha1": "b2f55e80c9d03d2c6e53d2b8daaf93bfd5071230",
+        "size": 30598,
+        "mode": "100644"
+      },
+      {
+        "path": "source/PROFILES/fixture_realtime.json",
+        "git_blob_sha1": "1820e72b4a6de741b68269d7fd31b7f4015914ad",
+        "size": 31880,
+        "mode": "100644"
+      },
+      {
+        "path": "source/README.md",
+        "git_blob_sha1": "e4e5947204982aab5617abdf8f8743671222deeb",
+        "size": 272,
+        "mode": "100644"
+      },
+      {
+        "path": "source/scripts/package_integrity.py",
+        "git_blob_sha1": "dbaac952555ba878952360455d7c6a12a1716b33",
+        "size": 9490,
+        "mode": "100644"
+      },
+      {
+        "path": "source/scripts/PHASE3_OVERLAY_REBUILD.ps1",
+        "git_blob_sha1": "fb902b5876610c6a7b34acad5da1c3698e0a689d",
+        "size": 9144,
+        "mode": "100644"
+      },
+      {
+        "path": "source/scripts/PHASE3_REGEN_MANIFEST.ps1",
+        "git_blob_sha1": "78254b99c6bed806682f19e7535cc5f49dab4272",
+        "size": 1677,
+        "mode": "100644"
+      },
+      {
+        "path": "source/scripts/PREPARE_SOURCE.ps1",
+        "git_blob_sha1": "dbf5d0c168bee50876b568380efda858fd0c62f9",
+        "size": 1793,
+        "mode": "100644"
+      },
+      {
+        "path": "source/START_FUNCTIONAL.cmd",
+        "git_blob_sha1": "27b590609d049fc65ea634acf715797b57eb370c",
+        "size": 75,
+        "mode": "100644"
+      },
+      {
+        "path": "source/START_LOGIC.cmd",
+        "git_blob_sha1": "e64631a1e21ce4e8f591d25ff2546d9a453ee390",
+        "size": 79,
+        "mode": "100644"
+      },
+      {
+        "path": "source/START_LONG_SOAK.cmd",
+        "git_blob_sha1": "8b6f88d78a091b7850e69780d6520b369bc62101",
+        "size": 80,
+        "mode": "100644"
+      },
+      {
+        "path": "source/START_PLAYABLE.cmd",
+        "git_blob_sha1": "9bb044132c700e56f3db8369a38affb8cd42a921",
+        "size": 82,
+        "mode": "100644"
+      },
+      {
+        "path": "source/START_QA.cmd",
+        "git_blob_sha1": "b00458e81f36b91baa336db98349a7d5938abea3",
+        "size": 630,
+        "mode": "100644"
+      },
+      {
+        "path": "source/START_SELFTEST.cmd",
+        "git_blob_sha1": "88d3ac1d85b0b58f56bb9245431d3b0f28564fe0",
+        "size": 97,
+        "mode": "100644"
+      },
+      {
+        "path": "source/START_SOAK_24H.cmd",
+        "git_blob_sha1": "f3e2935633252072232f1f4500c9500389628c24",
+        "size": 81,
+        "mode": "100644"
+      },
+      {
+        "path": "source/START_VALIDATION.sh",
+        "git_blob_sha1": "5fcda66b80a78d987ea3ff56fb103a582dd03ec1",
+        "size": 147,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/probe_native_fixture_faults.gd",
+        "git_blob_sha1": "914fcc826d05dfcc270b61ff89c8bcd4a1270a62",
+        "size": 1498,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/probe_native_fixture_faults.py",
+        "git_blob_sha1": "03b9d9f614859fc9899fa981e3e91ba5c12ea2f7",
+        "size": 2778,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_audit_v032.py",
+        "git_blob_sha1": "a4d91217ecc112bb7137f2819af003a219db2a26",
+        "size": 15301,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_bridge_observation.py",
+        "git_blob_sha1": "ecbb06fda3166937ec8e4337cf249f359928bfc5",
+        "size": 2201,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_campaigns.py",
+        "git_blob_sha1": "2649f490c653c7fbbd9a781f396d9fc83d96193f",
+        "size": 11154,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_capability_contract_phase1.py",
+        "git_blob_sha1": "72dd72eb631c40da0a8d75fd85edee370525101d",
+        "size": 5553,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_coordinator_phase1.py",
+        "git_blob_sha1": "6011e918fcae0b30628869677d73bc16cc66bc8b",
+        "size": 11195,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_core.py",
+        "git_blob_sha1": "67432a0a24bdc80ea605b8d4d2678847d550bf44",
+        "size": 9725,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_finalization_certification_recovery.py",
+        "git_blob_sha1": "801fde1200fdc912b2ee6c67300d1888655b8a6a",
+        "size": 3009,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_headquarters_gates_phase1.py",
+        "git_blob_sha1": "7daaf698b543c3016e3488c5f82bfedb3b4010e6",
+        "size": 5707,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_hq_coordinator_integration.py",
+        "git_blob_sha1": "58d3c4e7311ffd6d7f1d2e70d4544f1fa01749cf",
+        "size": 18956,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_input_key_contract.py",
+        "git_blob_sha1": "14998bceb0b9d7b04e18471bc0a07cc6bed85089",
+        "size": 1554,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_management_hq.py",
+        "git_blob_sha1": "36ee85ddbca22528267fbaa8011eaa17b5aa74a7",
+        "size": 17476,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_package_distribution.py",
+        "git_blob_sha1": "91780036033ea9c89648c71f00f535edbec83ad5",
+        "size": 3983,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_persisted_save_storage.py",
+        "git_blob_sha1": "2bae9c26c327240bf6d3f59c84980fe0ed0a98c3",
+        "size": 2373,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_phase2_two_candidate_acceptance.py",
+        "git_blob_sha1": "53158133c4abad36dd7bd14105274a079a2dc141",
+        "size": 6375,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_phase3_integrated.py",
+        "git_blob_sha1": "00db411c913c51ba0287b33dd2ed96c481ea7d0c",
+        "size": 12224,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_pipeline_phase1.py",
+        "git_blob_sha1": "2c62c9913367d0665c55c877abb3a33af24fff2f",
+        "size": 18761,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_rework_v030.py",
+        "git_blob_sha1": "070f71606eb36bb2d84f2c4fbacf5c305de8d8ef",
+        "size": 5700,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_sales_hq.py",
+        "git_blob_sha1": "8d3fd638628cc84ede8290afc24e7b74cce961d2",
+        "size": 13624,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_sparse_detector.py",
+        "git_blob_sha1": "8a1dac564f65f6706d1e4e7aba80f3fe86325ecf",
+        "size": 2883,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_start_entrypoint.py",
+        "git_blob_sha1": "c2c446a759223c41f95b404b51e2f0804f2c91de",
+        "size": 4003,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_supporting_diagnostics.py",
+        "git_blob_sha1": "c7f29ae0f5ccb177892db4264ffced4f0f8fd926",
+        "size": 2519,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_target_binding_v033.py",
+        "git_blob_sha1": "4f0d895c2dadca267236e80aad18cd922472496c",
+        "size": 5078,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_target_identity_phase1.py",
+        "git_blob_sha1": "4c14db059e1202b6cce1ed1cf675a5a7f94b27ef",
+        "size": 7683,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_windows_evidence_paths.py",
+        "git_blob_sha1": "61f5dcc214cb210aa83a3843addc392c07c3d0f2",
+        "size": 3086,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/test_work_phase1_acceptance.py",
+        "git_blob_sha1": "3fb038dbfa544226d66b8577eb49c0b72e9ee36d",
+        "size": 3395,
+        "mode": "100644"
+      },
+      {
+        "path": "source/TESTS/windows_acceptance.py",
+        "git_blob_sha1": "7c7a6b2e527994b7b184c52f5f8fc47516c9cce0",
+        "size": 8860,
+        "mode": "100644"
+      }
+    ]
   },
   "semantics": {
     "raw_donor_is_not_the_predecessor_candidate": true,
+    "rollback_kind": "rebuild verified predecessor source+acceptance contract on byte-identical donor, then fresh SelfTest",
+    "historical_candidate_sha_is_reference_not_automatic_rebuild_identity": true,
     "product_acceptance": "HOLD",
     "stable": "HOLD"
   }
