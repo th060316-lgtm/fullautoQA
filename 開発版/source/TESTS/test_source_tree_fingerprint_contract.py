@@ -56,6 +56,21 @@ class CanonicalFingerprintContractTests(unittest.TestCase):
             self.assertEqual(64, len(parts[2]))
             self.assertEqual(parts[2], parts[2].lower())
 
+    def test_ordinal_order_matches_dotnet_for_supplementary_characters(self):
+        # Python code-point order puts U+E000 before U+1F600.  .NET ordinal
+        # comparison sees the emoji's leading UTF-16 surrogate D83D first, so
+        # it sorts the emoji first.  The Python binding must match PowerShell.
+        emoji = '\U0001F600.txt'
+        private_use = '\uE000.txt'
+        files = {
+            private_use: {'size': 1, 'sha256': 'a' * 64},
+            emoji: {'size': 1, 'sha256': 'b' * 64},
+        }
+        rows = immutability.canonical_rows(files)
+        self.assertEqual([emoji, private_use], [row.split('\t')[0] for row in rows])
+        self.assertLess(immutability.ordinal_path_key(emoji),
+                        immutability.ordinal_path_key(private_use))
+
     def test_fingerprint_is_the_sha256_of_the_lf_joined_rows(self):
         files = immutability.collect(self.root)
         expected = hashlib.sha256(
