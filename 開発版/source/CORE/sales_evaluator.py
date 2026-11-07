@@ -79,12 +79,12 @@ PHASES = (
                                    'communication_test', 'clarity')),
 )
 
-_HUMAN_KINDS = frozenset({'human', 'human_reviewer', 'real_human', 'person', 'player',
-                          'tester', 'manual_reviewer', 'human_tester'})
-_PROXY_KINDS = frozenset({'model', 'model_proxy', 'llm', 'ai', 'proxy', 'synthetic',
-                           'simulated', 'agent', 'automated', 'self_review'})
-_FIXTURE_KINDS = frozenset({'fixture', 'selftest', 'self_test', 'unit', 'unit_test',
-                             'synthetic', 'mock', 'stub', 'dry_run'})
+# The reviewer classification is owned by the review intake so that the
+# intake and this judgement can never disagree about what counts as a human.
+from review_intake import FIXTURE_KINDS as _FIXTURE_KINDS
+from review_intake import HUMAN_KINDS as _HUMAN_KINDS
+from review_intake import PROXY_KINDS as _PROXY_KINDS
+from review_intake import sanitize_sales_bundle
 
 _KIND_ALIASES = ('evidence_kind', 'kind', 'mode', 'run_mode', 'execution_kind')
 _REVIEWER_ALIASES = ('reviewer', 'reviewed_by', 'human_test', 'reviewer_kind', 'evaluator')
@@ -476,11 +476,20 @@ def evaluate_sales(context):
     """
     settings = getattr(context, 'settings', None) or {}
     bundle, sources = collect_evidence(context, DOMAIN, SALES_EVIDENCE_FILES)
+    # A collected bundle may claim a human test it cannot prove.  The intake
+    # owns that rule, so it is applied here as well: a proxy review may add
+    # observations, but it can never buy the human gate.
+    bundle, sanitizer_notes = sanitize_sales_bundle(bundle)
     table, threshold_sources, ignored = resolve_thresholds(settings, DOMAIN, bundle)
 
     rows = []
     risks = []
     notes = []
+    for note in sanitizer_notes:
+        risks.append({'code': note, 'severity': 'ERROR',
+                      'detail': 'a collected human-test claim was rejected because the '
+                                'recorded reviewer is not a real human'})
+        notes.append(note)
     sessions = _sessions(bundle)
 
     cold_session = _cold_start_session(sessions)
