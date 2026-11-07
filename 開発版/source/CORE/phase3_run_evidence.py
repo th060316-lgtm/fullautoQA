@@ -15,7 +15,8 @@ from pathlib import Path
 
 from common import archive_eligible, inside, read_json, tree_size, write_json
 from audience_summary import build_audience_summary, render_audience_summary
-from review_intake import load_review_evidence, merge_review_evidence
+from review_intake import (load_review_evidence, materialize_review_evidence,
+                           merge_review_evidence)
 
 
 def _identity_snapshot(prepared):
@@ -431,10 +432,19 @@ def build_sales_evidence(*, e, sessions, results, run_mode):
     # never satisfy the human gate; an absent or malformed review leaves the
     # bundle exactly as the automated run produced it.
     review, review_problems, review_source = load_review_evidence(e.root, run_id=e.run_id)
+    materialized_files = []
+    if review is not None:
+        review, materialize_problems, materialized_files = materialize_review_evidence(
+            review, e.root
+        )
+        review_problems = list(review_problems) + list(materialize_problems)
     bundle["review_evidence"] = {
         "source": review_source,
-        "status": "PRESENT" if review is not None else "ABSENT",
+        "status": "PRESENT" if review is not None else (
+            "INVALID" if review_problems else "ABSENT"
+        ),
         "problems": list(review_problems),
+        "materialized_files": list(materialized_files),
     }
     if review is not None:
         bundle, _ = merge_review_evidence(bundle, review)
@@ -465,6 +475,7 @@ def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
 
     write_json(Path(e.root) / "management_evidence.json", management)
     write_json(Path(e.root) / "sales_evidence.json", sales)
+    review_files = list((sales.get("review_evidence") or {}).get("materialized_files") or [])
     return [
         "phase3_environment.json",
         "phase3_preseal_integrity.json",
@@ -472,4 +483,4 @@ def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
         "sales_evidence.json",
         "audience_summary.json",
         "AUDIENCE_SUMMARY.txt",
-    ]
+    ] + review_files

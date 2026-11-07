@@ -22,8 +22,9 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SOURCE_ROOT / 'CORE'))
 
 import review_intake  # noqa: E402
-from review_intake import (load_review_evidence, merge_review_evidence,  # noqa: E402
-                            sanitize_sales_bundle, validate_review_evidence)
+from review_intake import (load_review_evidence, materialize_review_evidence,  # noqa: E402
+                            merge_review_evidence, sanitize_sales_bundle,
+                            validate_review_evidence)
 
 
 def _review(reviewer_kind='human', human_test=True, run_id='run-1'):
@@ -128,6 +129,55 @@ class ReviewIntakeContractTests(unittest.TestCase):
         self.assertIsNone(normalized)
         self.assertTrue(problems)
         self.assertEqual('default', source)
+    def test_review_and_attachments_are_materialized_into_run_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / 'input'
+            run = root / 'run'
+            source.mkdir()
+            run.mkdir()
+            document = _review()
+            document['sessions'][0]['phases']['first_30_seconds']['evidence'] = ['capture/session-01.mp4']
+            document['sessions'][0]['phases']['first_5_minutes']['evidence'] = ['capture/session-01.mp4']
+            (source / 'capture').mkdir()
+            (source / 'capture' / 'session-01.mp4').write_bytes(b'video-evidence')
+            review_path = source / 'sales_review.json'
+            review_path.write_text(json.dumps(document), encoding='utf-8')
+            normalized, problems, _ = load_review_evidence(
+                run, explicit_path=str(review_path), run_id='run-1')
+            self.assertEqual([], problems)
+            materialized, problems, files = materialize_review_evidence(normalized, run)
+            self.assertEqual([], problems)
+            self.assertIsNotNone(materialized)
+            self.assertEqual('review_evidence/source_review.json', materialized['source'])
+            self.assertIn('review_evidence/capture/session-01.mp4', files)
+            self.assertEqual(
+                ['review_evidence/capture/session-01.mp4'],
+                materialized['sessions'][0]['phases']['first_30_seconds']['evidence'])
+            self.assertEqual(
+                b'video-evidence',
+                (run / 'review_evidence' / 'capture' / 'session-01.mp4').read_bytes())
+            self.assertTrue((run / 'review_evidence' / 'normalized_review.json').is_file())
+
+    def test_missing_review_attachment_makes_review_unusable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / 'input'
+            run = root / 'run'
+            source.mkdir()
+            run.mkdir()
+            document = _review()
+            document['sessions'][0]['phases']['first_30_seconds']['evidence'] = ['missing.mp4']
+            document['sessions'][0]['phases']['first_5_minutes']['evidence'] = ['missing.mp4']
+            review_path = source / 'sales_review.json'
+            review_path.write_text(json.dumps(document), encoding='utf-8')
+            normalized, problems, _ = load_review_evidence(
+                run, explicit_path=str(review_path), run_id='run-1')
+            self.assertEqual([], problems)
+            materialized, problems, files = materialize_review_evidence(normalized, run)
+            self.assertIsNone(materialized)
+            self.assertTrue(any('ATTACHMENT_MISSING' in item for item in problems))
+            self.assertIn('review_evidence/source_review.json', files)
 
     def test_a_forged_human_claim_is_rejected(self):
         bundle = {'reviewer': {'kind': 'model_proxy'}, 'human_test_performed': True}

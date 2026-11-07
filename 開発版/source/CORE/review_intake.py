@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from pathlib import Path
 
 #: Environment variable that points at an explicit review evidence file.
@@ -194,6 +195,105 @@ def load_review_evidence(root, explicit_path='', run_id=None):
         normalized['source'] = str(path)
     return normalized, problems, source
 
+
+
+def _safe_review_reference(root, reference):
+    """Resolve a review attachment below root without path escape."""
+    text = str(reference or '').replace('\\\\', '/').strip()
+    if not text or text.startswith('/') or ':' in text:
+        raise ValueError('REVIEW_EVIDENCE_REFERENCE_INVALID:%s' % text)
+    parts = text.split('/')
+    if any(part in ('', '.', '..') for part in parts):
+        raise ValueError('REVIEW_EVIDENCE_REFERENCE_INVALID:%s' % text)
+    base = Path(root).resolve()
+    path = base.joinpath(*parts).resolve()
+    try:
+        path.relative_to(base)
+    except ValueError:
+        raise ValueError('REVIEW_EVIDENCE_REFERENCE_ESCAPE:%s' % text)
+    return path, '/'.join(parts)
+
+
+def materialize_review_evidence(review, evidence_root):
+    """Copy a validated external review and its attachments into run evidence.
+
+    Review references are interpreted relative to the source review JSON.
+    Missing or escaping attachments make the review unusable. Returned
+    references are rooted at review_evidence/ so normal Result ZIP integrity
+    covers the exact bytes that the Sales evaluator judged.
+    """
+    if not isinstance(review, dict):
+        return None, ['REVIEW_EVIDENCE_ABSENT'], []
+    source_text = str(review.get('source') or '')
+    if not source_text:
+        return None, ['REVIEW_EVIDENCE_SOURCE_MISSING'], []
+    source = Path(source_text).resolve()
+    if not source.is_file():
+        return None, ['REVIEW_EVIDENCE_SOURCE_MISSING'], []
+
+    root = Path(evidence_root).resolve()
+    destination = root / 'review_evidence'
+    destination.mkdir(parents=True, exist_ok=True)
+    files = []
+    raw_target = destination / 'source_review.json'
+    try:
+        if source != raw_target.resolve():
+            shutil.copy2(source, raw_target)
+        elif not raw_target.is_file():
+            raise OSError('source review vanished')
+        files.append('review_evidence/source_review.json')
+    except Exception as ex:
+        return None, ['REVIEW_EVIDENCE_SOURCE_COPY_FAILED:%s' % type(ex).__name__], files
+
+    normalized = json.loads(json.dumps(review))
+    problems = []
+    source_root = source.parent
+    copied = {}
+    for session in normalized.get('sessions') or []:
+        if not isinstance(session, dict):
+            continue
+        phases = session.get('phases')
+        if not isinstance(phases, dict):
+            continue
+        for phase in phases.values():
+            if not isinstance(phase, dict):
+                continue
+            references = phase.get('evidence')
+            if not isinstance(references, list):
+                continue
+            rewritten = []
+            for reference in references:
+                try:
+                    attachment, relative = _safe_review_reference(source_root, reference)
+                    if not attachment.is_file():
+                        problems.append('REVIEW_EVIDENCE_ATTACHMENT_MISSING:%s' % relative)
+                        continue
+                    target = destination.joinpath(*relative.split('/'))
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    key = target.resolve()
+                    if key not in copied:
+                        shutil.copy2(attachment, target)
+                        copied[key] = attachment
+                    run_relative = 'review_evidence/' + relative
+                    rewritten.append(run_relative)
+                    if run_relative not in files:
+                        files.append(run_relative)
+                except ValueError as ex:
+                    problems.append(str(ex))
+                except Exception as ex:
+                    problems.append('REVIEW_EVIDENCE_ATTACHMENT_COPY_FAILED:%s:%s' %
+                                    (str(reference), type(ex).__name__))
+            phase['evidence'] = rewritten
+
+    if problems:
+        return None, problems, files
+
+    normalized['source'] = 'review_evidence/source_review.json'
+    normalized_target = destination / 'normalized_review.json'
+    normalized_target.write_text(
+        json.dumps(normalized, ensure_ascii=False, indent=2), encoding='utf-8')
+    files.append('review_evidence/normalized_review.json')
+    return normalized, [], files
 
 def merge_review_evidence(sales_bundle, review):
     """Merge validated review evidence into a Sales evidence bundle.
