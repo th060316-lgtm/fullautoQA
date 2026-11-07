@@ -1,7 +1,8 @@
 import copy,json,os,sys,tempfile,unittest,zipfile
 from pathlib import Path
-from run_series import (OPERATION_LOG,compare_records,cross_run_reproducibility,extract,origin_record,
-                        run_logged,summarize_execution_environment)
+from run_series import (OPERATION_LOG,_series_review_payload,compare_records,
+                        cross_run_reproducibility,extract,origin_record,run_logged,
+                        series_hq_readback,summarize_execution_environment)
 
 class SeriesIntegrityTests(unittest.TestCase):
     def setUp(self):
@@ -115,5 +116,68 @@ class SeriesIntegrityTests(unittest.TestCase):
         self.assertEqual(data['local_windows_offline'],'NOT_VERIFIED')
         self.assertEqual(data['non_admin_series'],'NOT_VERIFIED')
         self.assertEqual(data['controller_only_series'],'NOT_VERIFIED')
+
+    def test_series_review_manifest_binds_each_review_to_candidate_and_target(self):
+        target={'fingerprint':'fp-a','game_id':'gameA'}
+        review={'schema_version':1,'reviewer':{'kind':'human','id':'h1'},
+                'human_test_performed':True,'sessions':[{'cold_start':True,
+                'provenance':{'source':'human'},'phases':{'first_30_seconds':{
+                'status':'PASS','evidence':['r.mp4']}}}]}
+        manifest={'schema_version':1,'series_reviews':[{
+            'index':1,'target_key':'A','candidate_sha256':'candidate',
+            'target_fingerprint':'fp-a','game_id':'gameA','review':review}]}
+        with tempfile.TemporaryDirectory() as td:
+            path=Path(td)/'reviews.json';path.write_text(json.dumps(manifest),encoding='utf-8')
+            payload=_series_review_payload(path,1,'A','candidate',target)
+            self.assertEqual(payload['series_binding']['target_key'],'A')
+            with self.assertRaisesRegex(ValueError,'CANDIDATE_MISMATCH'):
+                _series_review_payload(path,1,'A','other',target)
+            with self.assertRaisesRegex(ValueError,'BINDING_MISSING_OR_AMBIGUOUS'):
+                _series_review_payload(path,2,'B','candidate',{'fingerprint':'fp-b','game_id':'gameB'})
+
+    def test_series_hq_requires_every_run_not_only_the_last(self):
+        def management(fp,offline=True):
+            return {'evidence_kind':'real_game','measurements':{
+                'cpu_percent':{'value':1,'unit':'percent'},'ram_mb':{'value':1,'unit':'mb'},
+                'handles':{'value':1,'unit':'count'},'runtime_seconds':{'value':1,'unit':'seconds'},
+                'disk_bytes':{'value':1,'unit':'bytes'},'evidence_bytes':{'value':1,'unit':'bytes'}},
+                'performance_regression':False,
+                'reproducibility':{'status':True,'scope':'same_run_seed_replay'},
+                'fresh_run':True,'target_fingerprint':fp,'one_click':True,
+                'manual_intervention':False,'no_admin':True,'offline':offline,
+                'integrity':True,'residual_risk':[]}
+        def sales(human=True):
+            return {'evidence_kind':'real_human' if human else 'model_proxy',
+                'reviewer':{'kind':'human' if human else 'model_proxy','id':'h1'},
+                'human_test_performed':human,
+                'review_evidence_source':'review_evidence/sales_review.json' if human else None,
+                'audience_summary':{'status':'GENERATED','entries':[{
+                    'what_game':'move','product_description':'move to a goal'}],
+                    'description_contract':{'brand_price_independent':True}},
+                'audience_summary_evidence':['audience_summary.json'],
+                'sessions':[{'cold_start':True,'provenance':{'source':'fresh'},
+                    'phases':{
+                        'first_30_seconds':{'status':'PASS','evidence':['30.mp4']},
+                        'first_5_minutes':{'status':'PASS','evidence':['5.mp4']},
+                        'product_shelf_test':{'status':'PASS','evidence':['shelf.png']},
+                        'communication_readability':{'status':'PASS','evidence':['notes.txt']}}}]}
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);records=[]
+            for index,label in enumerate(['A','B','A'],1):
+                slot=root/('Run'+str(index));slot.mkdir()
+                fp='fp-a' if label=='A' else 'fp-b'
+                with zipfile.ZipFile(slot/'RESULT_FOR_CHATGPT.zip','w') as z:
+                    z.writestr('management_evidence.json',json.dumps(management(fp,offline=(index!=2))))
+                    z.writestr('sales_evidence.json',json.dumps(sales(human=(index!=2))))
+                records.append({'index':index,'target_key':label,'run_id':'run'+str(index),
+                    'fresh_extraction_id':'fresh'+str(index),'candidate_sha256':'candidate',
+                    'required_case_digest':'same','required_case_count':3,'required_nonpass':[],
+                    'target':{'fingerprint':fp,'game_id':'game'+label},'evidence_root':str(slot)})
+            result=series_hq_readback(records,root,expected_count=3)
+            self.assertNotEqual(result['management']['status'],'PASS')
+            self.assertNotEqual(result['sales']['status'],'PASS')
+            self.assertEqual(len(result['management']['per_run']),3)
+            self.assertEqual(len(result['sales']['per_run']),3)
+            self.assertEqual(result['human_test'],'NOT_RUN')
 
 if __name__=='__main__':unittest.main()

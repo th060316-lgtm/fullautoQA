@@ -38,6 +38,7 @@ SALES_COLD_START_EVIDENCE_ABSENT = 'SALES_COLD_START_EVIDENCE_ABSENT'
 SALES_COLD_START_PROVENANCE_MISSING = 'SALES_COLD_START_PROVENANCE_MISSING'
 SALES_PHASE_EVIDENCE_ABSENT = 'SALES_PHASE_EVIDENCE_ABSENT'
 SALES_OBSERVATION_INCOMPLETE = 'SALES_OBSERVATION_INCOMPLETE'
+SALES_PHASE_EVIDENCE_MISSING = 'SALES_PHASE_EVIDENCE_MISSING'
 SALES_PHASE_FAILED = 'SALES_PHASE_FAILED'
 SALES_BLOCKING_FINDINGS_RECORDED = 'SALES_BLOCKING_FINDINGS_RECORDED'
 SALES_MODEL_PROXY_IS_NOT_HUMAN_TEST = 'SALES_MODEL_PROXY_IS_NOT_HUMAN_TEST'
@@ -352,6 +353,12 @@ def _evaluate_phase(gate, name, session, threshold):
                      detail='the %s phase was recorded as failed' % name),
                 base)
     if explicit is True:
+        if not evidence:
+            base['status'] = 'NOT_RUN'
+            base['reason_code'] = SALES_PHASE_EVIDENCE_MISSING
+            return (_row(gate, 'NOT_RUN', SALES_PHASE_EVIDENCE_MISSING,
+                         detail='the %s phase records a positive outcome but no evidence reference' % name),
+                    base)
         base['status'] = 'PASS'
         base['reason_code'] = None
         return (_row(gate, 'PASS', None, evidence=evidence,
@@ -364,6 +371,12 @@ def _evaluate_phase(gate, name, session, threshold):
             return (_row(gate, 'FAIL', SALES_BLOCKING_FINDINGS_RECORDED, evidence=evidence,
                          detail='%d blocking finding(s) were recorded in the %s phase'
                                 % (len(blocking), name)),
+                    base)
+        if not evidence:
+            base['status'] = 'NOT_RUN'
+            base['reason_code'] = SALES_PHASE_EVIDENCE_MISSING
+            return (_row(gate, 'NOT_RUN', SALES_PHASE_EVIDENCE_MISSING,
+                         detail='the %s phase has no blocking finding but no evidence reference' % name),
                     base)
         base['status'] = 'PASS'
         base['reason_code'] = None
@@ -640,10 +653,11 @@ def evaluate_sales(context):
     human_evidence = False
     if reviewer_kind == 'human':
         present, value = lookup(bundle, ['human_test_performed', 'human_test_evidence'])
+        review_source = bundle.get('review_evidence_source') if isinstance(bundle, dict) else None
         # Human identity alone is not evidence that a human test occurred.
-        # The performed flag must be present and explicitly true; missing or
-        # indeterminate evidence stays NOT_RUN.
-        human_evidence = bool(present and truthiness(value) is True)
+        # The performed flag must be explicitly true, the reviewer must be
+        # identified, and the validated review intake must preserve its source.
+        human_evidence = bool(present and truthiness(value) is True and reviewer_id and review_source)
     if reviewer_kind == 'model_proxy':
         human_row = _row('sales.human_test', 'NOT_RUN', SALES_MODEL_PROXY_IS_NOT_HUMAN_TEST,
                          detail='the review was produced by a model proxy; a model proxy is '

@@ -99,6 +99,13 @@ class ReviewIntakeContractTests(unittest.TestCase):
         self.assertIsNone(normalized)
         self.assertIn('REVIEW_EVIDENCE_PHASE_OUTCOME_MISSING:first_30_seconds', problems)
 
+    def test_a_positive_phase_without_evidence_reference_is_rejected(self):
+        document = _review()
+        document['sessions'][0]['phases']['first_30_seconds']['evidence'] = []
+        normalized, problems = validate_review_evidence(document, run_id='run-1')
+        self.assertIsNone(normalized)
+        self.assertIn('REVIEW_EVIDENCE_PHASE_EVIDENCE_MISSING:first_30_seconds', problems)
+
     def test_a_review_for_another_run_is_rejected(self):
         normalized, problems = validate_review_evidence(_review(run_id='other'), run_id='run-1')
         self.assertIsNone(normalized)

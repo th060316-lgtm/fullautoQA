@@ -123,10 +123,15 @@ def validate_review_evidence(data, run_id=None):
             if not status and not isinstance(findings, list):
                 problems.append('REVIEW_EVIDENCE_PHASE_OUTCOME_MISSING:%s' % name)
                 continue
+            evidence = list(record.get('evidence') or []) if isinstance(record.get('evidence'), list) else []
+            evidence = [str(item) for item in evidence if str(item)]
+            if status == 'PASS' and not evidence:
+                problems.append('REVIEW_EVIDENCE_PHASE_EVIDENCE_MISSING:%s' % name)
+                continue
             normalized_phases[name] = {
                 'status': status or None,
                 'findings': list(findings) if isinstance(findings, list) else [],
-                'evidence': list(record.get('evidence') or []) if isinstance(record.get('evidence'), list) else [],
+                'evidence': evidence,
             }
         if not normalized_phases:
             problems.append('REVIEW_EVIDENCE_NO_REVIEWED_PHASE:%d' % index)
@@ -163,6 +168,8 @@ def validate_review_evidence(data, run_id=None):
         'human_test_performed': bool(data.get('human_test_performed')),
         'sessions': normalized_sessions,
     }
+    if isinstance(data.get('series_binding'), dict):
+        normalized['series_binding'] = dict(data.get('series_binding'))
     if problems:
         return None, problems
     return normalized, []
@@ -204,6 +211,8 @@ def merge_review_evidence(sales_bundle, review):
     bundle['evidence_kind'] = 'human_review' if kind == 'human' else 'model_proxy'
     bundle['human_test_performed'] = bool(kind == 'human' and review.get('human_test_performed'))
     bundle['review_evidence_source'] = review.get('source')
+    if isinstance(review.get('series_binding'), dict):
+        bundle['review_binding'] = dict(review.get('series_binding'))
     sessions = list(bundle.get('sessions') or [])
     cold = None
     for session in sessions:

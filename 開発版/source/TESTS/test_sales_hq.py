@@ -45,6 +45,7 @@ def complete_bundle(**overrides):
         'evidence_kind': 'real_human',
         'reviewer': {'kind': 'human', 'id': 'reviewer-1'},
         'human_test_performed': True,
+        'review_evidence_source': 'review_evidence/sales_review.json',
         'audience_summary': {
             'schema_version': 1,
             'status': 'GENERATED',
@@ -221,6 +222,13 @@ class SalesHumanVersusProxyTest(unittest.TestCase):
         self.assertFalse(report.readback['human_test_performed'])
         self.assertEqual(gate(report.readback, 'sales.human_test')['status'], 'NOT_RUN')
 
+    def test_human_flag_without_validated_review_source_is_not_a_human_test(self):
+        bundle = complete_bundle()
+        bundle.pop('review_evidence_source')
+        report = evaluate(bundle)
+        self.assertFalse(report.readback['human_test_performed'])
+        self.assertEqual(gate(report.readback, 'sales.human_test')['status'], 'NOT_RUN')
+
 
 class SalesPhaseSeparationTest(unittest.TestCase):
     def test_30_second_and_5_minute_gates_are_separate(self):
@@ -262,6 +270,15 @@ class SalesPhaseSeparationTest(unittest.TestCase):
         gate_entry = gate(report.readback, 'sales.first_5_minutes')
         self.assertEqual(gate_entry['status'], 'NOT_RUN')
         self.assertEqual(gate_entry['reason_code'], SALES_OBSERVATION_INCOMPLETE)
+
+    def test_positive_phase_without_evidence_reference_is_not_run(self):
+        bundle = complete_bundle()
+        bundle['sessions'][0]['phases']['first_30_seconds'] = {
+            'observed': True, 'status': 'pass', 'findings': []}
+        report = evaluate(bundle)
+        entry = gate(report.readback, 'sales.first_30_seconds')
+        self.assertEqual(entry['status'], 'NOT_RUN')
+        self.assertEqual(entry['reason_code'], 'SALES_PHASE_EVIDENCE_MISSING')
 
 
 class SalesCertificationTest(unittest.TestCase):

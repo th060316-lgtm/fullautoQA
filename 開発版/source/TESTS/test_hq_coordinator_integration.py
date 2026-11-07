@@ -76,6 +76,7 @@ def sales_bundle(reviewer='human'):
         'evidence_kind': 'real_human' if reviewer == 'human' else 'model_proxy',
         'reviewer': {'kind': reviewer, 'id': 'reviewer-1'},
         'human_test_performed': reviewer == 'human',
+        'review_evidence_source': 'review_evidence/sales_review.json',
         'audience_summary': {
             'schema_version': 1,
             'status': 'GENERATED',
@@ -94,10 +95,10 @@ def sales_bundle(reviewer='human'):
             'cold_start': True,
             'provenance': {'source': 'fresh_install', 'run_id': 'r1'},
             'phases': {
-                'first_30_seconds': {'observed': True, 'status': 'pass', 'findings': []},
-                'first_5_minutes': {'observed': True, 'status': 'pass', 'findings': []},
-                'product_shelf_test': {'observed': True, 'status': 'pass', 'findings': []},
-                'communication_readability': {'observed': True, 'status': 'pass', 'findings': []},
+                'first_30_seconds': {'observed': True, 'status': 'pass', 'findings': [], 'evidence': ['rec30.mp4']},
+                'first_5_minutes': {'observed': True, 'status': 'pass', 'findings': [], 'evidence': ['rec5m.mp4']},
+                'product_shelf_test': {'observed': True, 'status': 'pass', 'findings': [], 'evidence': ['shelf.png']},
+                'communication_readability': {'observed': True, 'status': 'pass', 'findings': [], 'evidence': ['notes.txt']},
             },
         }],
     }
