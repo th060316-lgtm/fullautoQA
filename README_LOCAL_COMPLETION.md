@@ -9,7 +9,27 @@ This entrypoint runs the current Source through Candidate rebuild, Source regres
 3. Disconnect external network access before starting. The standard CMD entrypoint now requires offline evidence; it does not treat an online run as final acceptance.
 4. Run RUN_LOCAL_COMPLETION.cmd once. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.
 
+Optionally, pass the path of a cold-start review file as the first argument:
+
+    RUN_LOCAL_COMPLETION.cmd C:\path\to\sales_review.json
+
+The file is ingested by the Sales headquarters. A model proxy is never promoted to a human, and a missing or unreadable file is reported as such and never read as a pass.
+
 The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. It does not permanently change PATH or Registry values.
+
+## Handoff preflight
+
+Before anything is built, step 0/8 resolves every declared input through one shared entry contract (`source/scripts/REPOSITORY_ENTRY.ps1`) and verifies that each declared file and directory really exists:
+
+- the donor complete set and its JOIN script,
+- the recovery source archive and its declared SHA-256,
+- the prepare, rebuild and fingerprint scripts,
+- the acceptance plan and series controller,
+- the rollback entrypoint.
+
+The contract reads `transfer/TRANSFER_MANIFEST.json` explicitly as UTF-8 and resolves every path relative to the repository root, refusing any path that leaves it. The source-root directory is discovered structurally rather than by its name, because Windows PowerShell 5.1 reads a BOM-less script with the system ANSI code page: a non-ASCII directory name written literally inside a script is mojibake on a real machine while the same script still passes under PowerShell 7 in hosted CI. Every `.ps1` the route executes is therefore ASCII-only, and the source test suite enforces that invariant.
+
+If the preflight fails, the summary records `handoff_preflight` with the exact missing entry and nothing is built.
 
 ## Evidence
 
@@ -24,8 +44,29 @@ The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory beside the repository cont
 - ROLLBACK_PREDECESSOR.log
 - start/end network observations plus per-run network observations
 - persistent user/machine PATH before/after comparison
+- SERIES_HQ_READBACK.json and ENVIRONMENT_AUDIT.json under series/
 - step logs
 
 A local technical PASS now requires: standard-user execution, Candidate/source/selftest/A-B-A success, preserved-predecessor rollback selftest PASS, unchanged persistent user/machine PATH, and no up non-loopback IP interfaces observed at local-run start, throughout all three Final runs, and at local-run end. This is still not a complete Registry-write audit and does not automatically promote Human test, Product Acceptance, Stable, or Release.
 
-If the run fails, keep the visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory and return it for diagnosis.
+## What the summary reports, and what it does not
+
+`LOCAL_COMPLETION_SUMMARY.json` carries the technical verdict plus three groups of observations that are deliberately *not* folded into that verdict:
+
+- `management_gate` and `sales_gate`: the verdicts of the Management and Sales headquarters, evaluated over the complete A-B-A series. The Management gate needs evidence that the *same target* behaved reproducibly across two independent fresh extractions; a single run can only observe its own seed replay, and the evaluator still refuses that narrower scope. The Sales gate stays NOT_RUN unless a review was ingested; a proxy review adds observations but never sets the human test.
+- `independent_hq_final_verdict`: the combined series-level verdict of those two domains.
+- `registry_write_audit` and `program_files_write_audit`: the persistent-environment observation before and after the series. The scope is stated in the evidence: the Registry observation covers the per-user and machine `Environment` keys only, and the Program Files observation covers the top level of each Program Files root only. A measurement that did not happen is reported as `NOT_MEASURED` and is never reported as unchanged.
+
+`product_acceptance` and `stable` remain `HOLD`, and `human_test` remains `NOT_RUN`, whatever those two gates report.
+
+## Offline observation
+
+The offline observation is fail-closed. The address query runs with an explicit error stop and a correctly typed interface index; a query that fails is reported as `NOT_MEASURED` with the failing adapters listed, never as "no external address". A machine is only reported as offline when the observation actually succeeded and found no up adapter with a non-loopback address.
+
+## Source-tree identity
+
+The prepared Source tree is identified by one canonical fingerprint (ordinal path order, LF-joined rows, UTF-8, SHA-256), computed by `source/scripts/SOURCE_TREE_FINGERPRINT.ps1`. The runner binds the baseline and the Candidate builder re-hashes the same tree with the same script, and the baseline is taken *after* the acceptance bundle is overlaid, because that is the tree the builder hashes. The summary declares the algorithm in `source_tree_fingerprint_algorithm`, and the hosted Windows PowerShell 5.1 job compares the PowerShell and Python implementations byte for byte.
+
+## If the run fails
+
+Keep the visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory and return it for diagnosis.
