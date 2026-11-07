@@ -65,6 +65,22 @@ class EnvironmentAuditContractTests(unittest.TestCase):
         self.assertIn('scope', program_files)
         self.assertIn('not a recursive content audit', program_files['scope'])
 
+    def test_runner_does_not_promote_bounded_observations_to_full_write_audits(self):
+        runner = Path(__file__).resolve().parents[3] / 'RUN_LOCAL_COMPLETION.ps1'
+        text = runner.read_text(encoding='utf-8')
+        self.assertIn("registry_write_audit = 'NOT_MEASURED'", text)
+        self.assertIn("program_files_write_audit = 'NOT_MEASURED'", text)
+        self.assertIn('$Summary.registry_environment_audit=', text)
+        self.assertIn('$Summary.program_files_top_level_audit=', text)
+        self.assertNotIn(
+            '$Summary.registry_write_audit=[string]$environmentAudit.comparison.registry_environment_status',
+            text,
+        )
+        self.assertNotIn(
+            '$Summary.program_files_write_audit=[string]$environmentAudit.comparison.program_files_status',
+            text,
+        )
+
     def test_the_snapshot_carries_both_observations(self):
         snapshot = environment_audit_snapshot()
         self.assertIn('registry_environment', snapshot)
