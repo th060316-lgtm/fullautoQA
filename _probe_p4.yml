@@ -1,0 +1,7 @@
+name: t
+jobs:
+  a:
+    steps:
+      - run: |
+          echo one
+          echo two
