@@ -1,6 +1,11 @@
 # Restore the preserved predecessor Candidate into a fresh directory.
 # This proves byte-level rollback executability only; it does not promote the
 # predecessor to Product Accepted / Stable or claim current-version QA.
+#
+# ASCII-only invariant: this file must never contain a byte above 0x7F.
+# The predecessor set is resolved through the shared entry contract in
+# ../source/scripts/REPOSITORY_ENTRY.ps1 so that the non-ASCII source-root
+# name is never written into a script that Windows PowerShell 5.1 executes.
 [CmdletBinding()]
 param(
   [Parameter(Mandatory=$true)][string]$Destination,
@@ -13,29 +18,13 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-function Get-SHA256([string]$Path) {
-  $stream=[IO.File]::OpenRead($Path)
-  $hash=[Security.Cryptography.SHA256]::Create()
-  try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
-  finally { $hash.Dispose(); $stream.Dispose() }
-}
-function Resolve-RepositoryRelativePath([string]$Root,[string]$Relative) {
-  if ([string]::IsNullOrWhiteSpace($Relative)) { throw 'DECLARED_REPOSITORY_PATH_EMPTY' }
-  $normalized=$Relative.Replace('/',[IO.Path]::DirectorySeparatorChar)
-  if ([IO.Path]::IsPathRooted($normalized) -or $normalized -match '(^|[\\/])\.\.([\\/]|$)') {
-    throw ('DECLARED_REPOSITORY_PATH_INVALID:'+ $Relative)
-  }
-  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
-  $candidate=[IO.Path]::GetFullPath((Join-Path $rootFull $normalized))
-  if (-not ($candidate.Equals($rootFull,[StringComparison]::OrdinalIgnoreCase) -or
-            $candidate.StartsWith($rootFull+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase))) {
-    throw ('DECLARED_REPOSITORY_PATH_ESCAPE:'+ $Relative)
-  }
-  return $candidate
-}
+# Captured before the shared contract is dot-sourced: dot-sourcing assigns the
+# dot-sourced script's own $PSScriptRoot into the caller's scope.
+$ScriptDirectory=$PSScriptRoot
+. (Join-Path (Split-Path -Parent $ScriptDirectory) 'source/scripts/REPOSITORY_ENTRY.ps1')
 
 if ([string]::IsNullOrWhiteSpace($RepositoryRoot)) {
-  $RepositoryRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+  $RepositoryRoot=[IO.Path]::GetFullPath((Join-Path $ScriptDirectory '..\..'))
 } else {
   $RepositoryRoot=[IO.Path]::GetFullPath($RepositoryRoot)
 }
@@ -49,9 +38,11 @@ if (Test-Path -LiteralPath $Destination) { throw 'ROLLBACK_DESTINATION_MUST_BE_F
 if (Test-Path -LiteralPath $EvidenceDirectory) { throw 'ROLLBACK_EVIDENCE_DESTINATION_MUST_BE_FRESH' }
 
 if ([string]::IsNullOrWhiteSpace($PredecessorSet)) {
-  $transferPath=Resolve-RepositoryRelativePath -Root $RepositoryRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
-  if (-not (Test-Path -LiteralPath $transferPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
-  $transfer=Get-Content -LiteralPath $transferPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  $transferPath=Get-TransferManifestPath -SourceRoot (Get-RepositorySourceRoot)
+  if (-not (Test-Path -LiteralPath $transferPath -PathType Leaf)) {
+    throw ('TRANSFER_MANIFEST_MISSING:'+$transferPath)
+  }
+  $transfer=Read-TransferManifest -ManifestPath $transferPath
   if (-not $transfer.latest_complete_candidate -or [string]::IsNullOrWhiteSpace([string]$transfer.latest_complete_candidate.path)) {
     throw 'ROLLBACK_PREDECESSOR_DECLARATION_MISSING'
   }
@@ -77,7 +68,7 @@ if ($joinExit -ne 0) { throw ('ROLLBACK_PREDECESSOR_JOIN_FAILED:'+ $joinExit) }
 $archive=Join-Path $setRoot ([string]$manifest.file)
 if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) { throw 'ROLLBACK_PREDECESSOR_ARCHIVE_MISSING' }
 $size=(Get-Item -LiteralPath $archive).Length
-$sha=Get-SHA256 $archive
+$sha=Get-Sha256File $archive
 if ($size -ne [long]$manifest.size) { throw 'ROLLBACK_PREDECESSOR_SIZE_MISMATCH' }
 if ($sha -ne ([string]$manifest.sha256).ToLowerInvariant()) { throw 'ROLLBACK_PREDECESSOR_SHA_MISMATCH' }
 

@@ -46,6 +46,115 @@ def extract(archive,destination):
             path.parent.mkdir(parents=True,exist_ok=True)
             with z.open(row) as src,path.open('wb') as dst:shutil.copyfileobj(src,dst,1024*1024)
 
+def _read_zip_json(zip_path,name):
+    try:
+        with zipfile.ZipFile(zip_path) as z:
+            names=z.namelist()
+            for candidate in (name,'evidence/'+name):
+                if candidate in names:
+                    return json.loads(z.read(candidate).decode('utf-8-sig'))
+    except Exception:
+        return None
+    return None
+
+def cross_run_reproducibility(records):
+    """Independent-run reproducibility observed by the A -> B -> A series.
+
+    A single run can only observe its own seed replay, and the Management
+    evaluator explicitly refuses that narrower scope.  The series executes the
+    same target twice, so the independent-run observation the gate needs is
+    produced here and handed over with an explicit scope.  This is the only
+    way the gate can be satisfied: by real evidence, not by relaxing it.
+
+    The observation is fail-closed: it reports ``status=False`` with the
+    reasons why whenever the two runs do not agree, whenever a required case
+    did not pass, or whenever the series does not contain two independent runs
+    of one target at all.
+    """
+    groups={}
+    for row in records or []:
+        key=row.get('target_key')
+        if not key:continue
+        groups.setdefault(key,[]).append(row)
+    for key,rows in sorted(groups.items()):
+        if len(rows)<2:continue
+        first,last=rows[0],rows[-1]
+        reasons=[]
+        first_digest=first.get('required_case_digest')
+        last_digest=last.get('required_case_digest')
+        if not first_digest or not last_digest:
+            reasons.append('REQUIRED_CASE_DIGEST_ABSENT')
+        elif first_digest!=last_digest:
+            reasons.append('REQUIRED_CASE_DIGEST_DIVERGED')
+        nonpass=list(first.get('required_nonpass') or [])+list(last.get('required_nonpass') or [])
+        if nonpass:reasons.append('REQUIRED_CASE_NOT_PASSED')
+        if first.get('run_id')==last.get('run_id'):
+            reasons.append('CROSS_RUN_SAMPLE_INSUFFICIENT')
+        return {'status':not reasons,'scope':'cross_run_same_target','source':'series_records',
+                'target_key':key,'run_ids':[first.get('run_id'),last.get('run_id')],
+                'required_case_count':first.get('required_case_count'),
+                'evidence':['SERIES_RECORDS.json'],
+                'reasons':reasons,
+                'detail':('the same target ran in two independent fresh extractions and produced the '
+                          'same required outcomes') if not reasons else
+                         'the two runs of the same target do not establish reproducibility: '+','.join(reasons)}
+    return {'status':False,'scope':'cross_run_same_target','source':'series_records',
+            'evidence':['SERIES_RECORDS.json'],'reasons':['CROSS_RUN_SAMPLE_INSUFFICIENT'],
+            'detail':'the series does not contain two independent runs of the same target'}
+
+def _domain_payload(report):
+    return {'name':report.name,'status':report.status,'reason_code':report.reason_code,
+            'gates':list(report.gates),'counts':dict(report.counts),'notes':list(report.notes)}
+
+def series_hq_readback(records,output):
+    """Evaluate the Management and Sales domains over the complete series.
+
+    The per-run domains cannot see that the same target was executed twice,
+    and the Sales domain cannot see a review that was produced outside the
+    run.  Both are evaluated here over the same evidence the runs produced,
+    with the independent-run reproducibility observation added for the
+    Management gate.  Nothing is reclassified: a domain that is not satisfied
+    stays NOT_RUN.
+    """
+    if not records:return {'status':'NOT_RUN','reason':'NO_SERIES_RECORDS'}
+    controller=Path(__file__).resolve().parent.parent
+    core=str(controller/'CORE')
+    if core not in sys.path:sys.path.insert(0,core)
+    from coordinator import CoordinatorContext
+    from management_evaluator import evaluate_management
+    from sales_evaluator import evaluate_sales
+    last=records[-1]
+    archive=Path(last['evidence_root'])/'RESULT_FOR_CHATGPT.zip'
+    management_bundle=_read_zip_json(archive,'management_evidence.json')
+    sales_bundle=_read_zip_json(archive,'sales_evidence.json')
+    out={'schema_version':1,
+         'scope':'series level; the evidence the per-run domains used, plus the independent-run reproducibility observation',
+         'series_run_ids':[row['run_id'] for row in records],
+         'product_acceptance':'HOLD','stable':'HOLD','human_test':'NOT_RUN'}
+    if not isinstance(management_bundle,dict):
+        out['management']={'status':'NOT_RUN','reason':'MANAGEMENT_EVIDENCE_BUNDLE_UNAVAILABLE'}
+    else:
+        bundle=dict(management_bundle)
+        observation=cross_run_reproducibility(records)
+        bundle['reproducibility']=observation
+        context=CoordinatorContext(root=str(output),evidence_root=str(output),results=[],
+                                   identity={'target':last.get('target') or {}},
+                                   extras={'management_evidence':bundle})
+        report=evaluate_management(context)
+        out['management']=_domain_payload(report)
+        out['management']['reproducibility_observation']=observation
+    if not isinstance(sales_bundle,dict):
+        out['sales']={'status':'NOT_RUN','reason':'SALES_EVIDENCE_BUNDLE_UNAVAILABLE'}
+    else:
+        context=CoordinatorContext(root=str(output),evidence_root=str(output),results=[],identity=None,
+                                   extras={'sales_evidence':dict(sales_bundle)})
+        report=evaluate_sales(context)
+        out['sales']=_domain_payload(report)
+    satisfied=out.get('management',{}).get('status')=='PASS' and out.get('sales',{}).get('status')=='PASS'
+    out['status']='PASS' if satisfied else 'NOT_PASS'
+    out['product_acceptance']='HOLD'
+    return out
+
 def origin_record(proof):
     origin=proof['origin']
     return {'repository':origin['repository'],'commit':origin['commit'],
@@ -128,10 +237,16 @@ def run_logged(argv,cwd,log,timeout=1800,env=None):
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--candidate',required=True);ap.add_argument('--expected-sha',required=True)
     ap.add_argument('--output',required=True);ap.add_argument('--plan',default=str(Path(__file__).with_name('FINAL_SERIES_PLAN.json')))
+    ap.add_argument('--review-evidence',default='',help='Optional cold-start review evidence (human or validated proxy) to ingest into each final run')
     args=ap.parse_args();archive=Path(args.candidate).resolve();output=Path(args.output).resolve()
     if output.exists():raise ValueError('SERIES_OUTPUT_ALREADY_EXISTS')
     output.mkdir(parents=True);bundle=Path(__file__).resolve().parent;controller=bundle.parent
+    core=str(controller/'CORE')
+    if core not in sys.path:sys.path.insert(0,core)
+    from environment_audit import environment_audit_comparison, environment_audit_snapshot
     plan=read(args.plan);records=[];frozen={};sha=args.expected_sha.lower();persistent_before=persistent_path_snapshot()
+    review_evidence=args.review_evidence or ''
+    environment_before=environment_audit_snapshot()
     elevated=bool(ctypes.windll.shell32.IsUserAnAdmin()) if os.name=='nt' else None
     execution_environment={'os':os.name,'hosted_ci':os.environ.get('GITHUB_ACTIONS')=='true',
                            'elevated':elevated,'local_windows_offline':'NOT_VERIFIED',
@@ -180,6 +295,11 @@ def main():
             if target!=frozen[label]:raise ValueError('TARGET_CHANGED_AFTER_FREEZE')
             shutil.copy2(fresh/'TARGET_PREPARATION.json',slot/'TARGET_PREPARATION.json')
             run_env=os.environ.copy();run_env['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
+            if review_evidence and Path(review_evidence).is_file():
+                review_dir=fresh/'review_evidence';review_dir.mkdir(parents=True,exist_ok=True)
+                review_target=review_dir/'sales_review.json'
+                shutil.copy2(review_evidence,review_target)
+                run_env['FULLAUTOQA_SALES_REVIEW_EVIDENCE']=str(review_target)
             code=run_logged(['cmd.exe','/d','/c','START_QA.cmd'],fresh,slot/'START_QA.log',env=run_env)
             result=authoritative_result(fresh,set())
             validate_result_zip(result,require_manifest=True,expected_run_id=result.parent.name)
@@ -188,6 +308,8 @@ def main():
                 foreign=(set(data.get('versions',{}))!={target['game_id']} or set(identities)!={target['target_id']})
                 actual=identities.get(target['target_id'],{})
                 if actual.get('fingerprint')!=target['fingerprint']:raise ValueError('RUN_FROZEN_TARGET_MISMATCH')
+                required_rows=sorted('%s=%s'%(str(r.get('test_case')),str(r.get('status'))) for r in data['results'] if r.get('gate')=='REQUIRED')
+                required_digest=hashlib.sha256('\n'.join(required_rows).encode('utf-8')).hexdigest()
                 baseline_scopes={json.loads(z.read(n)).get('baseline_scope') for n in z.namelist() if n.endswith('_behavioral_regression.json')}
                 if baseline_scopes!={'SAME_RUN_SELF_CHECK'}:raise ValueError('UNEXPECTED_BASELINE_PROVENANCE')
                 env=json.loads(z.read('phase3_environment.json'))
@@ -199,6 +321,7 @@ def main():
                  'archive_integrity':'PASS','evidence_missing':0,'diagnostic_archive':bool(data.get('diagnostic_archive')),
                  'foreign_target_evidence':foreign,'required_nonpass':[{'case':r['test_case'],'status':r['status'],'reason':r.get('reason_code')} for r in data['results'] if r.get('gate')=='REQUIRED' and r['status']!='PASS'],
                  'required_counts':{status:sum(r.get('gate')=='REQUIRED' and r['status']==status for r in data['results']) for status in ('PASS','FAIL','NOT_RUN','HARNESS_ERROR','INCONCLUSIVE')},
+                 'required_case_count':len(required_rows),'required_case_digest':required_digest,
                  'headquarters':data.get('headquarters'),'completion_certified':data.get('completion_certified'),
                  'human_test_performed':data.get('human_test_performed'),'baseline_provenance':sorted(baseline_scopes),
                  'environment_observation':{
@@ -220,8 +343,14 @@ def main():
     execution_environment=summarize_execution_environment(records,plan,execution_environment)
     write(output/'EXECUTION_ENVIRONMENT.json',execution_environment)
     persistent_after=persistent_path_snapshot()
+    environment_after=environment_audit_snapshot()
+    write(output/'ENVIRONMENT_AUDIT.json',{'schema_version':1,'before':environment_before,'after':environment_after,'comparison':environment_audit_comparison(environment_before,environment_after)})
     write(output/'PERSISTENT_ENVIRONMENT_READBACK.json',{'scope':'Persistent user and machine PATH values only; not a complete Registry write audit','before':persistent_before,'after':persistent_after,'persistent_path_status':('UNCHANGED' if persistent_before==persistent_after else 'CHANGED_REQUIRES_REVIEW') if persistent_before['status']==persistent_after['status']=='MEASURED' else 'NOT_MEASURED','registry_write_audit':'NOT_RUN'})
     write(output/'OPERATION_LOG.json',{'automated_operations':OPERATION_LOG,'automated_operation_count':len(OPERATION_LOG),'start_qa_invocations':sum('START_QA.cmd' in row['argv'] for row in OPERATION_LOG),'manual_intervention':'NOT_OBSERVED_BY_CONTROLLER','controller_retry_count':0})
+    hq=series_hq_readback(records,output)
+    write(output/'SERIES_HQ_READBACK.json',hq)
+    result['independent_hq_final_verdict']=hq.get('status','NOT_RUN')
+    result['independent_hq_domains']={'management':hq.get('management',{}).get('status'),'sales':hq.get('sales',{}).get('status')}
     write(output/'SERIES_COMPARISON.json',result);print(json.dumps(result,ensure_ascii=False,indent=2))
     return 0 if result['technical_series_status']=='PASS' else 2
 
