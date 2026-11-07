@@ -63,36 +63,7 @@ jobs:
           $fpOut=& "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $fingerprintScript -Root $source
           if($LASTEXITCODE -ne 0){throw "SOURCE_FINGERPRINT_FAILED:$LASTEXITCODE"}
           $fingerprint=([string](@($fpOut|Where-Object{$_.Trim()})[-1])).Trim().ToLowerInvariant()
-          if($fingerprint -notmatch '^[0-9a-f]{64}      - name: START_QA target compatibility diagnostic, not Final Run 1
-        shell: pwsh
-        run: |
-          & "$env:BUNDLED_PYTHON" -B -E -s (Join-Path $env:FRESH_ROOT 'ACCEPTANCE/run_target.py') --candidate-root $env:FRESH_ROOT --evidence (Join-Path $PWD '_target_preflight_evidence')
-          if ($LASTEXITCODE -ne 0) { throw "TARGET_PREFLIGHT_NONPASS:$LASTEXITCODE" }
-      - name: Complete Source regression using actual bundled FFmpeg
-        if: always() && env.BUNDLED_PYTHON != ''
-        shell: pwsh
-        run: |
-          $ffmpeg=@(Get-ChildItem (Join-Path $env:FRESH_ROOT 'RUNTIME') -Recurse -Filter ffmpeg.exe)
-          $dirs=@($ffmpeg | ForEach-Object { $_.DirectoryName } | Select-Object -Unique)
-          if ($dirs.Count -eq 0) { throw 'BUNDLED_ENCODER_NOT_PREPARED' }
-          $env:PATH=($dirs -join ';')+';'+$env:PATH
-          & "$env:BUNDLED_PYTHON" -B -E -s -m unittest discover -s (Join-Path $env:FRESH_ROOT 'TESTS') -v 2>&1 | Tee-Object BUNDLED_SOURCE_TESTS.log
-          if ($LASTEXITCODE -ne 0) { throw 'BUNDLED_SOURCE_TESTS_FAILED' }
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Target-A-Preflight-${{ github.run_id }}
-          path: |
-            _target_preflight_evidence/**
-            _target_preflight/RESULTS/**
-            _target_preflight/TARGET_PREPARATION.json
-            _target_preflight_build/PHASE3_CANDIDATE_IDENTITY.json
-            _target_preflight_build/PHASE3_CANDIDATE_BUILD_REPORT.json
-            _target_preflight_build/TARGET_A_CANDIDATE_BUILD.log
-            BUNDLED_SOURCE_TESTS.log
-          retention-days: 14
-
-){throw "SOURCE_FINGERPRINT_INVALID:$fingerprint"}
+          if($fingerprint -notmatch '^[0-9a-f]{64}$'){throw "SOURCE_FINGERPRINT_INVALID:$fingerprint"}
 
           $complete=(Resolve-Path './開発版/complete_v033').Path
           & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $complete 'JOIN_COMPLETE.ps1')
@@ -128,7 +99,7 @@ jobs:
       - name: START_QA target compatibility diagnostic, not Final Run 1
         shell: pwsh
         run: |
-          & "$env:BUNDLED_PYTHON" -B -E -s './開発版/acceptance_targets/run_target.py' --candidate-root $env:FRESH_ROOT --evidence (Join-Path $PWD '_target_preflight_evidence')
+          & "$env:BUNDLED_PYTHON" -B -E -s (Join-Path $env:FRESH_ROOT 'ACCEPTANCE/run_target.py') --candidate-root $env:FRESH_ROOT --evidence (Join-Path $PWD '_target_preflight_evidence')
           if ($LASTEXITCODE -ne 0) { throw "TARGET_PREFLIGHT_NONPASS:$LASTEXITCODE" }
       - name: Complete Source regression using actual bundled FFmpeg
         if: always() && env.BUNDLED_PYTHON != ''
@@ -148,6 +119,9 @@ jobs:
             _target_preflight_evidence/**
             _target_preflight/RESULTS/**
             _target_preflight/TARGET_PREPARATION.json
+            _target_preflight_build/PHASE3_CANDIDATE_IDENTITY.json
+            _target_preflight_build/PHASE3_CANDIDATE_BUILD_REPORT.json
+            _target_preflight_build/TARGET_A_CANDIDATE_BUILD.log
             BUNDLED_SOURCE_TESTS.log
           retention-days: 14
 
