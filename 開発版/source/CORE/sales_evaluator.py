@@ -26,6 +26,8 @@ Rules that this module enforces
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from common import stamp
 from hq_evidence import (ReadbackDomainReport, collect_evidence, get_any, has_any, jsonable,
                          lookup, resolve_thresholds, safe_join, stable_fingerprint, truthiness)
