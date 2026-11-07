@@ -55,6 +55,8 @@ jobs:
             RUN_LOCAL_COMPLETION.ps1
             RUN_LOCAL_COMPLETION.cmd
             開発版/source
+            開発版/rollback
+            開発版/transfer/TRANSFER_MANIFEST.json
           sparse-checkout-cone-mode: false
 
       - name: Every shipped script must be ASCII-only or UTF-8 with BOM
