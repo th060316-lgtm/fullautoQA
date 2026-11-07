@@ -81,9 +81,69 @@ New-Item -ItemType Directory -Path $EvidenceDirectory | Out-Null
 $startQa=Join-Path $Destination 'START_QA.cmd'
 if (-not (Test-Path -LiteralPath $startQa -PathType Leaf)) { throw 'ROLLBACK_START_QA_MISSING' }
 
+function Export-ResultDiagnosticReadback([string]$ResultZipPath,[string]$EvidenceRoot) {
+  if ([string]::IsNullOrWhiteSpace($ResultZipPath) -or
+      -not (Test-Path -LiteralPath $ResultZipPath -PathType Leaf)) {
+    return $null
+  }
+  $readbackRoot=Join-Path $EvidenceRoot 'result_readback'
+  New-Item -ItemType Directory -Path $readbackRoot -Force | Out-Null
+  $records=New-Object 'System.Collections.Generic.List[object]'
+  $archiveHandle=$null
+  $total=[long]0
+  $maxEntry=[long](5*1024*1024)
+  $maxTotal=[long](50*1024*1024)
+  try {
+    $archiveHandle=[IO.Compression.ZipFile]::OpenRead($ResultZipPath)
+    $index=0
+    foreach ($entry in @($archiveHandle.Entries | Sort-Object FullName)) {
+      if ([string]::IsNullOrWhiteSpace($entry.Name)) { continue }
+      $extension=[IO.Path]::GetExtension($entry.Name).ToLowerInvariant()
+      if (@('.json','.txt','.log','.md','.csv','.yaml','.yml') -notcontains $extension) { continue }
+      if ([long]$entry.Length -gt $maxEntry) { continue }
+      if (($total+[long]$entry.Length) -gt $maxTotal) { continue }
+      $index++
+      $fileName=('{0:D4}{1}' -f $index,$extension)
+      $target=Join-Path $readbackRoot $fileName
+      $input=$null
+      $output=$null
+      try {
+        $input=$entry.Open()
+        $output=[IO.File]::Create($target)
+        $input.CopyTo($output)
+      } finally {
+        if ($output) { $output.Dispose() }
+        if ($input) { $input.Dispose() }
+      }
+      $total += [long]$entry.Length
+      $records.Add([ordered]@{
+        entry=[string]$entry.FullName
+        file=$fileName
+        size=[long]$entry.Length
+      })
+    }
+    $indexDocument=[ordered]@{
+      schema_version=1
+      source_result_zip=[IO.Path]::GetFileName($ResultZipPath)
+      extracted_count=$records.Count
+      extracted_bytes=$total
+      max_entry_bytes=$maxEntry
+      max_total_bytes=$maxTotal
+      entries=@($records)
+    }
+    $indexPath=Join-Path $readbackRoot 'INDEX.json'
+    $indexDocument | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $indexPath -Encoding UTF8
+    return $indexPath
+  } finally {
+    if ($archiveHandle) { $archiveHandle.Dispose() }
+  }
+}
+
 $selftestStatus='NOT_RUN'
 $selftestExit=$null
 $resultZip=$null
+$diagnosticReadback=$null
+$diagnosticReadbackError=$null
 if ($SelfTest) {
   $results=Join-Path $Destination 'RESULTS'
   $before=@()
@@ -103,16 +163,28 @@ if ($SelfTest) {
     $after=@(Get-ChildItem -LiteralPath $results -Recurse -File -Filter 'RESULT_FOR_CHATGPT.zip')
   }
   $new=@($after | Where-Object { $before -notcontains $_.FullName } | Sort-Object LastWriteTimeUtc -Descending)
+  if ($new.Count -ge 1) {
+    $resultZipFull=$new[0].FullName
+    $resultZip=$resultZipFull.Substring($Destination.Length).TrimStart('\').Replace('\','/')
+    try {
+      $diagnosticReadback=Export-ResultDiagnosticReadback -ResultZipPath $resultZipFull -EvidenceRoot $EvidenceDirectory
+      if ($diagnosticReadback) {
+        $diagnosticReadback=$diagnosticReadback.Substring($EvidenceDirectory.Length).TrimStart('\').Replace('\','/')
+      }
+    } catch {
+      $diagnosticReadbackError=$_.Exception.GetType().Name
+      Set-Content -LiteralPath (Join-Path $EvidenceDirectory 'ROLLBACK_DIAGNOSTIC_EXPORT_ERROR.txt') -Value $diagnosticReadbackError -Encoding ASCII
+    }
+  }
   if ($selftestExit -eq 0 -and $new.Count -ge 1) {
     $selftestStatus='PASS'
-    $resultZip=$new[0].FullName.Substring($Destination.Length).TrimStart('\').Replace('\','/')
   } else {
     $selftestStatus='FAIL'
   }
 }
 
 $proof=[ordered]@{
-  schema_version=1
+  schema_version=2
   predecessor_version=[string]$manifest.version
   predecessor_archive=[string]$manifest.file
   archive_size=[long]$size
@@ -124,6 +196,8 @@ $proof=[ordered]@{
   selftest_status=$selftestStatus
   selftest_exit_code=$selftestExit
   result_zip=$resultZip
+  diagnostic_readback=$diagnosticReadback
+  diagnostic_readback_error=$diagnosticReadbackError
   runnable_rollback_status=$(if($SelfTest){$selftestStatus}else{'RESTORED_NOT_EXECUTED'})
   product_acceptance='NOT_CLAIMED'
   stable_certification='NOT_CLAIMED'
