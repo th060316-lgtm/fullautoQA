@@ -1,0 +1,5 @@
+name: t
+jobs:
+  a:
+    steps:
+      - run: echo ${{ github.sha }}
