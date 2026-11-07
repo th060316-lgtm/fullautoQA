@@ -49,7 +49,7 @@ $SeriesOut = $null
 $BuildOut = $null
 
 $Summary = [ordered]@{
-  schema_version = 6
+  schema_version = 7
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
@@ -84,8 +84,14 @@ $Summary = [ordered]@{
   persistent_path_status = 'NOT_MEASURED'
   workspace_cleanup = 'NOT_RUN'
   offline_internet_status = $(if ($RequireOffline) {'REQUIRED_NOT_YET_VERIFIED'} else {'USER_MUST_RUN_WITH_EXTERNAL_NETWORK_DISCONNECTED'})
-  registry_write_audit = 'NOT_RUN'
-  program_files_write_audit = 'NOT_RUN'
+  # These two unqualified fields are reserved for a complete write audit.
+  # The current observer is intentionally bounded, so it must not promote its
+  # narrower before/after comparison into these Issue #1 claims.
+  registry_write_audit = 'NOT_MEASURED'
+  program_files_write_audit = 'NOT_MEASURED'
+  registry_environment_audit = 'NOT_RUN'
+  program_files_top_level_audit = 'NOT_RUN'
+  environment_audit_scope = $null
   management_gate = 'NOT_RUN'
   sales_gate = 'NOT_RUN'
   sales_review_evidence = $null
@@ -1066,8 +1072,15 @@ try {
   if (Test-Path -LiteralPath $environmentAuditPath -PathType Leaf) {
     $environmentAudit=Get-Content -LiteralPath $environmentAuditPath -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($environmentAudit.PSObject.Properties.Name -contains 'comparison' -and $environmentAudit.comparison) {
-      $Summary.registry_write_audit=[string]$environmentAudit.comparison.registry_environment_status
-      $Summary.program_files_write_audit=[string]$environmentAudit.comparison.program_files_status
+      # Preserve the bounded observation under bounded names.  Its own scope
+      # explicitly says that it is not a complete Registry write audit and not
+      # a recursive Program Files audit, so the unqualified Issue #1 fields
+      # remain NOT_MEASURED until stronger evidence exists.
+      $Summary.registry_environment_audit=[string]$environmentAudit.comparison.registry_environment_status
+      $Summary.program_files_top_level_audit=[string]$environmentAudit.comparison.program_files_status
+      if ($environmentAudit.comparison.PSObject.Properties.Name -contains 'scope') {
+        $Summary.environment_audit_scope=[string]$environmentAudit.comparison.scope
+      }
     }
   }
   Write-Summary
