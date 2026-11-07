@@ -248,6 +248,7 @@ $rebuiltCandidate=$null
 $rebuiltSize=$null
 $rebuiltSha=$null
 $historicalByteIdentity='NOT_EVALUATED'
+$sourceFingerprint=$null
 $packageIntegrity='NOT_RUN'
 $selftestStatus='NOT_RUN'
 $selftestExit=$null
@@ -270,12 +271,172 @@ try {
   }
   Copy-Tree -Source $snapshotAcceptance -Target $acceptanceTarget
 
-  $builder=Join-Path $historicalSource 'scripts/PHASE3_OVERLAY_REBUILD.ps1'
-  if (-not (Test-Path -LiteralPath $builder -PathType Leaf)) { throw 'ROLLBACK_HISTORICAL_BUILDER_MISSING' }
+  $fingerprintScript=[string]$entries.fingerprint_script
+  $fingerprintOutput=& $ps -NoLogo -NoProfile -ExecutionPolicy Bypass -File $fingerprintScript -Root $historicalSource
+  if ($LASTEXITCODE -ne 0) { throw ('ROLLBACK_PREDECESSOR_FINGERPRINT_FAILED:'+$LASTEXITCODE) }
+  $sourceFingerprint=([string](@($fingerprintOutput | Where-Object { $_.Trim() })[-1])).Trim().ToLowerInvariant()
+  if ($sourceFingerprint -notmatch '^[0-9a-f]{64}  $buildExit=$LASTEXITCODE
+  if ($buildExit -ne 0) { throw ('ROLLBACK_PREDECESSOR_REBUILD_FAILED:'+$buildExit) }
+
+  $rebuiltCandidate=Join-Path $buildOut 'FullAutoQA_PHASE3_CANDIDATE.zip'
+  $rebuiltIdentity=Join-Path $buildOut 'PHASE3_CANDIDATE_IDENTITY.json'
+  if (-not (Test-Path -LiteralPath $rebuiltCandidate -PathType Leaf) -or
+      -not (Test-Path -LiteralPath $rebuiltIdentity -PathType Leaf)) {
+    throw 'ROLLBACK_REBUILT_CANDIDATE_MISSING'
+  }
+  $rebuiltId=Get-Content -LiteralPath $rebuiltIdentity -Raw -Encoding UTF8 | ConvertFrom-Json
+  $rebuiltSize=(Get-Item -LiteralPath $rebuiltCandidate).Length
+  $rebuiltSha=Get-Sha256File $rebuiltCandidate
+  if ($rebuiltSize -ne [long]$rebuiltId.candidate_size -or
+      $rebuiltSha -ne ([string]$rebuiltId.candidate_sha256).ToLowerInvariant()) {
+    throw 'ROLLBACK_REBUILT_CANDIDATE_IDENTITY_MISMATCH'
+  }
+  $historicalExpectedSize=[long]$predecessorManifest.predecessor.verified_candidate.size
+  $historicalExpectedSha=([string]$predecessorManifest.predecessor.verified_candidate.sha256).ToLowerInvariant()
+  $historicalByteIdentity=$(if ($rebuiltSize -eq $historicalExpectedSize -and $rebuiltSha -eq $historicalExpectedSha) {
+    'PASS'
+  } else {
+    'NOT_IDENTICAL_REBUILD'
+  })
+
+  [IO.Compression.ZipFile]::ExtractToDirectory($rebuiltCandidate,$Destination)
+  $startQa=Join-Path $Destination 'START_QA.cmd'
+  if (-not (Test-Path -LiteralPath $startQa -PathType Leaf)) { throw 'ROLLBACK_START_QA_MISSING' }
+  $freshPython=Join-Path $Destination 'RUNTIME/python/python.exe'
+  $freshIntegrity=Join-Path $Destination 'scripts/package_integrity.py'
+  if (-not (Test-Path -LiteralPath $freshPython -PathType Leaf) -or
+      -not (Test-Path -LiteralPath $freshIntegrity -PathType Leaf)) {
+    throw 'ROLLBACK_FRESH_INTEGRITY_TOOL_MISSING'
+  }
+  $integrityLog=Join-Path $EvidenceDirectory 'ROLLBACK_PREDECESSOR_PACKAGE_INTEGRITY.log'
+  & $freshPython -B -E -s $freshIntegrity --root $Destination --full-payload --require-fresh-marker *>&1 |
+    Tee-Object -FilePath $integrityLog
+  if ($LASTEXITCODE -ne 0) { throw ('ROLLBACK_FRESH_PACKAGE_INTEGRITY_FAILED:'+$LASTEXITCODE) }
+  $packageIntegrity='PASS'
+
+  Remove-Item -LiteralPath $workRoot -Recurse -Force
+  $workCleanup='REMOVED'
+
+  if ($SelfTest) {
+    $results=Join-Path $Destination 'RESULTS'
+    $before=@()
+    if (Test-Path -LiteralPath $results) {
+      $before=@(Get-ChildItem -LiteralPath $results -Recurse -File -Filter 'RESULT_FOR_CHATGPT.zip' | ForEach-Object { $_.FullName })
+    }
+    $log=Join-Path $EvidenceDirectory 'ROLLBACK_PREDECESSOR_SELFTEST.log'
+    Push-Location $Destination
+    try {
+      & $startQa -SelfTest *>&1 | Tee-Object -FilePath $log
+      $selftestExit=$LASTEXITCODE
+    } finally {
+      Pop-Location
+    }
+    $after=@()
+    if (Test-Path -LiteralPath $results) {
+      $after=@(Get-ChildItem -LiteralPath $results -Recurse -File -Filter 'RESULT_FOR_CHATGPT.zip')
+    }
+    $new=@($after | Where-Object { $before -notcontains $_.FullName } | Sort-Object LastWriteTimeUtc -Descending)
+    if ($new.Count -ge 1) {
+      $resultZipFull=$new[0].FullName
+      $resultZip=$resultZipFull.Substring($Destination.Length).TrimStart('\').Replace('\','/')
+      try {
+        $diagnosticReadback=Export-ResultDiagnosticReadback -ResultZipPath $resultZipFull -EvidenceRoot $EvidenceDirectory
+        if ($diagnosticReadback) {
+          $diagnosticReadback=$diagnosticReadback.Substring($EvidenceDirectory.Length).TrimStart('\').Replace('\','/')
+        }
+      } catch {
+        $diagnosticReadbackError=$_.Exception.GetType().Name
+        Set-Content -LiteralPath (Join-Path $EvidenceDirectory 'ROLLBACK_DIAGNOSTIC_EXPORT_ERROR.txt') -Value $diagnosticReadbackError -Encoding ASCII
+      }
+    }
+    if ($selftestExit -eq 0 -and $new.Count -ge 1) {
+      $selftestStatus='PASS'
+    } else {
+      $selftestStatus='FAIL'
+    }
+  }
+
+  $proof=[ordered]@{
+    schema_version=3
+    predecessor_source_commit=[string]$predecessorManifest.predecessor.source_commit
+    predecessor_source_tree=[string]$predecessorManifest.predecessor.source_tree
+    predecessor_acceptance_tree=[string]$predecessorManifest.predecessor.acceptance_tree
+    snapshot_file_count=[int]$predecessorManifest.snapshot.file_count
+    snapshot_git_blob_identity=$snapshotStatus
+    predecessor_prepared_source_fingerprint=$sourceFingerprint
+    recovery_source_sha256=$recoverySha
+    donor_archive=[string]$donorManifest.file
+    donor_size=[long]$donorSize
+    donor_sha256=$donorSha
+    donor_byte_identity='PASS'
+    historical_candidate_size=[long]$predecessorManifest.predecessor.verified_candidate.size
+    historical_candidate_sha256=[string]$predecessorManifest.predecessor.verified_candidate.sha256
+    historical_candidate_build_run=[long]$predecessorManifest.predecessor.verified_candidate.build_run
+    rebuilt_candidate_size=[long]$rebuiltSize
+    rebuilt_candidate_sha256=$rebuiltSha
+    historical_candidate_byte_identity=$historicalByteIdentity
+    fresh_destination=$Destination
+    package_integrity=$packageIntegrity
+    selftest_requested=[bool]$SelfTest
+    selftest_status=$selftestStatus
+    selftest_exit_code=$selftestExit
+    result_zip=$resultZip
+    diagnostic_readback=$diagnosticReadback
+    diagnostic_readback_error=$diagnosticReadbackError
+    work_cleanup=$workCleanup
+    runnable_rollback_status=$(if($SelfTest){$selftestStatus}else{'RESTORED_NOT_EXECUTED'})
+    product_acceptance='NOT_CLAIMED'
+    stable_certification='NOT_CLAIMED'
+    claim_scope='Functional predecessor rebuilt from exact historical Source/acceptance Git blobs on the byte-identical preserved donor. Rebuilt ZIP byte identity is reported separately and never inferred.'
+  }
+  $proofPath=Join-Path $EvidenceDirectory 'ROLLBACK_PREDECESSOR_QUALIFICATION.json'
+  $proof | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $proofPath -Encoding UTF8
+
+  if ($SelfTest -and $selftestStatus -ne 'PASS') {
+    throw ('ROLLBACK_PREDECESSOR_SELFTEST_FAILED:'+$selftestExit)
+  }
+  Write-Host ('ROLLBACK_RESTORE_PASS source={0} rebuilt_size={1} rebuilt_sha256={2} historical_byte_identity={3} selftest={4}' -f
+    $predecessorManifest.predecessor.source_commit,$rebuiltSize,$rebuiltSha,$historicalByteIdentity,$selftestStatus)
+  Write-Host ('Rollback destination: '+$Destination)
+  Write-Host ('Rollback evidence: '+$EvidenceDirectory)
+} catch {
+  $failure=[ordered]@{
+    schema_version=3
+    status='FAIL'
+    error=$_.Exception.Message
+    predecessor_source_commit=$(if($predecessorManifest){[string]$predecessorManifest.predecessor.source_commit}else{$null})
+    snapshot_git_blob_identity=$snapshotStatus
+    predecessor_prepared_source_fingerprint=$sourceFingerprint
+    recovery_source_sha256=$recoverySha
+    donor_sha256=$donorSha
+    rebuilt_candidate_size=$rebuiltSize
+    rebuilt_candidate_sha256=$rebuiltSha
+    historical_candidate_byte_identity=$historicalByteIdentity
+    package_integrity=$packageIntegrity
+    selftest_status=$selftestStatus
+    selftest_exit_code=$selftestExit
+    result_zip=$resultZip
+    diagnostic_readback=$diagnosticReadback
+    product_acceptance='NOT_CLAIMED'
+    stable_certification='NOT_CLAIMED'
+  }
+  $failure | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $EvidenceDirectory 'ROLLBACK_PREDECESSOR_FAILURE.json') -Encoding UTF8
+  throw
+} finally {
+  if (Test-Path -LiteralPath $workRoot) {
+    try { Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction Stop; $workCleanup='REMOVED' } catch {}
+  }
+}
+) { throw 'ROLLBACK_PREDECESSOR_FINGERPRINT_INVALID' }
+
+  $builder=[string]$entries.rebuild_script
+  $manifestRegenerator=Join-Path (Split-Path -Parent $builder) 'PHASE3_REGEN_MANIFEST.ps1'
+  if (-not (Test-Path -LiteralPath $builder -PathType Leaf)) { throw 'ROLLBACK_CURRENT_BUILDER_MISSING' }
+  if (-not (Test-Path -LiteralPath $manifestRegenerator -PathType Leaf)) { throw 'ROLLBACK_CURRENT_MANIFEST_REGENERATOR_MISSING' }
   $buildOut=Join-Path $workRoot 'build'
   New-Item -ItemType Directory -Path $buildOut | Out-Null
   $buildLog=Join-Path $EvidenceDirectory 'ROLLBACK_PREDECESSOR_REBUILD.log'
-  & $ps -NoLogo -NoProfile -ExecutionPolicy Bypass -File $builder -DonorArchive $donorArchive -SourceRoot $historicalSource -OutputDir $buildOut -SourceBaseline ([string]$predecessorManifest.predecessor.source_commit) *>&1 |
+  & $ps -NoLogo -NoProfile -ExecutionPolicy Bypass -File $builder -DonorArchive $donorArchive -SourceRoot $historicalSource -OutputDir $buildOut -SourceBaseline $sourceFingerprint -ManifestRegenerator $manifestRegenerator *>&1 |
     Tee-Object -FilePath $buildLog
   $buildExit=$LASTEXITCODE
   if ($buildExit -ne 0) { throw ('ROLLBACK_PREDECESSOR_REBUILD_FAILED:'+$buildExit) }
