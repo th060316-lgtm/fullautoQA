@@ -69,6 +69,23 @@ class ReviewIntakeContractTests(unittest.TestCase):
         self.assertTrue(bundle['human_test_performed'])
         self.assertEqual('human', bundle['reviewer']['kind'])
 
+    def test_a_human_test_claim_requires_reviewer_identity_and_cold_start_provenance(self):
+        document = _review()
+        document['reviewer']['id'] = ''
+        document['sessions'][0]['cold_start'] = False
+        document['sessions'][0]['provenance'] = {}
+        normalized, problems = validate_review_evidence(document, run_id='run-1')
+        self.assertIsNone(normalized)
+        self.assertIn('REVIEW_EVIDENCE_HUMAN_REVIEWER_ID_MISSING', problems)
+        self.assertIn('REVIEW_EVIDENCE_HUMAN_COLD_START_MISSING', problems)
+
+    def test_a_human_test_claim_requires_cold_start_provenance(self):
+        document = _review()
+        document['sessions'][0]['provenance'] = {}
+        normalized, problems = validate_review_evidence(document, run_id='run-1')
+        self.assertIsNone(normalized)
+        self.assertIn('REVIEW_EVIDENCE_HUMAN_PROVENANCE_MISSING', problems)
+
     def test_an_unknown_reviewer_kind_is_rejected(self):
         normalized, problems = validate_review_evidence(
             _review(reviewer_kind='wizard'), run_id='run-1')
