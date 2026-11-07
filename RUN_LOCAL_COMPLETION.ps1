@@ -662,7 +662,7 @@ function Invoke-EnvironmentMonitorContractTest {
   if ($env:OS -ne 'Windows_NT') { throw 'ENVIRONMENT_MONITOR_CONTRACT_REQUIRES_WINDOWS' }
   Initialize-EnvironmentChangeMonitorType
   $root=Join-Path ([IO.Path]::GetTempPath()) ('fqa_env_monitor_'+[Guid]::NewGuid().ToString('N'))
-  New-Item -ItemType Directory -LiteralPath $root -Force | Out-Null
+  New-Item -ItemType Directory -Path $root -Force | Out-Null
   $monitor=$null
   try {
     $monitor=[FqaEnvironmentChangeMonitor]::Create([string[]]@($root),$true)
