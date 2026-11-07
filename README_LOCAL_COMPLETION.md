@@ -33,7 +33,7 @@ If the preflight fails, the summary records `handoff_preflight` with the exact m
 
 ## Evidence
 
-The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory beside the repository contains the summary and logs. Large/deep transient trees stay in the separate temporary work area and are never repository inputs. The run also restores the preserved predecessor into a fresh temporary directory and executes its START_QA selftest; rollback evidence is preserved before cleanup. The runner exports compact evidence before cleanup:
+The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory beside the repository contains the summary and logs. Large/deep transient trees stay in the separate temporary work area and are never repository inputs. The run also rebuilds the last verified predecessor Candidate from the preserved historical Source/acceptance snapshot plus the byte-identical donor, restores that rebuilt predecessor into a fresh temporary directory, and executes its START_QA selftest; rollback evidence is preserved before cleanup. The raw donor is not called the predecessor Candidate, and a rebuilt ZIP is not called byte-identical to the historical ZIP unless its recorded size/SHA actually match. The runner exports compact evidence before cleanup:
 
 - LOCAL_COMPLETION_SUMMARY.json
 - Candidate build files under candidate_build/
