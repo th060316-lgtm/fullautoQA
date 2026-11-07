@@ -75,6 +75,15 @@ class LocalCompletionRunnerContractTests(unittest.TestCase):
         self.assertContains('Get-RepositorySourceRoot',
                             'the runner must discover the source root structurally')
 
+    def test_stage0_shared_entry_contract_owns_input_identity_preflight(self):
+        entry = REPO_ROOT / '開発版' / 'source' / 'scripts' / 'REPOSITORY_ENTRY.ps1'
+        text = entry.read_text(encoding='utf-8')
+        self.assertIn('RECOVERY_SOURCE_SHA256_MISMATCH', text)
+        self.assertIn('DONOR_DECLARATION_SHA256_MISMATCH', text)
+        self.assertIn('DONOR_BLOCK_SIZE_MISMATCH', text)
+        self.assertContains('Test-DeclaredRepositoryEntries -Entries $declaredEntries',
+                            'the live Stage-0 route must call the shared aggregate preflight')
+
     def test_the_runner_does_not_write_its_work_or_evidence_under_the_repository(self):
         self.assertNotContains("Join-Path `$RepoRoot ('.fqa_work_'",
                                'the transient work tree must not live in the repository')

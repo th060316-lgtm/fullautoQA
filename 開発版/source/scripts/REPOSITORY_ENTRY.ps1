@@ -205,11 +205,12 @@ function Get-DeclaredRepositoryEntries {
 function Test-DeclaredRepositoryEntries {
     <#
       .SYNOPSIS
-        Verify that every declared entry exists and reports what is missing.
+        Verify declared completion-route inputs before expensive work starts.
       .DESCRIPTION
-        Used by the real-machine handoff preflight and by the Windows
-        PowerShell 5.1 behavioural contract.  A missing entry is reported as a
-        missing entry - never as a pass.
+        Stage-0 aggregates existence and lightweight identity checks. Recovery
+        Source SHA-256 and donor declaration metadata are checked here. The
+        expensive SHA-256 scan of every donor block and of the reconstructed
+        1 GB archive remains owned by JOIN_COMPLETE.ps1.
     #>
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)]$Entries)
@@ -234,19 +235,68 @@ function Test-DeclaredRepositoryEntries {
     if (-not (Test-Path -LiteralPath $Entries.donor_blocks -PathType Container)) {
         $problems.Add('DECLARED_ENTRY_MISSING:donor_blocks')
     }
-    if ($problems.Count -eq 0) {
-        $declared = $Entries.transfer_manifest.latest_complete_candidate
-        if ($declared -and $declared.blocks_required) {
-            $count = @(Get-ChildItem -LiteralPath $Entries.donor_blocks -File -ErrorAction Stop).Count
-            if ($count -ne [int]$declared.blocks_required) {
-                $problems.Add('DONOR_BLOCK_COUNT_MISMATCH:' + $count)
+
+    if (Test-Path -LiteralPath $Entries.recovery_source -PathType Leaf) {
+        try {
+            $actualRecovery = Get-Sha256File -Path $Entries.recovery_source
+            if ($actualRecovery -ne ([string]$Entries.recovery_source_sha256).ToLowerInvariant()) {
+                $problems.Add('RECOVERY_SOURCE_SHA256_MISMATCH')
             }
+        } catch {
+            $problems.Add('RECOVERY_SOURCE_IDENTITY_UNREADABLE')
         }
     }
-    # The result is returned as a single object on purpose.  Returning the
-    # empty list directly would unroll it to nothing, and the caller would
-    # then evaluate .Count on $null, which throws under
-    # Set-StrictMode -Version Latest.
+
+    $declared = $Entries.transfer_manifest.latest_complete_candidate
+    if ($declared -and (Test-Path -LiteralPath $Entries.donor_manifest -PathType Leaf)) {
+        try {
+            $donorManifest = Get-Content -LiteralPath $Entries.donor_manifest -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ([long]$declared.archive_size -ne [long]$donorManifest.size) {
+                $problems.Add('DONOR_DECLARATION_SIZE_MISMATCH')
+            }
+            if (([string]$declared.archive_sha256).ToLowerInvariant() -ne ([string]$donorManifest.sha256).ToLowerInvariant()) {
+                $problems.Add('DONOR_DECLARATION_SHA256_MISMATCH')
+            }
+            if ([int]$declared.blocks_required -ne [int]$donorManifest.block_count) {
+                $problems.Add('DONOR_DECLARATION_BLOCK_COUNT_MISMATCH')
+            }
+            $blocks = @($donorManifest.blocks)
+            if ($blocks.Count -ne [int]$donorManifest.block_count) {
+                $problems.Add('DONOR_MANIFEST_BLOCK_COUNT_MISMATCH')
+            } else {
+                $donorRoot = [IO.Path]::GetFullPath((Split-Path -Parent $Entries.donor_manifest))
+                $prefix = $donorRoot.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+                $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+                foreach ($block in $blocks) {
+                    $relative = [string]$block.path
+                    if ([string]::IsNullOrWhiteSpace($relative) -or [IO.Path]::IsPathRooted($relative) -or $relative -match '(^|[\\/])\.\.([\\/]|$)') {
+                        $problems.Add('DONOR_BLOCK_DECLARATION_INVALID')
+                        continue
+                    }
+                    $normalized = $relative.Replace('/', [IO.Path]::DirectorySeparatorChar)
+                    $full = [IO.Path]::GetFullPath((Join-Path $donorRoot $normalized))
+                    if (-not $full.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) -or -not $seen.Add($full)) {
+                        $problems.Add('DONOR_BLOCK_DECLARATION_INVALID')
+                        continue
+                    }
+                    if (-not (Test-Path -LiteralPath $full -PathType Leaf)) {
+                        $problems.Add('DONOR_BLOCK_MISSING:' + $relative)
+                    } elseif ((Get-Item -LiteralPath $full).Length -ne [long]$block.size) {
+                        $problems.Add('DONOR_BLOCK_SIZE_MISMATCH:' + $relative)
+                    }
+                }
+            }
+        } catch {
+            $problems.Add('DONOR_MANIFEST_PREFLIGHT_INVALID')
+        }
+    }
+
+    if ($declared -and $declared.blocks_required -and (Test-Path -LiteralPath $Entries.donor_blocks -PathType Container)) {
+        $count = @(Get-ChildItem -LiteralPath $Entries.donor_blocks -File -ErrorAction Stop).Count
+        if ($count -ne [int]$declared.blocks_required) {
+            $problems.Add('DONOR_BLOCK_COUNT_MISMATCH:' + $count)
+        }
+    }
     return ,$problems.ToArray()
 }
 

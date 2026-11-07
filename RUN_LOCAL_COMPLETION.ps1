@@ -1004,9 +1004,32 @@ function Invoke-RepositoryEntryContractTest {
   $entries=Get-DeclaredRepositoryEntries -RepositoryRoot $PhysicalRepoRoot -SourceRoot $sourceRootDirectory
   $problems=Test-DeclaredRepositoryEntries -Entries $entries
   if ($problems.Count -gt 0) { throw ('REPOSITORY_ENTRY_CONTRACT_FAILED:'+($problems -join ',')) }
-  $actual=Get-Sha256File -Path $entries.recovery_source
-  if ($actual -ne ([string]$entries.recovery_source_sha256).ToLowerInvariant()) {
-    throw ('REPOSITORY_ENTRY_CONTRACT_RECOVERY_SHA_MISMATCH:'+$actual)
+  # Identity validation belongs to Test-DeclaredRepositoryEntries so the live
+  # Stage-0 route and this behavioural contract exercise one implementation.
+  $badRecovery=[ordered]@{}
+  foreach($property in $entries.PSObject.Properties) { $badRecovery[$property.Name]=$property.Value }
+  $badRecovery.recovery_source_sha256=('0' * 64)
+  $negativeRecovery=Test-DeclaredRepositoryEntries -Entries $badRecovery
+  if ($negativeRecovery -notcontains 'RECOVERY_SOURCE_SHA256_MISMATCH') {
+    throw 'REPOSITORY_ENTRY_CONTRACT_RECOVERY_FAIL_CLOSED_MISSING'
+  }
+  $originalDeclared=$entries.transfer_manifest.latest_complete_candidate
+  $badDeclared=[pscustomobject]@{
+    path=$originalDeclared.path
+    blocks_required=$originalDeclared.blocks_required
+    archive_size=$originalDeclared.archive_size
+    archive_sha256=('0' * 64)
+  }
+  $badManifest=[pscustomobject]@{
+    latest_complete_candidate=$badDeclared
+    recovery_source=$entries.transfer_manifest.recovery_source
+  }
+  $badDonor=[ordered]@{}
+  foreach($property in $entries.PSObject.Properties) { $badDonor[$property.Name]=$property.Value }
+  $badDonor.transfer_manifest=$badManifest
+  $negativeDonor=Test-DeclaredRepositoryEntries -Entries $badDonor
+  if ($negativeDonor -notcontains 'DONOR_DECLARATION_SHA256_MISMATCH') {
+    throw 'REPOSITORY_ENTRY_CONTRACT_DONOR_FAIL_CLOSED_MISSING'
   }
   $declaredBlocks=$entries.transfer_manifest.latest_complete_candidate.blocks_required
   if ($declaredBlocks) {
