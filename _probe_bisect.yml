@@ -1,10 +1,5 @@
-        run: |
-          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1') -RepositoryDiscoveryContractTest
-          if($LASTEXITCODE -ne 0){ throw ('REPOSITORY_DISCOVERY_CONTRACT_TEST_FAILED:'+$LASTEXITCODE) }
-      - name: Every shipped script must be ASCII-only or UTF-8 with BOM
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          python -m unittest discover -s (Join-Path $PWD '開発版/source/TESTS') -p 'test_windows_script_encoding.py' -v
-          if ($LASTEXITCODE -ne 0) { throw "WINDOWS_SCRIPT_ENCODING_CONTRACT_FAILED:$LASTEXITCODE" }
-      - name: The runner must resolve its inputs through the shared entry contract
+          python -m unittest discover -s (Join-Path $PWD '開発版/source/TESTS') -p 'test_local_completion_runner_contract.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "LOCAL_COMPLETION_RUNNER_CONTRACT_FAILED:$LASTEXITCODE" }
