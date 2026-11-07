@@ -25,8 +25,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: rollback-predecessor-${{ github.ref }}-${{ github.sha }}
-  cancel-in-progress: false
+  # A newer commit on the same PR/ref supersedes the previous qualification
+  # run.  Keeping SHA in the group left many obsolete 1 GB rebuild/selftest
+  # jobs running concurrently and delayed the authoritative latest result.
+  group: rollback-predecessor-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   qualify-verified-predecessor:
