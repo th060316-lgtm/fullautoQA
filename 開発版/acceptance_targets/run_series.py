@@ -188,7 +188,10 @@ def series_hq_readback(records,output,expected_count=None):
     """
     if not records:return {'status':'NOT_RUN','reason':'NO_SERIES_RECORDS'}
     controller=Path(__file__).resolve().parent.parent
-    core=str(controller/'CORE')
+    core_candidates=[controller/'CORE',controller/'source'/'CORE']
+    core_root=next((item for item in core_candidates if item.is_dir()),None)
+    if core_root is None:raise RuntimeError('SERIES_HQ_CORE_ROOT_NOT_FOUND')
+    core=str(core_root)
     if core not in sys.path:sys.path.insert(0,core)
     from coordinator import CoordinatorContext
     from management_evaluator import evaluate_management
