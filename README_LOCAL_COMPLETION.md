@@ -4,22 +4,55 @@ This entrypoint runs the current Source through Candidate rebuild, Source regres
 
 ## Run
 
-1. Use a complete FullAutoQA download that contains the preserved donor blocks, or apply the lightweight download update pack to a previous complete download.
+1. Use a **fresh extraction of one complete self-contained FullAutoQA freeze** that contains the preserved donor blocks, transfer manifest, current Source, acceptance targets and rollback files. Do not overlay an update pack onto an older FullAutoQA tree and do not reuse a previously failed runnable tree.
 2. Do not run as administrator.
-3. Disconnect external network access before starting. The standard CMD entrypoint now requires offline evidence; it does not treat an online run as final acceptance.
+3. Disconnect external network access before starting. The standard CMD entrypoint requires offline evidence; it does not treat an online run as final acceptance.
 4. Run RUN_LOCAL_COMPLETION.cmd once. Do not manually stop after an individual sub-result: the runner gathers Candidate/selftest/A-B-A/rollback/environment evidence and makes the combined technical gate decision at the end.
 
-Optionally, pass the path of a cold-start review file as the first argument:
+The first optional argument is **not a single review JSON**. It is a schema-v1 series-review manifest used by the Sales headquarters:
 
-    RUN_LOCAL_COMPLETION.cmd C:\path\to\sales_review.json
+    RUN_LOCAL_COMPLETION.cmd C:\path\to\series_reviews.json
 
-The file is ingested by the Sales headquarters. A model proxy is never promoted to a human, and a missing or unreadable file is reported as such and never read as a pass.
+The manifest may contain one review for A and one for B; the repeated final A exists for stale-state/reproducibility checking and does not invent a third duplicate human-playtest requirement. Each review entry is bound to its Final-series index/target key and must carry the exact frozen `target_fingerprint` and `game_id`. `candidate_sha256` is optional additional provenance; when supplied it must match the actual Candidate. Review attachment paths are relative to the manifest directory and are copied into the corresponding Run evidence before the Sales verdict is evaluated.
+
+A minimal shape is:
+
+```json
+{
+  "schema_version": 1,
+  "series_reviews": [
+    {
+      "index": 1,
+      "target_key": "A",
+      "target_fingerprint": "<exact frozen A fingerprint>",
+      "game_id": "<A game_id>",
+      "review": {
+        "schema_version": 1,
+        "reviewer": {"kind": "human", "id": "<reviewer id>"},
+        "human_test_performed": true,
+        "sessions": [{
+          "cold_start": true,
+          "provenance": {"source": "human playtest"},
+          "phases": {
+            "first_30_seconds": {"status": "PASS", "evidence": ["evidence/a_30s.mp4"]},
+            "first_5_minutes": {"status": "PASS", "evidence": ["evidence/a_5m.mp4"]},
+            "product_shelf_test": {"status": "PASS", "evidence": ["evidence/a_shelf.png"]},
+            "communication_readability": {"status": "PASS", "evidence": ["evidence/a_readability.txt"]}
+          }
+        }]
+      }
+    }
+  ]
+}
+```
+
+This is only the input contract; the example does not claim that any Human review has occurred. For Issue #1 completion, each distinct Final target must have valid Sales/Human coverage. Missing, malformed, cross-target or attachment-missing review evidence leaves the Sales/Human gate non-PASS and does not get converted into technical A-B-A PASS evidence. The exact supplied manifest is preserved in the series evidence, and the actual review/attachment bytes used by a Run are sealed inside that Run's `RESULT_FOR_CHATGPT.zip`.
 
 The runner treats the repository as read-only input, creates a separate temporary physical workspace outside the repository, maps that workspace itself to a temporary free logical drive, and removes the mapping/workspace when the run ends. Preserved LOCAL_FINAL_ACCEPTANCE_<RunTag> evidence is written beside the repository rather than inside it. The download folder may remain where the user placed it; no manual relocation or fixed drive letter is required. The route does not intentionally require persistent PATH or Registry changes; acceptance of the stronger "no persistent change" claims depends on the recorded environment evidence and is never inferred from design intent alone.
 
 ## Handoff preflight
 
-Before anything is built, step 0/8 resolves every declared input through one shared entry contract (`source/scripts/REPOSITORY_ENTRY.ps1`) and verifies that each declared file and directory really exists:
+Before anything is built, step 0/8 resolves every declared input through one shared entry contract (`source/scripts/REPOSITORY_ENTRY.ps1`) and performs an aggregate handoff check. It verifies that the declared files/directories exist, that the Recovery Source SHA-256 matches the transfer manifest, that donor size/SHA/block-count declarations agree with the donor manifest, and that every declared donor block exists with its declared size:
 
 - the donor complete set and its JOIN script,
 - the recovery source archive and its declared SHA-256,
@@ -29,7 +62,9 @@ Before anything is built, step 0/8 resolves every declared input through one sha
 
 The contract reads `transfer/TRANSFER_MANIFEST.json` explicitly as UTF-8 and resolves every path relative to the repository root, refusing any path that leaves it. The source-root directory is discovered structurally rather than by its name, because Windows PowerShell 5.1 reads a BOM-less script with the system ANSI code page: a non-ASCII directory name written literally inside a script is mojibake on a real machine while the same script still passes under PowerShell 7 in hosted CI. Every `.ps1` the route executes is therefore ASCII-only, and the source test suite enforces that invariant.
 
-If the preflight fails, the summary records `handoff_preflight` with the exact missing entry and nothing is built.
+The expensive SHA-256 scan of all donor blocks and of the reconstructed large donor archive is deliberately not duplicated in step 0; `JOIN_COMPLETE.ps1` remains the authoritative implementation of those byte-identity checks immediately afterward.
+
+If the preflight fails, `handoff_preflight` never becomes PASS and nothing is built.
 
 ## Evidence
 

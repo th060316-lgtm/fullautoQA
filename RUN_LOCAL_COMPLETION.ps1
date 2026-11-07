@@ -18,9 +18,10 @@ param(
   [switch]$PreparedBaselineContractTest,
   [switch]$EnvironmentMonitorContractTest,
   [switch]$RequireOffline,
-  # Optional cold-start review evidence (human or validated proxy) that the
-  # Sales headquarters consumes.  A model proxy is never promoted to a human
-  # and the absence of the file is never read as a pass.
+  # Optional schema-v1 Final-series review manifest. Reviews are bound to
+  # exact frozen target identity; attachments are manifest-relative and are
+  # sealed into per-Run evidence. Missing/invalid review input never becomes
+  # Human/Sales PASS and does not redefine the technical A-B-A gate.
   [string]$SalesReviewEvidence=''
 )
 
