@@ -24,9 +24,9 @@ Canonical row format (identical in both implementations)
   ``.pyo`` are excluded - they are transient bytecode caches, not Source;
 * the relative path is POSIX style and relative to the root;
 * one row per file: ``<relative path> TAB <size> TAB <sha256 lowercase hex>``;
-* rows are sorted ordinally by the relative path (code point order, which is
-  identical to UTF-8 byte order and to .NET's ordinal comparer for every path
-  that does not use characters outside the Basic Multilingual Plane);
+* rows are sorted by .NET-style ordinal UTF-16 code units, matching
+  ``StringComparer.Ordinal`` exactly even when a path contains supplementary
+  Unicode characters;
 * rows are joined with a single LF and the payload is hashed as UTF-8.
 
 The audit is fail-closed: a regression that modified its own input tree is
@@ -81,11 +81,25 @@ def collect(root: Path) -> dict:
     return files
 
 
+def ordinal_path_key(value: str) -> tuple:
+    """Match .NET ``StringComparer.Ordinal`` using UTF-16 code units.
+
+    Python normally sorts Unicode strings by code point.  .NET ordinal string
+    comparison sorts UTF-16 code units, which differs for supplementary
+    characters.  The PowerShell binding uses ``StringComparer.Ordinal``, so the
+    Python binding must use the same ordering for every valid path, not only
+    the current ASCII-heavy tree.
+    """
+    encoded = value.encode('utf-16-le', errors='surrogatepass')
+    return tuple(encoded[index] | (encoded[index + 1] << 8)
+                 for index in range(0, len(encoded), 2))
+
+
 def canonical_rows(files: dict) -> list:
-    """The canonical row list: ordinal sort by relative path."""
+    """The canonical row list: .NET ordinal sort by relative path."""
     return [
         '{}'.format(relative) + '\t' + str(files[relative]['size']) + '\t' + files[relative]['sha256']
-        for relative in sorted(files)
+        for relative in sorted(files, key=ordinal_path_key)
     ]
 
 
