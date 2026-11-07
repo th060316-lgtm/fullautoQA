@@ -113,8 +113,24 @@ function Find-RepositoryEntryModule([string]$Root) {
   return $found[0]
 }
 
-$RepositoryEntryModule = Find-RepositoryEntryModule -Root $PhysicalRepoRoot
-. $RepositoryEntryModule
+function Resolve-RepositoryEntryModule {
+  # The shared entry contract is loaded ON DEMAND, not at startup.
+  #
+  # Two of the contract-test modes are self-contained: they build their own
+  # tree in the temporary directory and never touch the repository inputs.
+  # Loading the contract at startup made those modes fail on a checkout that
+  # contains only the runner, which is exactly the checkout the hosted
+  # syntax job uses.
+  #
+  # The contract is dot-sourced at the SCRIPT scope on purpose: dot-sourcing
+  # it inside a function would define its functions in that function's scope
+  # only, and the runner's own functions could not see them.
+  $module = Find-RepositoryEntryModule -Root $PhysicalRepoRoot
+  if (-not (Test-Path -LiteralPath $module -PathType Leaf)) {
+    throw ('REPOSITORY_ENTRY_MODULE_MISSING:' + $module)
+  }
+  return $module
+}
 
 function Get-SHA256([string]$Path) {
   # The hashing itself lives in the shared entry contract; this keeps the
@@ -818,16 +834,19 @@ if ($RepositoryDiscoveryContractTest) {
   exit 0
 }
 if ($RepositoryEntryContractTest) {
+  . (Resolve-RepositoryEntryModule)
   Invoke-RepositoryEntryContractTest
   exit 0
 }
 if ($PreparedBaselineContractTest) {
+  . (Resolve-RepositoryEntryModule)
   Invoke-PreparedBaselineContractTest
   exit 0
 }
 
 try {
   if ($env:OS -ne 'Windows_NT') { throw 'LOCAL_COMPLETION_REQUIRES_WINDOWS' }
+  . (Resolve-RepositoryEntryModule)
 
   $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
   $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)

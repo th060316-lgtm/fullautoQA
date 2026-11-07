@@ -21,7 +21,11 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 # Captured before the shared contract is dot-sourced: dot-sourcing assigns the
 # dot-sourced script's own $PSScriptRoot into the caller's scope.
 $ScriptDirectory=$PSScriptRoot
-. (Join-Path (Split-Path -Parent $ScriptDirectory) 'source/scripts/REPOSITORY_ENTRY.ps1')
+$RepositoryEntryModule=Join-Path (Split-Path -Parent $ScriptDirectory) 'source/scripts/REPOSITORY_ENTRY.ps1'
+if (-not (Test-Path -LiteralPath $RepositoryEntryModule -PathType Leaf)) {
+  throw ('REPOSITORY_ENTRY_MODULE_MISSING:'+$RepositoryEntryModule)
+}
+. $RepositoryEntryModule
 
 if ([string]::IsNullOrWhiteSpace($RepositoryRoot)) {
   $RepositoryRoot=[IO.Path]::GetFullPath((Join-Path $ScriptDirectory '..\..'))
