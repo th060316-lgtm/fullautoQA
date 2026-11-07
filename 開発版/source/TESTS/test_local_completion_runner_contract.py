@@ -134,6 +134,8 @@ class LocalCompletionRunnerContractTests(unittest.TestCase):
         self.assertIn('-RequireOffline', cmd)
         self.assertIn('-SalesReviewEvidence "%~1"', cmd)
         self.assertIn('if not "%~1"==""', cmd)
+        self.assertIn('LOCAL TECHNICAL ACCEPTANCE FINISHED.', cmd)
+        self.assertNotIn('LOCAL FINAL COMPLETION FINISHED.', cmd)
     def test_the_runner_reports_the_hq_gates_without_promoting_them(self):
         self.assertContains('management_gate', 'the summary must carry the Management verdict')
         self.assertContains('sales_gate', 'the summary must carry the Sales verdict')

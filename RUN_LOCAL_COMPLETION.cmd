@@ -12,7 +12,8 @@ if not "%~1"=="" (
 set "CODE=%ERRORLEVEL%"
 echo.
 if "%CODE%"=="0" (
-  echo LOCAL FINAL COMPLETION FINISHED.
+  echo LOCAL TECHNICAL ACCEPTANCE FINISHED.
+  echo Check LOCAL_COMPLETION_SUMMARY.json for Management, Sales, Human, Product and Stable gates.
 ) else (
   echo LOCAL FINAL COMPLETION STOPPED WITH CODE %CODE%.
   echo Preserve the LOCAL_FINAL_ACCEPTANCE_* folder and its logs.
