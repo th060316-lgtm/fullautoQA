@@ -81,7 +81,8 @@ def _series_review_payload(source,index,label,candidate_sha,target):
     if len(matches)!=1:raise ValueError('SERIES_REVIEW_BINDING_AMBIGUOUS:'+str(index)+':'+str(label))
     entry=matches[0]
     declared_candidate=str(entry.get('candidate_sha256') or '').lower()
-    if declared_candidate!=str(candidate_sha or '').lower():
+    actual_candidate=str(candidate_sha or '').lower()
+    if declared_candidate and declared_candidate!=actual_candidate:
         raise ValueError('SERIES_REVIEW_CANDIDATE_MISMATCH:'+str(index))
     declared_fingerprint=str(entry.get('target_fingerprint') or '')
     if declared_fingerprint!=str((target or {}).get('fingerprint') or ''):
@@ -93,7 +94,9 @@ def _series_review_payload(source,index,label,candidate_sha,target):
     if not isinstance(payload,dict):raise ValueError('SERIES_REVIEW_PAYLOAD_INVALID:'+str(index))
     payload=dict(payload)
     payload['series_binding']={
-        'index':int(index),'target_key':str(label),'candidate_sha256':declared_candidate,
+        'index':int(index),'target_key':str(label),
+        'candidate_sha256':actual_candidate,
+        'candidate_sha256_declared':bool(declared_candidate),
         'target_fingerprint':declared_fingerprint,'game_id':declared_game,
     }
     return payload
@@ -369,7 +372,7 @@ def run_logged(argv,cwd,log,timeout=1800,env=None):
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--candidate',required=True);ap.add_argument('--expected-sha',required=True)
     ap.add_argument('--output',required=True);ap.add_argument('--plan',default=str(Path(__file__).with_name('FINAL_SERIES_PLAN.json')))
-    ap.add_argument('--review-evidence',default='',help='Optional schema-v1 series review manifest with one candidate/target-bound review per Final run')
+    ap.add_argument('--review-evidence',default='',help='Optional schema-v1 series review manifest with reviews bound to frozen target identity; Candidate SHA may be declared as additional provenance')
     args=ap.parse_args();archive=Path(args.candidate).resolve();output=Path(args.output).resolve()
     if output.exists():raise ValueError('SERIES_OUTPUT_ALREADY_EXISTS')
     output.mkdir(parents=True);bundle=Path(__file__).resolve().parent;controller=bundle.parent

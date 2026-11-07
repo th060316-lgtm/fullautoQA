@@ -124,17 +124,22 @@ class SeriesIntegrityTests(unittest.TestCase):
                 'provenance':{'source':'human'},'phases':{'first_30_seconds':{
                 'status':'PASS','evidence':['r.mp4']}}}]}
         manifest={'schema_version':1,'series_reviews':[{
-            'index':1,'target_key':'A','candidate_sha256':'candidate',
+            'index':1,'target_key':'A',
             'target_fingerprint':'fp-a','game_id':'gameA','review':review}]}
         with tempfile.TemporaryDirectory() as td:
             path=Path(td)/'reviews.json';path.write_text(json.dumps(manifest),encoding='utf-8')
             payload=_series_review_payload(path,1,'A','candidate',target)
             self.assertEqual(payload['series_binding']['target_key'],'A')
+            self.assertEqual(payload['series_binding']['candidate_sha256'],'candidate')
+            self.assertFalse(payload['series_binding']['candidate_sha256_declared'])
+            manifest['series_reviews'][0]['candidate_sha256']='candidate'
+            path.write_text(json.dumps(manifest),encoding='utf-8')
             with self.assertRaisesRegex(ValueError,'CANDIDATE_MISMATCH'):
                 _series_review_payload(path,1,'A','other',target)
             self.assertIsNone(
                 _series_review_payload(path,2,'B','candidate',
                                        {'fingerprint':'fp-b','game_id':'gameB'}))
+            manifest['series_reviews'][0].pop('candidate_sha256',None)
             manifest['series_reviews'].append(dict(manifest['series_reviews'][0]))
             path.write_text(json.dumps(manifest),encoding='utf-8')
             with self.assertRaisesRegex(ValueError,'BINDING_AMBIGUOUS'):
