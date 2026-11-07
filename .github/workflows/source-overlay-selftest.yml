@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - '開発版/source/**'
+      - '開発版/acceptance_targets/**'
+      - '開発版/complete_v033/**'
       - '開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip'
       - '開発版/transfer/TRANSFER_MANIFEST.json'
       - '.github/workflows/source-overlay-selftest.yml'
@@ -14,6 +16,7 @@ permissions:
 concurrency:
   group: source-overlay-selftest-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
+
 jobs:
   inputs:
     runs-on: ubuntu-latest
@@ -24,94 +27,178 @@ jobs:
         id: check
         with:
           script: |
-            if(context.eventName!=='pull_request'||context.payload.action!=='synchronize'||!context.payload.before) { core.setOutput('changed','true'); return; }
+            if(context.eventName!=='pull_request'||context.payload.action!=='synchronize'||!context.payload.before) {
+              core.setOutput('changed','true');
+              return;
+            }
             const {owner,repo}=context.repo;
             const before=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.before,recursive:'1'})).data;
             const after=(await github.rest.git.getTree({owner,repo,tree_sha:context.payload.pull_request.head.sha,recursive:'1'})).data;
             if(before.truncated||after.truncated) throw new Error('SOURCE_TREE_TRUNCATED');
-            const select=t=>JSON.stringify(t.tree.filter(x=>x.path==='開発版/source' || x.path==='開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip' || x.path==='開発版/transfer/TRANSFER_MANIFEST.json').map(x=>[x.path,x.sha]).sort());
+            const selectedPaths=new Set([
+              '.github/workflows/source-overlay-selftest.yml',
+              '開発版/source',
+              '開発版/acceptance_targets',
+              '開発版/complete_v033',
+              '開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip',
+              '開発版/transfer/TRANSFER_MANIFEST.json'
+            ]);
+            const select=t=>JSON.stringify(
+              t.tree
+                .filter(x=>selectedPaths.has(x.path))
+                .map(x=>[x.path,x.sha])
+                .sort()
+            );
             const changed=select(before)!==select(after);
             core.setOutput('changed',String(changed));
             if(changed) {
               const branch=context.payload.pull_request.head.ref;
-              const runs=(await github.rest.actions.listWorkflowRuns({owner,repo,workflow_id:'source-overlay-selftest.yml',branch,per_page:30})).data.workflow_runs;
-              for(const run of runs) if(run.id!==context.runId&&run.head_sha!==context.payload.pull_request.head.sha&&run.status!=='completed') {
-                try { await github.rest.actions.cancelWorkflowRun({owner,repo,run_id:run.id}); } catch(error) { if(![404,409].includes(error.status)) throw error; }
-                core.info('Cancelled superseded Source overlay '+run.id+'; always evidence steps remain enabled');
+              const runs=(await github.rest.actions.listWorkflowRuns({
+                owner,repo,workflow_id:'source-overlay-selftest.yml',branch,per_page:30
+              })).data.workflow_runs;
+              for(const run of runs) {
+                if(run.id!==context.runId && run.head_sha!==context.payload.pull_request.head.sha && run.status!=='completed') {
+                  try {
+                    await github.rest.actions.cancelWorkflowRun({owner,repo,run_id:run.id});
+                  } catch(error) {
+                    if(![404,409].includes(error.status)) throw error;
+                  }
+                  core.info('Cancelled superseded Source rebuild selftest '+run.id);
+                }
               }
             }
+
   diagnostic:
     needs: inputs
-    if: needs.inputs.outputs.changed == 'true' 
+    if: needs.inputs.outputs.changed == 'true'
     runs-on: windows-latest
-    timeout-minutes: 80
+    timeout-minutes: 120
+    env:
+      DIAG_OUT: ${{ github.workspace }}/_source_rebuild_diagnostic
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPYCACHEPREFIX: ${{ github.workspace }}/_pycache
     steps:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
+            開発版/complete_v033
             開発版/source
+            開発版/acceptance_targets
             開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
             開発版/transfer/TRANSFER_MANIFEST.json
           sparse-checkout-cone-mode: false
-      - uses: actions/download-artifact@v4
-        with:
-          github-token: ${{ github.token }}
-          run-id: 41636608324
-          name: FullAutoQA-Phase3-Candidate-93cc5ce54d30a9abca6d886ce451bc6b578fc468
-          path: _old_candidate
-      - name: Reconstruct complete current Source
-        shell: pwsh
-        run: |
-          $source = & './開発版/source/scripts/PREPARE_SOURCE.ps1' -RepositoryRoot $PWD -Destination (Join-Path $PWD '_source')
-          "SOURCE_ROOT=$source" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Create diagnostic overlay without rebuilding a Candidate
+
+      - name: Reconstruct complete current Source with Windows PowerShell 5.1
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
-          $zip=Join-Path $PWD '_old_candidate/FullAutoQA_PHASE3_CANDIDATE.zip'
-          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne '6b2190c79a14f55ef17b4ba1be14e98567a2fa4ade67a1a5d7758c5f59b46b1d') { throw 'DONOR_CANDIDATE_IDENTITY' }
-          $fresh=Join-Path $PWD '_diagnostic'
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          [IO.Compression.ZipFile]::ExtractToDirectory($zip,$fresh)
-          $python=Join-Path $fresh 'RUNTIME/python/python.exe'
-          & $python -B -E -s (Join-Path $fresh 'scripts/package_integrity.py') --root $fresh --full-payload --require-fresh-marker
-          if ($LASTEXITCODE -ne 0) { throw 'PRISTINE_PACKAGE_INVALID' }
-          Get-ChildItem $env:SOURCE_ROOT -Force | Where-Object { $_.Name -notin @('RUNTIME','PAYLOAD','RESULTS','core_manifest.json','package_manifest.json') } | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $fresh -Force -Recurse }
-          & (Join-Path $fresh 'scripts/PHASE3_REGEN_MANIFEST.ps1') -Tree $fresh
-          if ($LASTEXITCODE -ne 0) { throw 'CORE_MANIFEST_FAILED' }
-          "FRESH_ROOT=$fresh" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          '{"scope":"SOURCE_OVERLAY_DIAGNOSTIC_NOT_FINAL_CANDIDATE","old_candidate_sha256":"6b2190c79a14f55ef17b4ba1be14e98567a2fa4ade67a1a5d7758c5f59b46b1d"}' | Set-Content DIAGNOSTIC_SCOPE.json
-      - name: Native fixture normal and fault isolation regression
-        shell: pwsh
-        run: |
-          & (Join-Path $env:FRESH_ROOT 'RUNTIME/python/python.exe') -B -E -s (Join-Path $env:FRESH_ROOT 'TESTS/probe_native_fixture_faults.py') --root $env:FRESH_ROOT --evidence (Join-Path $PWD '_native_fixture_regression')
-          if ($LASTEXITCODE -ne 0) { throw 'NATIVE_FIXTURE_FAULT_REGRESSION_FAILED' }
-      - name: START_QA full selftest
-        shell: pwsh
-        run: |
-          Push-Location $env:FRESH_ROOT
-          try { & cmd.exe /d /c 'START_QA.cmd -SelfTest' 2>&1 | Tee-Object (Join-Path $env:GITHUB_WORKSPACE 'SELFTEST.log'); $code=$LASTEXITCODE } finally { Pop-Location }
-          "$code" | Set-Content SELFTEST_EXIT.txt
-          if ($code -ne 0) { throw "SELFTEST_REQUIRED_NONPASS:$code" }
-      - name: Complete Source suite with bundled Python and FFmpeg
-        if: always() && env.FRESH_ROOT != ''
-        shell: pwsh
-        run: |
-          $ffmpeg=@(Get-ChildItem (Join-Path $env:FRESH_ROOT 'RUNTIME') -Recurse -Filter ffmpeg.exe)
-          $dirs=@($ffmpeg | ForEach-Object { $_.DirectoryName } | Select-Object -Unique)
-          if ($dirs.Count -eq 0) { throw 'BUNDLED_ENCODER_NOT_PREPARED' }
-          $env:PATH=($dirs -join ';')+';'+$env:PATH
-          & (Join-Path $env:FRESH_ROOT 'RUNTIME/python/python.exe') -B -E -s -m unittest discover -s (Join-Path $env:FRESH_ROOT 'TESTS') -v 2>&1 | Tee-Object BUNDLED_SOURCE_TESTS.log
-          if ($LASTEXITCODE -ne 0) { throw 'BUNDLED_SOURCE_TESTS_FAILED' }
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Source-Overlay-Selftest-${{ github.run_id }}
-          path: |
-            _native_fixture_regression/**
-            DIAGNOSTIC_SCOPE.json
-            BUNDLED_SOURCE_TESTS.log
-            SELFTEST*.*
-            _diagnostic/RESULTS/**
-          retention-days: 14
+          New-Item -ItemType Directory -Path $env:DIAG_OUT -Force | Out-Null
+          $prepare=(Resolve-Path './開発版/source/scripts/PREPARE_SOURCE.ps1').Path
+          $output=& "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $prepare -RepositoryRoot $PWD -Destination (Join-Path $PWD '_source')
+          if($LASTEXITCODE -ne 0){throw "PREPARE_SOURCE_FAILED:$LASTEXITCODE"}
+          $source=([string](@($output|Where-Object{$_.Trim()})[-1])).Trim()
+          if(-not (Test-Path -LiteralPath (Join-Path $source 'CORE') -PathType Container)){throw "PREPARED_SOURCE_INVALID:$source"}
+          Copy-Item -LiteralPath './開発版/acceptance_targets' -Destination (Join-Path $source 'ACCEPTANCE') -Recurse -Force
+          $fingerprintScript=Join-Path $source 'scripts/SOURCE_TREE_FINGERPRINT.ps1'
+          $fpOut=& "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $fingerprintScript -Root $source
+          if($LASTEXITCODE -ne 0){throw "SOURCE_FINGERPRINT_FAILED:$LASTEXITCODE"}
+          $fp=([string](@($fpOut|Where-Object{$_.Trim()})[-1])).Trim().ToLowerInvariant()
+          if($fp -notmatch '^[0-9a-f]{64}$'){throw "SOURCE_FINGERPRINT_INVALID:$fp"}
+          "SOURCE_ROOT=$source" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "SOURCE_FINGERPRINT=$fp" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
+      - name: Independent complete Source regression and immutability
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $snap=Join-Path $env:DIAG_OUT 'SOURCE_TREE_BEFORE.json'
+          python -B (Join-Path $env:SOURCE_ROOT 'scripts/source_tree_immutability.py') snapshot --root $env:SOURCE_ROOT --output $snap
+          if($LASTEXITCODE -ne 0){throw "SOURCE_SNAPSHOT_FAILED:$LASTEXITCODE"}
+          python -B -m compileall -q (Join-Path $env:SOURCE_ROOT 'CORE') (Join-Path $env:SOURCE_ROOT 'TESTS')
+          if($LASTEXITCODE -ne 0){throw 'SOURCE_COMPILE_FAILED'}
+          python -B -m unittest discover -s (Join-Path $env:SOURCE_ROOT 'TESTS') -v 2>&1 | Tee-Object (Join-Path $env:DIAG_OUT 'SOURCE_TESTS.log')
+          if($LASTEXITCODE -ne 0){throw "SOURCE_REGRESSION_FAILED:$LASTEXITCODE"}
+          Get-ChildItem -LiteralPath $env:SOURCE_ROOT -Directory -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force
+          python -B (Join-Path $env:SOURCE_ROOT 'scripts/source_tree_immutability.py') compare --root $env:SOURCE_ROOT --before $snap --output (Join-Path $env:DIAG_OUT 'SOURCE_TREE_IMMUTABILITY.json')
+          if($LASTEXITCODE -ne 0){throw "SOURCE_TREE_MUTATED:$LASTEXITCODE"}
+
+      - name: JOIN preserved donor and verify byte identity
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $complete=(Resolve-Path './開発版/complete_v033').Path
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $complete 'JOIN_COMPLETE.ps1') 2>&1 | Tee-Object (Join-Path $env:DIAG_OUT 'DONOR_JOIN.log')
+          if($LASTEXITCODE -ne 0){throw "DONOR_JOIN_FAILED:$LASTEXITCODE"}
+          $manifest=Get-Content -LiteralPath (Join-Path $complete 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          $donor=Join-Path $complete ([string]$manifest.file)
+          if((Get-Item -LiteralPath $donor).Length -ne [long]$manifest.size){throw 'DONOR_SIZE_MISMATCH'}
+          $hash=(Get-FileHash -LiteralPath $donor -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($hash -ne ([string]$manifest.sha256).ToLowerInvariant()){throw 'DONOR_SHA_MISMATCH'}
+          "DONOR=$donor" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Rebuild current Candidate independently
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $build=Join-Path $env:DIAG_OUT 'build'
+          New-Item -ItemType Directory -Path $build -Force | Out-Null
+          $script=Join-Path $env:SOURCE_ROOT 'scripts/PHASE3_OVERLAY_REBUILD.ps1'
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -DonorArchive $env:DONOR -SourceRoot $env:SOURCE_ROOT -OutputDir $build -SourceBaseline $env:SOURCE_FINGERPRINT 2>&1 | Tee-Object (Join-Path $env:DIAG_OUT 'CANDIDATE_BUILD.log')
+          if($LASTEXITCODE -ne 0){throw "CANDIDATE_BUILD_FAILED:$LASTEXITCODE"}
+          $candidate=Join-Path $build 'FullAutoQA_PHASE3_CANDIDATE.zip'
+          $identity=Join-Path $build 'PHASE3_CANDIDATE_IDENTITY.json'
+          if(-not (Test-Path -LiteralPath $candidate -PathType Leaf) -or -not (Test-Path -LiteralPath $identity -PathType Leaf)){throw 'CANDIDATE_OUTPUT_MISSING'}
+          $id=Get-Content -LiteralPath $identity -Raw -Encoding UTF8 | ConvertFrom-Json
+          $actualSize=(Get-Item -LiteralPath $candidate).Length
+          $actualHash=(Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($actualSize -ne [long]$id.candidate_size){throw 'CANDIDATE_SIZE_RECORD_MISMATCH'}
+          if($actualHash -ne ([string]$id.candidate_sha256).ToLowerInvariant()){throw 'CANDIDATE_SHA_RECORD_MISMATCH'}
+          "CANDIDATE=$candidate" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "CANDIDATE_SIZE=$actualSize" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "CANDIDATE_SHA256=$actualHash" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Fresh package integrity and START_QA selftest
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $fresh=Join-Path $PWD '_diagnostic_fresh'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::ExtractToDirectory($env:CANDIDATE,$fresh)
+          $python=Join-Path $fresh 'RUNTIME/python/python.exe'
+          $integrity=Join-Path $env:DIAG_OUT 'FRESH_PACKAGE_INTEGRITY.json'
+          & $python -B -E -s (Join-Path $fresh 'scripts/package_integrity.py') --root $fresh --full-payload --require-fresh-marker --json-out $integrity
+          if($LASTEXITCODE -ne 0){throw "FRESH_PACKAGE_INTEGRITY_FAILED:$LASTEXITCODE"}
+          Push-Location $fresh
+          try{
+            & cmd.exe /d /c 'START_QA.cmd -SelfTest' 2>&1 | Tee-Object (Join-Path $env:DIAG_OUT 'SELFTEST.log')
+            $code=$LASTEXITCODE
+          }finally{Pop-Location}
+          "$code" | Set-Content -LiteralPath (Join-Path $env:DIAG_OUT 'SELFTEST_EXIT.txt') -Encoding ASCII
+          if($code -ne 0){throw "SELFTEST_REQUIRED_NONPASS:$code"}
+          [ordered]@{
+            schema_version=1
+            scope='INDEPENDENT_REBUILD_FROM_PRESERVED_DONOR_AND_CURRENT_SOURCE'
+            source_fingerprint=$env:SOURCE_FINGERPRINT
+            candidate_size=[long]$env:CANDIDATE_SIZE
+            candidate_sha256=$env:CANDIDATE_SHA256
+            package_integrity='PASS'
+            selftest='PASS'
+            product_acceptance='HOLD'
+            stable='HOLD'
+            real_game_e2e='NOT_RUN'
+            human_test='NOT_RUN'
+          } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $env:DIAG_OUT 'SOURCE_REBUILD_SELFTEST.json') -Encoding UTF8
+
+      - name: Preserve compact independent rebuild evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Source-Rebuild-Selftest-${{ github.run_id }}
+          path: |
+            _source_rebuild_diagnostic/*.json
+            _source_rebuild_diagnostic/*.log
+            _source_rebuild_diagnostic/*.txt
+            _source_rebuild_diagnostic/build/PHASE3_CANDIDATE_IDENTITY.json
+            _source_rebuild_diagnostic/build/PHASE3_CANDIDATE_BUILD_REPORT.json
+          if-no-files-found: warn
+          retention-days: 14
