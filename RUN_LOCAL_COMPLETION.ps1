@@ -1247,6 +1247,7 @@ function Export-ChatEvidence {
       'SERIES_COMPARISON.json',
       'SERIES_HQ_READBACK.json',
       'SERIES_REVIEW_INTAKE.json',
+      'SERIES_REVIEW_SOURCE_INPUT.json',
       'ENVIRONMENT_AUDIT.json',
       'PERSISTENT_ENVIRONMENT_READBACK.json',
       'OPERATION_LOG.json'

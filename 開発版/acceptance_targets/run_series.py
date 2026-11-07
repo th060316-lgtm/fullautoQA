@@ -101,6 +101,42 @@ def _series_review_payload(source,index,label,candidate_sha,target):
     }
     return payload
 
+def _stage_review_payload(payload, source_manifest, destination):
+    """Stage one review outside Candidate bytes with safe relative attachments."""
+    destination=Path(destination)
+    if destination.exists():raise ValueError('SERIES_REVIEW_STAGE_NOT_FRESH')
+    destination.mkdir(parents=True)
+    source_root=Path(source_manifest).resolve().parent
+    staged=json.loads(json.dumps(payload))
+    copied=[];seen={}
+    for session in staged.get('sessions') or []:
+        if not isinstance(session,dict):continue
+        phases=session.get('phases')
+        if not isinstance(phases,dict):continue
+        for record in phases.values():
+            if not isinstance(record,dict):continue
+            refs=record.get('evidence')
+            if not isinstance(refs,list):continue
+            rewritten=[]
+            for ref in refs:
+                normalized=str(ref or '').replace('\\','/').strip()
+                source=child(source_root,normalized)
+                if not source.is_file():raise ValueError('SERIES_REVIEW_ATTACHMENT_MISSING:'+normalized)
+                relative='files/'+normalized
+                key=relative.casefold()
+                prior=seen.get(key)
+                if prior is not None and prior!=relative:
+                    raise ValueError('SERIES_REVIEW_ATTACHMENT_COLLISION:'+relative)
+                target=child(destination,relative)
+                target.parent.mkdir(parents=True,exist_ok=True)
+                if prior is None:
+                    shutil.copy2(source,target);seen[key]=relative;copied.append(relative)
+                rewritten.append(relative)
+            record['evidence']=rewritten
+    target=destination/'sales_review.json'
+    write(target,staged)
+    return target,copied
+
 def cross_run_reproducibility(records):
     """Independent-run reproducibility observed by the A -> B -> A series.
 
@@ -381,6 +417,22 @@ def main():
     from environment_audit import environment_audit_comparison, environment_audit_snapshot
     plan=read(args.plan);records=[];frozen={};sha=args.expected_sha.lower();persistent_before=persistent_path_snapshot()
     review_evidence=args.review_evidence or ''
+    review_intake_problems=[]
+    review_source_record=None
+    if review_evidence:
+        source_path=Path(review_evidence).resolve()
+        if source_path.is_file():
+            preserved=output/'SERIES_REVIEW_SOURCE_INPUT.json'
+            try:
+                shutil.copy2(source_path,preserved)
+                review_source_record={'file':preserved.name,'size':preserved.stat().st_size,
+                                      'sha256':digest(preserved)}
+            except Exception as ex:
+                review_intake_problems.append({'index':None,'target_key':None,
+                                               'error':'SERIES_REVIEW_SOURCE_COPY_FAILED:'+type(ex).__name__})
+        else:
+            review_intake_problems.append({'index':None,'target_key':None,
+                                           'error':'SERIES_REVIEW_EVIDENCE_MISSING'})
     environment_before=environment_audit_snapshot()
     elevated=bool(ctypes.windll.shell32.IsUserAnAdmin()) if os.name=='nt' else None
     execution_environment={'os':os.name,'hosted_ci':os.environ.get('GITHUB_ACTIONS')=='true',
@@ -412,7 +464,6 @@ def main():
             frozen[label]=record
             shutil.rmtree(temp)
         write(output/'TARGET_FREEZE.json',frozen)
-        review_intake_problems=[]
         for index,label in enumerate(plan['series'],1):
             if digest(archive)!=sha:raise ValueError('CANDIDATE_CHANGED_DURING_SERIES')
             slot=output/('Run'+str(index));slot.mkdir()
@@ -431,18 +482,21 @@ def main():
             if target!=frozen[label]:raise ValueError('TARGET_CHANGED_AFTER_FREEZE')
             shutil.copy2(fresh/'TARGET_PREPARATION.json',slot/'TARGET_PREPARATION.json')
             run_env=os.environ.copy();run_env['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
-            review_payload=None
+            review_payload=None;review_stage=None
             try:
                 review_payload=_series_review_payload(review_evidence,index,label,sha,target)
+                if review_payload is not None:
+                    review_stage=slot/'review_input'
+                    review_target,_=_stage_review_payload(
+                        review_payload,review_evidence,review_stage)
+                    run_env['FULLAUTOQA_SALES_REVIEW_EVIDENCE']=str(review_target)
             except Exception as ex:
                 review_intake_problems.append({
                     'index':index,'target_key':label,'error':str(ex),
                 })
-            if review_payload is not None:
-                review_dir=fresh/'review_evidence';review_dir.mkdir(parents=True,exist_ok=True)
-                review_target=review_dir/'sales_review.json'
-                write(review_target,review_payload)
-                run_env['FULLAUTOQA_SALES_REVIEW_EVIDENCE']=str(review_target)
+                if review_stage is not None and review_stage.exists():
+                    shutil.rmtree(review_stage,ignore_errors=True)
+                    review_stage=None
             code=run_logged(['cmd.exe','/d','/c','START_QA.cmd'],fresh,slot/'START_QA.log',env=run_env)
             result=authoritative_result(fresh,set())
             validate_result_zip(result,require_manifest=True,expected_run_id=result.parent.name)
@@ -458,6 +512,7 @@ def main():
                 env=json.loads(z.read('phase3_environment.json'))
                 if env.get('fresh_extraction_id')!=extraction_id:raise ValueError('FRESH_MARKER_NOT_PROPAGATED')
             saved=slot/'RESULT_FOR_CHATGPT.zip';shutil.copy2(result,saved)
+            if review_stage is not None and review_stage.exists():shutil.rmtree(review_stage)
             row={'index':index,'target_key':label,'target':target,'candidate_sha256':sha,
                  'run_id':data['run_id'],'fresh_extraction_id':extraction_id,'evidence_root':str(slot),
                  'execution_root':str(fresh),'result_sha256':digest(saved),'start_qa_exit_code':code,
@@ -491,10 +546,9 @@ def main():
     write(output/'PERSISTENT_ENVIRONMENT_READBACK.json',{'scope':'Persistent user and machine PATH values only; not a complete Registry write audit','before':persistent_before,'after':persistent_after,'persistent_path_status':('UNCHANGED' if persistent_before==persistent_after else 'CHANGED_REQUIRES_REVIEW') if persistent_before['status']==persistent_after['status']=='MEASURED' else 'NOT_MEASURED','registry_write_audit':'NOT_RUN'})
     write(output/'OPERATION_LOG.json',{'automated_operations':OPERATION_LOG,'automated_operation_count':len(OPERATION_LOG),'start_qa_invocations':sum('START_QA.cmd' in row['argv'] for row in OPERATION_LOG),'manual_intervention':'NOT_OBSERVED_BY_CONTROLLER','controller_retry_count':0})
     write(output/'SERIES_REVIEW_INTAKE.json',{
-        'schema_version':1,'source':review_evidence or None,
-        'problems':review_intake_problems if 'review_intake_problems' in locals() else [],
-        'status':('INVALID' if ('review_intake_problems' in locals() and review_intake_problems)
-                  else ('PRESENT' if review_evidence else 'ABSENT')),
+        'schema_version':1,'source':review_source_record,
+        'problems':review_intake_problems,
+        'status':('INVALID' if review_intake_problems else ('PRESENT' if review_evidence else 'ABSENT')),
         'product_acceptance':'HOLD','stable':'HOLD',
     })
     hq=series_hq_readback(records,output,expected_count=len(plan.get('series',[])))

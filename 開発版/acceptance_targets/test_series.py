@@ -1,8 +1,8 @@
 import copy,json,os,sys,tempfile,unittest,zipfile
 from pathlib import Path
-from run_series import (OPERATION_LOG,_series_review_payload,compare_records,
-                        cross_run_reproducibility,extract,origin_record,run_logged,
-                        series_hq_readback,summarize_execution_environment)
+from run_series import (OPERATION_LOG,_series_review_payload,_stage_review_payload,
+                        compare_records,cross_run_reproducibility,extract,origin_record,
+                        run_logged,series_hq_readback,summarize_execution_environment)
 
 class SeriesIntegrityTests(unittest.TestCase):
     def setUp(self):
@@ -144,6 +144,37 @@ class SeriesIntegrityTests(unittest.TestCase):
             path.write_text(json.dumps(manifest),encoding='utf-8')
             with self.assertRaisesRegex(ValueError,'BINDING_AMBIGUOUS'):
                 _series_review_payload(path,1,'A','candidate',target)
+
+    def test_series_review_stage_copies_relative_attachments_outside_candidate(self):
+        payload={'schema_version':1,'reviewer':{'kind':'human','id':'h1'},
+                 'human_test_performed':True,'sessions':[{'cold_start':True,
+                 'provenance':{'source':'human'},'phases':{'first_30_seconds':{
+                 'status':'PASS','evidence':['captures/review.mp4']}}}]}
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);source=root/'input';source.mkdir()
+            (source/'captures').mkdir()
+            (source/'captures'/'review.mp4').write_bytes(b'review-video')
+            manifest=source/'reviews.json';manifest.write_text('{}',encoding='utf-8')
+            stage=root/'Run1'/'review_input'
+            target,copied=_stage_review_payload(payload,manifest,stage)
+            staged=json.loads(target.read_text(encoding='utf-8'))
+            self.assertEqual(['files/captures/review.mp4'],
+                             staged['sessions'][0]['phases']['first_30_seconds']['evidence'])
+            self.assertEqual(b'review-video',
+                             (stage/'files'/'captures'/'review.mp4').read_bytes())
+            self.assertEqual(['files/captures/review.mp4'],copied)
+
+    def test_series_review_stage_rejects_missing_or_escaping_attachment(self):
+        payload={'sessions':[{'phases':{'first_30_seconds':{
+                 'status':'PASS','evidence':['missing.mp4']}}}]}
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);source=root/'input';source.mkdir()
+            manifest=source/'reviews.json';manifest.write_text('{}',encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'ATTACHMENT_MISSING'):
+                _stage_review_payload(payload,manifest,root/'stage1')
+            payload['sessions'][0]['phases']['first_30_seconds']['evidence']=['../escape.mp4']
+            with self.assertRaisesRegex(ValueError,'PATH_ESCAPE'):
+                _stage_review_payload(payload,manifest,root/'stage2')
 
     def test_series_hq_requires_every_run_not_only_the_last(self):
         def management(fp,offline=True):
