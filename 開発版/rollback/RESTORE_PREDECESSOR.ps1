@@ -188,7 +188,7 @@ $sourceRootForEntry=Get-RepositorySourceRoot
 $transferPath=Get-TransferManifestPath -SourceRoot $sourceRootForEntry
 $transfer=Read-TransferManifest -ManifestPath $transferPath
 $entries=Get-DeclaredRepositoryEntries -RepositoryRoot $RepositoryRoot -SourceRoot $sourceRootForEntry -Manifest $transfer
-$entryProblems=@(Test-DeclaredRepositoryEntries -Entries $entries)
+$entryProblems=Test-DeclaredRepositoryEntries -Entries $entries
 if ($entryProblems.Count -gt 0) {
   throw ('ROLLBACK_DECLARED_ENTRY_INVALID:'+($entryProblems -join ','))
 }
