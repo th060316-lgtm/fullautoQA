@@ -129,6 +129,11 @@ class LocalCompletionRunnerContractTests(unittest.TestCase):
         self.assertNotContains('$Summary.source_baseline=Get-SourceTreeFingerprint',
                                'the live route must not hash the tree outside the shared function')
 
+    def test_cmd_entrypoint_forwards_offline_and_optional_series_review_manifest(self):
+        cmd = (REPO_ROOT / 'RUN_LOCAL_COMPLETION.cmd').read_text(encoding='ascii')
+        self.assertIn('-RequireOffline', cmd)
+        self.assertIn('-SalesReviewEvidence "%~1"', cmd)
+        self.assertIn('if not "%~1"==""', cmd)
     def test_the_runner_reports_the_hq_gates_without_promoting_them(self):
         self.assertContains('management_gate', 'the summary must carry the Management verdict')
         self.assertContains('sales_gate', 'the summary must carry the Sales verdict')

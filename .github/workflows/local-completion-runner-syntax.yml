@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'RUN_LOCAL_COMPLETION.ps1'
+      - 'RUN_LOCAL_COMPLETION.cmd'
       - '開発版/source/**'
       - '開発版/rollback/**'
       - '.github/workflows/local-completion-runner-syntax.yml'
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - 'RUN_LOCAL_COMPLETION.ps1'
+      - 'RUN_LOCAL_COMPLETION.cmd'
       - '開発版/source/**'
       - '開発版/rollback/**'
       - '.github/workflows/local-completion-runner-syntax.yml'
