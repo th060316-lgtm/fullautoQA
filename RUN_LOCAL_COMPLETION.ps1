@@ -342,10 +342,10 @@ public sealed class FqaEnvironmentChangeMonitor : IDisposable
                           REG_NOTIFY_CHANGE_LAST_SET | REG_NOTIFY_CHANGE_SECURITY |
                           REG_NOTIFY_THREAD_AGNOSTIC;
             int userResult = RegNotifyChangeKeyValue(
-                currentUser.Handle, true, filter,
+                currentUser.SafeRegistryHandle.DangerousGetHandle(), true, filter,
                 currentUserEvent.SafeWaitHandle.DangerousGetHandle(), true);
             int machineResult = RegNotifyChangeKeyValue(
-                localMachine.Handle, true, filter,
+                localMachine.SafeRegistryHandle.DangerousGetHandle(), true, filter,
                 localMachineEvent.SafeWaitHandle.DangerousGetHandle(), true);
             if (userResult != 0 || machineResult != 0)
                 throw new InvalidOperationException("REG_NOTIFY_FAILED:" + userResult + ":" + machineResult);
