@@ -7,7 +7,7 @@ on:
       - '開発版/complete_v033/**'
       - '開発版/transfer/TRANSFER_MANIFEST.json'
       - '開発版/source/scripts/REPOSITORY_ENTRY.ps1'
-      - '開発版/rollback/RESTORE_PREDECESSOR.ps1'
+      - '開発版/rollback/**'
       - '.github/workflows/rollback-predecessor-qualification.yml'
   pull_request:
     branches: [main]
@@ -15,7 +15,7 @@ on:
       - '開発版/complete_v033/**'
       - '開発版/transfer/TRANSFER_MANIFEST.json'
       - '開発版/source/scripts/REPOSITORY_ENTRY.ps1'
-      - '開発版/rollback/RESTORE_PREDECESSOR.ps1'
+      - '開発版/rollback/**'
       - '.github/workflows/rollback-predecessor-qualification.yml'
   workflow_dispatch:
 
@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  qualify-v033-predecessor:
+  qualify-verified-predecessor:
     runs-on: windows-latest
     timeout-minutes: 75
     steps:
@@ -42,7 +42,7 @@ jobs:
             開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
           sparse-checkout-cone-mode: false
 
-      - name: The declared predecessor must resolve through the shared entry contract
+      - name: The declared donor and predecessor snapshot must resolve
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
@@ -60,7 +60,12 @@ jobs:
           if ([IO.Path]::GetFullPath($entries.donor_root) -ne [IO.Path]::GetFullPath((Join-Path $expected.FullName 'complete_v033'))) {
             throw ('DECLARED_DONOR_ROOT_DIVERGES:' + $entries.donor_root)
           }
-          Write-Host ('DECLARED_PREDECESSOR_RESOLVES ' + $entries.donor_root)
+          $snapshot=Join-Path $expected.FullName 'rollback/predecessor_23e0f380/manifest.json'
+          if (-not (Test-Path -LiteralPath $snapshot -PathType Leaf)) { throw 'PREDECESSOR_SNAPSHOT_MANIFEST_MISSING' }
+          $snapshotDoc=Get-Content -LiteralPath $snapshot -Raw -Encoding UTF8 | ConvertFrom-Json
+          if (-not $snapshotDoc.predecessor.source_commit) { throw 'PREDECESSOR_SNAPSHOT_SOURCE_COMMIT_MISSING' }
+          Write-Host ('DECLARED_DONOR_RESOLVES ' + $entries.donor_root)
+          Write-Host ('PREDECESSOR_SNAPSHOT_RESOLVES ' + $snapshotDoc.predecessor.source_commit)
 
       - name: Execute the exact rollback entrypoint on a fresh destination
         shell: pwsh
@@ -78,10 +83,15 @@ jobs:
           & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -RepositoryRoot $PWD -Destination $destination -EvidenceDirectory $evidence -SelfTest
           if ($LASTEXITCODE -ne 0) { throw "ROLLBACK_ENTRYPOINT_FAILED:$LASTEXITCODE" }
           $proof=Get-Content -LiteralPath (Join-Path $evidence 'ROLLBACK_PREDECESSOR_QUALIFICATION.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($proof.byte_identity -ne 'PASS') { throw 'ROLLBACK_BYTE_IDENTITY_NOT_PASS' }
+          if ($proof.snapshot_git_blob_identity -ne 'PASS') { throw 'ROLLBACK_SNAPSHOT_IDENTITY_NOT_PASS' }
+          if ($proof.donor_byte_identity -ne 'PASS') { throw 'ROLLBACK_DONOR_BYTE_IDENTITY_NOT_PASS' }
+          if ($proof.package_integrity -ne 'PASS') { throw 'ROLLBACK_PACKAGE_INTEGRITY_NOT_PASS' }
           if ($proof.runnable_rollback_status -ne 'PASS') { throw 'ROLLBACK_RUNNABLE_NOT_PASS' }
+          if (@('PASS','NOT_IDENTICAL_REBUILD') -notcontains [string]$proof.historical_candidate_byte_identity) {
+            throw 'ROLLBACK_HISTORICAL_BYTE_IDENTITY_UNREPORTED'
+          }
           if ($proof.product_acceptance -ne 'NOT_CLAIMED' -or $proof.stable_certification -ne 'NOT_CLAIMED') { throw 'ROLLBACK_SCOPE_OVERCLAIM' }
-          Write-Host "ROLLBACK_QUALIFICATION_PASS version=$($proof.predecessor_version) sha256=$($proof.archive_sha256)"
+          Write-Host "ROLLBACK_QUALIFICATION_PASS source=$($proof.predecessor_source_commit) rebuilt_sha256=$($proof.rebuilt_candidate_sha256) historical_byte_identity=$($proof.historical_candidate_byte_identity)"
 
       - name: Upload rollback qualification evidence
         if: always()
