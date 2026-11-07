@@ -139,6 +139,19 @@ def validate_review_evidence(data, run_id=None):
         })
     if not normalized_sessions:
         problems.append('REVIEW_EVIDENCE_NO_USABLE_SESSION')
+    human_test_claimed = bool(data.get('human_test_performed'))
+    reviewer_id = reviewer.get('id') or reviewer.get('name')
+    if kind == 'human' and human_test_claimed:
+        # A bare "kind=human, performed=true" assertion is not enough to buy
+        # the required Human gate.  The intake must preserve at least who
+        # reviewed, a cold-start session, and provenance for that session.
+        if not reviewer_id:
+            problems.append('REVIEW_EVIDENCE_HUMAN_REVIEWER_ID_MISSING')
+        cold_sessions = [session for session in normalized_sessions if session.get('cold_start')]
+        if not cold_sessions:
+            problems.append('REVIEW_EVIDENCE_HUMAN_COLD_START_MISSING')
+        elif not any(session.get('provenance') for session in cold_sessions):
+            problems.append('REVIEW_EVIDENCE_HUMAN_PROVENANCE_MISSING')
     if run_id is not None:
         declared = str(data.get('run_id') or '')
         if declared and declared != str(run_id):
@@ -146,7 +159,7 @@ def validate_review_evidence(data, run_id=None):
     normalized = {
         'schema_version': 1,
         'run_id': data.get('run_id'),
-        'reviewer': {'kind': kind, 'id': reviewer.get('id') or reviewer.get('name')},
+        'reviewer': {'kind': kind, 'id': reviewer_id},
         'human_test_performed': bool(data.get('human_test_performed')),
         'sessions': normalized_sessions,
     }
