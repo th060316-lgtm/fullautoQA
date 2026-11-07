@@ -8,6 +8,7 @@ on:
       - '開発版/transfer/TRANSFER_MANIFEST.json'
       - '開発版/source/scripts/REPOSITORY_ENTRY.ps1'
       - '開発版/rollback/**'
+      - '.gitattributes'
       - '.github/workflows/rollback-predecessor-qualification.yml'
   pull_request:
     branches: [main]
@@ -16,6 +17,7 @@ on:
       - '開発版/transfer/TRANSFER_MANIFEST.json'
       - '開発版/source/scripts/REPOSITORY_ENTRY.ps1'
       - '開発版/rollback/**'
+      - '.gitattributes'
       - '.github/workflows/rollback-predecessor-qualification.yml'
   workflow_dispatch:
 
