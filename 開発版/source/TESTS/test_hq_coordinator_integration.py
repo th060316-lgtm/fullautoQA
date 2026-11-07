@@ -75,6 +75,7 @@ def sales_bundle(reviewer='human'):
     return {
         'evidence_kind': 'real_human' if reviewer == 'human' else 'model_proxy',
         'reviewer': {'kind': reviewer, 'id': 'reviewer-1'},
+        'human_test_performed': reviewer == 'human',
         'audience_summary': {
             'schema_version': 1,
             'status': 'GENERATED',

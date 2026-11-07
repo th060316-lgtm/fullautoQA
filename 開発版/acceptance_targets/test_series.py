@@ -1,6 +1,7 @@
 import copy,json,os,sys,tempfile,unittest,zipfile
 from pathlib import Path
-from run_series import OPERATION_LOG,compare_records,extract,origin_record,run_logged,summarize_execution_environment
+from run_series import (OPERATION_LOG,compare_records,cross_run_reproducibility,extract,origin_record,
+                        run_logged,summarize_execution_environment)
 
 class SeriesIntegrityTests(unittest.TestCase):
     def setUp(self):
@@ -39,6 +40,36 @@ class SeriesIntegrityTests(unittest.TestCase):
     def test_origin_names_are_normalized_without_inventing_identity(self):
         value=origin_record({'origin':{'repository':'r','commit':'c','source_tree_sha':'t','source_path':'game'}})
         self.assertEqual(value,{'repository':'r','commit':'c','source_tree':'t','selected_path':'game'})
+
+    def test_cross_run_reproducibility_requires_same_candidate_target_and_distinct_extractions(self):
+        def row(run_id, fresh_id, candidate='candidate', fingerprint='A'*64, digest='required-digest'):
+            return {
+                'run_id':run_id,
+                'fresh_extraction_id':fresh_id,
+                'target_key':'A',
+                'target':{'fingerprint':fingerprint},
+                'candidate_sha256':candidate,
+                'required_case_digest':digest,
+                'required_case_count':3,
+                'required_nonpass':[],
+            }
+        good=cross_run_reproducibility([row('a1','fresh1'),row('a2','fresh2')])
+        self.assertTrue(good['status'])
+        self.assertEqual(good['scope'],'cross_run_same_target')
+
+        reused=cross_run_reproducibility([row('a1','same'),row('a2','same')])
+        self.assertFalse(reused['status'])
+        self.assertIn('FRESH_EXTRACTION_NOT_INDEPENDENT',reused['reasons'])
+
+        different_candidate=cross_run_reproducibility(
+            [row('a1','fresh1',candidate='c1'),row('a2','fresh2',candidate='c2')])
+        self.assertFalse(different_candidate['status'])
+        self.assertIn('CANDIDATE_IDENTITY_DIVERGED',different_candidate['reasons'])
+
+        different_target=cross_run_reproducibility(
+            [row('a1','fresh1',fingerprint='A'*64),row('a2','fresh2',fingerprint='B'*64)])
+        self.assertFalse(different_target['status'])
+        self.assertIn('TARGET_IDENTITY_DIVERGED',different_target['reasons'])
 
     def test_controller_marker_is_scoped_to_child_environment(self):
         with tempfile.TemporaryDirectory() as td:
