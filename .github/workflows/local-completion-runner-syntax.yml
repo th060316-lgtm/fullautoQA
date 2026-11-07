@@ -57,13 +57,15 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $test=(Resolve-Path './開発版/source/TESTS/test_windows_script_encoding.py').Path
+          $test=(Get-ChildItem -LiteralPath $PWD -Recurse -Filter 'test_windows_script_encoding.py' | Select-Object -First 1).FullName
+          if (-not $test) { throw 'WINDOWS_SCRIPT_ENCODING_TEST_NOT_FOUND' }
           python $test -v
           if ($LASTEXITCODE -ne 0) { throw "WINDOWS_SCRIPT_ENCODING_CONTRACT_FAILED:$LASTEXITCODE" }
       - name: The runner must resolve its inputs through the shared entry contract
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $test=(Resolve-Path './開発版/source/TESTS/test_local_completion_runner_contract.py').Path
+          $test=(Get-ChildItem -LiteralPath $PWD -Recurse -Filter 'test_local_completion_runner_contract.py' | Select-Object -First 1).FullName
+          if (-not $test) { throw 'LOCAL_COMPLETION_RUNNER_CONTRACT_TEST_NOT_FOUND' }
           python $test -v
           if ($LASTEXITCODE -ne 0) { throw "LOCAL_COMPLETION_RUNNER_CONTRACT_FAILED:$LASTEXITCODE" }
