@@ -1,0 +1,7 @@
+# Transient Python bytecode caches are never Source.
+# The canonical Source-tree fingerprint excludes them, and they must never be
+# committed, because a committed cache would make the tree hash depend on the
+# machine that produced it.
+__pycache__/
+*.pyc
+*.pyo
