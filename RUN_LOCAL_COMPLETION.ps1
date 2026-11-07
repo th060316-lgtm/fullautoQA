@@ -1009,6 +1009,7 @@ function Invoke-RepositoryEntryContractTest {
   $badRecovery=[ordered]@{}
   foreach($property in $entries.PSObject.Properties) { $badRecovery[$property.Name]=$property.Value }
   $badRecovery.recovery_source_sha256=('0' * 64)
+  $badRecovery=[pscustomobject]$badRecovery
   $negativeRecovery=Test-DeclaredRepositoryEntries -Entries $badRecovery
   if ($negativeRecovery -notcontains 'RECOVERY_SOURCE_SHA256_MISMATCH') {
     throw 'REPOSITORY_ENTRY_CONTRACT_RECOVERY_FAIL_CLOSED_MISSING'
@@ -1027,6 +1028,7 @@ function Invoke-RepositoryEntryContractTest {
   $badDonor=[ordered]@{}
   foreach($property in $entries.PSObject.Properties) { $badDonor[$property.Name]=$property.Value }
   $badDonor.transfer_manifest=$badManifest
+  $badDonor=[pscustomobject]$badDonor
   $negativeDonor=Test-DeclaredRepositoryEntries -Entries $badDonor
   if ($negativeDonor -notcontains 'DONOR_DECLARATION_SHA256_MISMATCH') {
     throw 'REPOSITORY_ENTRY_CONTRACT_DONOR_FAIL_CLOSED_MISSING'
