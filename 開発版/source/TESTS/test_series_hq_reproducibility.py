@@ -139,6 +139,8 @@ class CrossRunReproducibilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             for scope, expected in (('same_run_seed_replay', 'INCONCLUSIVE'),
+                                    ('invented_scope', 'INCONCLUSIVE'),
+                                    (None, 'INCONCLUSIVE'),
                                     ('cross_run_same_target', 'PASS')):
                 payload = dict(bundle)
                 payload['reproducibility'] = {
