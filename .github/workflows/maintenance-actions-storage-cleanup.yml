@@ -1,0 +1,114 @@
+name: One-time Actions storage cleanup
+
+on:
+  push:
+    branches:
+      - maintenance/actions-storage-cleanup-20261107
+    paths:
+      - .github/workflows/maintenance-actions-storage-cleanup.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: windows-latest
+    steps:
+      - name: Delete pre-existing Actions artifacts and caches
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $api = "https://api.github.com/repos/$env:REPO"
+          $headers = @{
+            Authorization = "Bearer $env:GH_TOKEN"
+            Accept = "application/vnd.github+json"
+            "X-GitHub-Api-Version" = "2022-11-28"
+            "User-Agent" = "fullautoqa-actions-storage-cleanup"
+          }
+
+          # Freeze the cleanup scope at job start so artifacts/caches created by
+          # concurrent Minimax or CI work are not deleted by this maintenance run.
+          $cutoff = [DateTimeOffset]::UtcNow
+
+          function Get-PagedItems {
+            param(
+              [Parameter(Mandatory = $true)][string]$Url,
+              [Parameter(Mandatory = $true)][string]$PropertyName
+            )
+
+            $all = [System.Collections.Generic.List[object]]::new()
+            $page = 1
+            while ($true) {
+              $separator = if ($Url.Contains('?')) { '&' } else { '?' }
+              $response = Invoke-RestMethod -Uri "$Url${separator}per_page=100&page=$page" -Headers $headers -Method Get
+              $items = @($response.$PropertyName)
+              foreach ($item in $items) {
+                $all.Add($item)
+              }
+              if ($items.Count -lt 100) {
+                break
+              }
+              $page += 1
+            }
+            return @($all)
+          }
+
+          $artifacts = @(
+            Get-PagedItems -Url "$api/actions/artifacts" -PropertyName "artifacts" |
+              Where-Object { [DateTimeOffset]$_.created_at -lt $cutoff }
+          )
+
+          $caches = @(
+            Get-PagedItems -Url "$api/actions/caches" -PropertyName "actions_caches" |
+              Where-Object { [DateTimeOffset]$_.created_at -lt $cutoff }
+          )
+
+          $artifactBytes = [Int64](($artifacts | Measure-Object -Property size_in_bytes -Sum).Sum)
+          $cacheBytes = [Int64](($caches | Measure-Object -Property size_in_bytes -Sum).Sum)
+
+          Write-Host "Cleanup cutoff (UTC): $cutoff"
+          Write-Host "Artifacts selected: $($artifacts.Count), bytes: $artifactBytes"
+          Write-Host "Caches selected: $($caches.Count), bytes: $cacheBytes"
+
+          $artifactDeleted = 0
+          $cacheDeleted = 0
+          $failures = [System.Collections.Generic.List[string]]::new()
+
+          foreach ($artifact in $artifacts) {
+            try {
+              Invoke-WebRequest -Uri "$api/actions/artifacts/$($artifact.id)" -Headers $headers -Method Delete | Out-Null
+              $artifactDeleted += 1
+            }
+            catch {
+              $failures.Add("artifact:$($artifact.id):$($_.Exception.Message)")
+            }
+          }
+
+          foreach ($cache in $caches) {
+            try {
+              Invoke-WebRequest -Uri "$api/actions/caches/$($cache.id)" -Headers $headers -Method Delete | Out-Null
+              $cacheDeleted += 1
+            }
+            catch {
+              $failures.Add("cache:$($cache.id):$($_.Exception.Message)")
+            }
+          }
+
+          $artifactGiB = [Math]::Round($artifactBytes / 1GB, 3)
+          $cacheGiB = [Math]::Round($cacheBytes / 1GB, 3)
+
+          Write-Host "ARTIFACTS_DELETED=$artifactDeleted/$($artifacts.Count) (~$artifactGiB GiB selected)"
+          Write-Host "CACHES_DELETED=$cacheDeleted/$($caches.Count) (~$cacheGiB GiB selected)"
+
+          if ($failures.Count -gt 0) {
+            Write-Host "DELETE_FAILURES=$($failures.Count)"
+            $failures | ForEach-Object { Write-Host $_ }
+            throw "Actions storage cleanup completed with deletion failures."
+          }
+
+          Write-Host "ACTIONS_STORAGE_CLEANUP=PASS"
