@@ -77,7 +77,8 @@ def _series_review_payload(source,index,label,candidate_sha,target):
     matches=[entry for entry in entries if isinstance(entry,dict)
              and int(entry.get('index') or -1)==int(index)
              and str(entry.get('target_key') or '')==str(label)]
-    if len(matches)!=1:raise ValueError('SERIES_REVIEW_BINDING_MISSING_OR_AMBIGUOUS:'+str(index)+':'+str(label))
+    if not matches:return None
+    if len(matches)!=1:raise ValueError('SERIES_REVIEW_BINDING_AMBIGUOUS:'+str(index)+':'+str(label))
     entry=matches[0]
     declared_candidate=str(entry.get('candidate_sha256') or '').lower()
     if declared_candidate!=str(candidate_sha or '').lower():
@@ -231,10 +232,43 @@ def series_hq_readback(records,output,expected_count=None):
             sales_runs.append(payload)
 
     management_status=_series_domain_status(management_runs)
-    sales_status=_series_domain_status(sales_runs)
     complete=(expected_count is None or len(records)==int(expected_count))
-    out={'schema_version':2,
-         'scope':'series level; every completed run is independently re-evaluated, plus the cross-run reproducibility observation',
+
+    # Sales is a series-level product gate.  A -> B -> A must cover every
+    # distinct target, but the repeated A run exists for stale-state and
+    # reproducibility detection; it is not an invented requirement for a
+    # duplicate human playtest.  A hard FAIL/HARNESS_ERROR from any actual
+    # review is never hidden by another PASS.
+    target_keys=[]
+    for row in records:
+        key=row.get('target_key')
+        if key and key not in target_keys:target_keys.append(key)
+    sales_targets=[]
+    for key in target_keys:
+        rows=[item for item in sales_runs if item.get('target_key')==key]
+        hard=next((status for status in ('HARNESS_ERROR','FAIL')
+                   if any(item.get('status')==status for item in rows)),None)
+        passed=[item for item in rows if item.get('status')=='PASS'
+                and item.get('human_test_performed') is True]
+        if hard:
+            status=hard
+        elif passed:
+            status='PASS'
+        elif any(item.get('status')=='INCONCLUSIVE' for item in rows):
+            status='INCONCLUSIVE'
+        else:
+            status='NOT_RUN'
+        sales_targets.append({
+            'target_key':key,'status':status,
+            'reviewed_run_ids':[item.get('run_id') for item in passed],
+            'observed_run_ids':[item.get('run_id') for item in rows],
+            'reason_code':_series_reason(rows,status),
+        })
+    sales_status=_series_domain_status(sales_targets)
+    sales_human=bool(sales_targets) and all(item.get('status')=='PASS' for item in sales_targets)
+
+    out={'schema_version':3,
+         'scope':'series level; Management checks every run plus series reproducibility; Sales requires at least one valid human cold-start review for each distinct target',
          'series_run_ids':[row.get('run_id') for row in records],
          'expected_run_count':expected_count,'observed_run_count':len(records),
          'product_acceptance':'HOLD','stable':'HOLD','human_test':'NOT_RUN'}
@@ -243,11 +277,10 @@ def series_hq_readback(records,output,expected_count=None):
                        'per_run':management_runs,
                        'reproducibility_observation':observation}
     out['sales']={'status':sales_status,
-                  'reason_code':_series_reason(sales_runs,sales_status),
-                  'per_run':sales_runs,
-                  'human_test_performed':bool(sales_runs) and all(
-                      item.get('human_test_performed') is True for item in sales_runs)}
-    out['human_test']='PASS' if out['sales']['human_test_performed'] and complete else 'NOT_RUN'
+                  'reason_code':_series_reason(sales_targets,sales_status),
+                  'per_run':sales_runs,'per_target':sales_targets,
+                  'human_test_performed':sales_human}
+    out['human_test']='PASS' if sales_human and complete else 'NOT_RUN'
     satisfied=complete and management_status=='PASS' and sales_status=='PASS'
     out['status']='PASS' if satisfied else 'NOT_PASS'
     if not complete:out['reason']='SERIES_INCOMPLETE_FOR_HQ'
@@ -376,6 +409,7 @@ def main():
             frozen[label]=record
             shutil.rmtree(temp)
         write(output/'TARGET_FREEZE.json',frozen)
+        review_intake_problems=[]
         for index,label in enumerate(plan['series'],1):
             if digest(archive)!=sha:raise ValueError('CANDIDATE_CHANGED_DURING_SERIES')
             slot=output/('Run'+str(index));slot.mkdir()
@@ -394,7 +428,13 @@ def main():
             if target!=frozen[label]:raise ValueError('TARGET_CHANGED_AFTER_FREEZE')
             shutil.copy2(fresh/'TARGET_PREPARATION.json',slot/'TARGET_PREPARATION.json')
             run_env=os.environ.copy();run_env['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
-            review_payload=_series_review_payload(review_evidence,index,label,sha,target)
+            review_payload=None
+            try:
+                review_payload=_series_review_payload(review_evidence,index,label,sha,target)
+            except Exception as ex:
+                review_intake_problems.append({
+                    'index':index,'target_key':label,'error':str(ex),
+                })
             if review_payload is not None:
                 review_dir=fresh/'review_evidence';review_dir.mkdir(parents=True,exist_ok=True)
                 review_target=review_dir/'sales_review.json'
@@ -447,7 +487,21 @@ def main():
     write(output/'ENVIRONMENT_AUDIT.json',{'schema_version':1,'before':environment_before,'after':environment_after,'comparison':environment_audit_comparison(environment_before,environment_after)})
     write(output/'PERSISTENT_ENVIRONMENT_READBACK.json',{'scope':'Persistent user and machine PATH values only; not a complete Registry write audit','before':persistent_before,'after':persistent_after,'persistent_path_status':('UNCHANGED' if persistent_before==persistent_after else 'CHANGED_REQUIRES_REVIEW') if persistent_before['status']==persistent_after['status']=='MEASURED' else 'NOT_MEASURED','registry_write_audit':'NOT_RUN'})
     write(output/'OPERATION_LOG.json',{'automated_operations':OPERATION_LOG,'automated_operation_count':len(OPERATION_LOG),'start_qa_invocations':sum('START_QA.cmd' in row['argv'] for row in OPERATION_LOG),'manual_intervention':'NOT_OBSERVED_BY_CONTROLLER','controller_retry_count':0})
+    write(output/'SERIES_REVIEW_INTAKE.json',{
+        'schema_version':1,'source':review_evidence or None,
+        'problems':review_intake_problems if 'review_intake_problems' in locals() else [],
+        'status':('INVALID' if ('review_intake_problems' in locals() and review_intake_problems)
+                  else ('PRESENT' if review_evidence else 'ABSENT')),
+        'product_acceptance':'HOLD','stable':'HOLD',
+    })
     hq=series_hq_readback(records,output,expected_count=len(plan.get('series',[])))
+    if 'review_intake_problems' in locals() and review_intake_problems:
+        hq['sales']['status']='FAIL'
+        hq['sales']['reason_code']='SERIES_REVIEW_INTAKE_INVALID'
+        hq['sales']['review_intake_problems']=review_intake_problems
+        hq['sales']['human_test_performed']=False
+        hq['human_test']='NOT_RUN'
+        hq['status']='NOT_PASS'
     write(output/'SERIES_HQ_READBACK.json',hq)
     result['independent_hq_final_verdict']=hq.get('status','NOT_RUN')
     result['independent_hq_domains']={'management':hq.get('management',{}).get('status'),'sales':hq.get('sales',{}).get('status')}
