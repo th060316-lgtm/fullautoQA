@@ -1244,6 +1244,7 @@ function Export-ChatEvidence {
       'SERIES_RECORDS.json',
       'SERIES_COMPARISON.json',
       'SERIES_HQ_READBACK.json',
+      'SERIES_REVIEW_INTAKE.json',
       'ENVIRONMENT_AUDIT.json',
       'PERSISTENT_ENVIRONMENT_READBACK.json',
       'OPERATION_LOG.json'
@@ -1600,7 +1601,9 @@ try {
   if (Test-Path -LiteralPath $rollbackProofPath -PathType Leaf) {
     $rollbackProof=Get-Content -LiteralPath $rollbackProofPath -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($rollbackCode -eq 0 -and
-        $rollbackProof.byte_identity -eq 'PASS' -and
+        $rollbackProof.snapshot_git_blob_identity -eq 'PASS' -and
+        $rollbackProof.donor_byte_identity -eq 'PASS' -and
+        $rollbackProof.package_integrity -eq 'PASS' -and
         $rollbackProof.runnable_rollback_status -eq 'PASS') {
       $Summary.rollback_predecessor='PASS'
     } else {

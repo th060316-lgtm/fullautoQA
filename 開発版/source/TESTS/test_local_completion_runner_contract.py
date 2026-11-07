@@ -135,6 +135,22 @@ class LocalCompletionRunnerContractTests(unittest.TestCase):
         self.assertContains('product_acceptance', 'the summary must carry the acceptance state')
         self.assertContains('stable', 'the summary must carry the stable state')
 
+    def test_local_rollback_gate_reads_the_actual_qualification_schema(self):
+        self.assertContains('$rollbackProof.snapshot_git_blob_identity',
+                            'rollback must verify the historical snapshot identity')
+        self.assertContains('$rollbackProof.donor_byte_identity',
+                            'rollback must verify the preserved donor identity')
+        self.assertContains('$rollbackProof.package_integrity',
+                            'rollback must verify the rebuilt package integrity')
+        self.assertContains('$rollbackProof.runnable_rollback_status',
+                            'rollback must require the fresh predecessor selftest')
+        self.assertNotContains('$rollbackProof.byte_identity',
+                               'the local route must not read a field the qualification schema never emits')
+
+    def test_compact_evidence_keeps_series_review_intake(self):
+        self.assertContains("'SERIES_REVIEW_INTAKE.json'",
+                            'review-intake failures must survive compact evidence export')
+
     def test_the_summary_declares_the_canonical_fingerprint_algorithm(self):
         self.assertContains('source_tree_fingerprint_algorithm',
                             'the summary must declare which fingerprint algorithm was used')
