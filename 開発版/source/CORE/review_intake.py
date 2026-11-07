@@ -199,7 +199,7 @@ def load_review_evidence(root, explicit_path='', run_id=None):
 
 def _safe_review_reference(root, reference):
     """Resolve a review attachment below root without path escape."""
-    text = str(reference or '').replace('\\\\', '/').strip()
+    text = str(reference or '').replace('\\', '/').strip()
     if not text or text.startswith('/') or ':' in text:
         raise ValueError('REVIEW_EVIDENCE_REFERENCE_INVALID:%s' % text)
     parts = text.split('/')
