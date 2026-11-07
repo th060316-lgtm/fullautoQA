@@ -1183,7 +1183,8 @@ function Export-ChatEvidence {
     'BUNDLED_SOURCE_TESTS.log',
     'START_QA_SELFTEST.log',
     'ABA_SERIES.log',
-    'ROLLBACK_PREDECESSOR.log'
+    'ROLLBACK_PREDECESSOR.log',
+    'ENVIRONMENT_CHANGE_MONITOR.json'
   )) {
     $source=Join-Path $OutRoot $name
     if (Test-Path -LiteralPath $source -PathType Leaf) {
@@ -1277,6 +1278,10 @@ if ($PreparedBaselineContractTest) {
   Invoke-PreparedBaselineContractTest
   exit 0
 }
+if ($EnvironmentMonitorContractTest) {
+  Invoke-EnvironmentMonitorContractTest
+  exit 0
+}
 
 try {
   if ($env:OS -ne 'Windows_NT') { throw 'LOCAL_COMPLETION_REQUIRES_WINDOWS' }
@@ -1313,6 +1318,32 @@ try {
   $Summary.evidence_root = $PhysicalOutRoot
   $Summary.logical_evidence_root = $OutRoot
   $Summary.status = 'RUNNING'
+
+  # The complete local acceptance route is monitored continuously before
+  # Stage 0 begins.  If a required monitor cannot start, fail early rather
+  # than spending a real-machine run on evidence that can never qualify.
+  $EnvironmentMonitor=Start-EnvironmentChangeMonitor
+  $EnvironmentMonitorStartedUtc=[DateTime]::UtcNow.ToString('o')
+  if (-not $EnvironmentMonitor.RegistryReady) {
+    throw ('ENVIRONMENT_MONITOR_PREFLIGHT_FAILED:REGISTRY:'+[string]$EnvironmentMonitor.RegistryError)
+  }
+  if (-not $EnvironmentMonitor.ProgramFilesReady -or $EnvironmentMonitor.ProgramFilesError) {
+    throw ('ENVIRONMENT_MONITOR_PREFLIGHT_FAILED:PROGRAM_FILES:'+[string]$EnvironmentMonitor.ProgramFilesErrorDetail)
+  }
+  if ($RequireOffline) {
+    $deadline=[DateTime]::UtcNow.AddSeconds(3)
+    while ([long]$EnvironmentMonitor.NetworkSampleCount -le 0 -and [DateTime]::UtcNow -lt $deadline) {
+      Start-Sleep -Milliseconds 50
+    }
+    if (-not $EnvironmentMonitor.NetworkReady -or $EnvironmentMonitor.NetworkError -or [long]$EnvironmentMonitor.NetworkSampleCount -le 0) {
+      throw ('ENVIRONMENT_MONITOR_PREFLIGHT_FAILED:NETWORK:'+[string]$EnvironmentMonitor.NetworkErrorDetail)
+    }
+    if ($EnvironmentMonitor.NetworkAddressObserved) {
+      throw 'ENVIRONMENT_MONITOR_PREFLIGHT_FAILED:EXTERNAL_ADDRESS_OBSERVED'
+    }
+  }
+  $Summary.environment_change_monitor='RUNNING'
+  Write-Summary
 
   # --- 0/8 Real-machine handoff preflight -----------------------------------
   # Every declared input is resolved through the shared entry contract.  The
@@ -1573,6 +1604,7 @@ try {
     }
   }
 
+  Complete-EnvironmentChangeMonitor
   $Summary.completed_utc=[DateTime]::UtcNow.ToString('o')
   Export-TransientEvidence
   Write-Summary
@@ -1580,8 +1612,17 @@ try {
   $finalFailures=New-Object 'System.Collections.Generic.List[string]'
   if ($Summary.rollback_predecessor -ne 'PASS') { $finalFailures.Add('ROLLBACK_PREDECESSOR_NONPASS') }
   if ($Summary.persistent_path_status -ne 'UNCHANGED') { $finalFailures.Add('PERSISTENT_PATH_CHANGED_OR_NOT_MEASURED') }
+  if ($Summary.registry_write_audit -ne 'UNCHANGED_CONTINUOUS_HKCU_HKLM_SUBTREE') {
+    $finalFailures.Add('REGISTRY_WRITE_AUDIT_NONPASS')
+  }
+  if ($Summary.program_files_write_audit -ne 'UNCHANGED_CONTINUOUS_RECURSIVE_MONITOR') {
+    $finalFailures.Add('PROGRAM_FILES_WRITE_AUDIT_NONPASS')
+  }
   if ($RequireOffline -and $Summary.offline_internet_status -ne 'PASS_NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_START_SERIES_END') {
-    $finalFailures.Add('OFFLINE_REQUIREMENT_NONPASS')
+    $finalFailures.Add('OFFLINE_CHECKPOINT_REQUIREMENT_NONPASS')
+  }
+  if ($RequireOffline -and $Summary.offline_continuous_audit -ne 'PASS_NO_UP_NONLOOPBACK_ADDRESS_OBSERVED_CONTINUOUSLY') {
+    $finalFailures.Add('OFFLINE_CONTINUOUS_REQUIREMENT_NONPASS')
   }
   if ($finalFailures.Count -gt 0) {
     throw ('FINAL_LOCAL_GATE_NONPASS:' + ($finalFailures -join ','))
@@ -1595,13 +1636,14 @@ try {
   Write-Host 'LOCAL TECHNICAL ACCEPTANCE PASS'
   Write-Host ('Candidate SHA256: ' + $candidateSha)
   Write-Host ('Evidence root: ' + $PhysicalOutRoot)
-  Write-Host 'Rollback, non-admin, Candidate selftest, A-B-A, persistent PATH and requested offline observation passed. Human/Product/Stable remain separate gates.'
+  Write-Host 'Rollback, non-admin, Candidate selftest, A-B-A, persistent PATH, continuous Registry/Program Files monitoring and requested offline observations passed. Human/Product/Stable remain separate gates.'
 }
 catch {
   $Summary.status='FAIL'
   $Summary.error=$_.Exception.Message
   $Summary.failed_utc=[DateTime]::UtcNow.ToString('o')
   try {
+    Complete-EnvironmentChangeMonitor
     Export-TransientEvidence
     $Summary.network_snapshot_end=Get-NetworkSnapshot
     if ($PathBefore) {
@@ -1617,6 +1659,9 @@ catch {
   $ExitCode=1
 }
 finally {
+  if (-not $EnvironmentMonitorFinalized) {
+    try { Complete-EnvironmentChangeMonitor } catch {}
+  }
   try {
     if ($ControllerRoot -and (Test-Path -LiteralPath $ControllerRoot)) {
       Remove-Item -LiteralPath $ControllerRoot -Recurse -Force -ErrorAction Stop
