@@ -1006,10 +1006,8 @@ function Invoke-RepositoryEntryContractTest {
   if ($problems.Count -gt 0) { throw ('REPOSITORY_ENTRY_CONTRACT_FAILED:'+($problems -join ',')) }
   # Identity validation belongs to Test-DeclaredRepositoryEntries so the live
   # Stage-0 route and this behavioural contract exercise one implementation.
-  $badRecovery=[ordered]@{}
-  foreach($property in $entries.PSObject.Properties) { $badRecovery[$property.Name]=$property.Value }
+  $badRecovery=($entries | ConvertTo-Json -Depth 20 | ConvertFrom-Json)
   $badRecovery.recovery_source_sha256=('0' * 64)
-  $badRecovery=[pscustomobject]$badRecovery
   $negativeRecovery=Test-DeclaredRepositoryEntries -Entries $badRecovery
   if ($negativeRecovery -notcontains 'RECOVERY_SOURCE_SHA256_MISMATCH') {
     throw 'REPOSITORY_ENTRY_CONTRACT_RECOVERY_FAIL_CLOSED_MISSING'
@@ -1025,10 +1023,8 @@ function Invoke-RepositoryEntryContractTest {
     latest_complete_candidate=$badDeclared
     recovery_source=$entries.transfer_manifest.recovery_source
   }
-  $badDonor=[ordered]@{}
-  foreach($property in $entries.PSObject.Properties) { $badDonor[$property.Name]=$property.Value }
+  $badDonor=($entries | ConvertTo-Json -Depth 20 | ConvertFrom-Json)
   $badDonor.transfer_manifest=$badManifest
-  $badDonor=[pscustomobject]$badDonor
   $negativeDonor=Test-DeclaredRepositoryEntries -Entries $badDonor
   if ($negativeDonor -notcontains 'DONOR_DECLARATION_SHA256_MISMATCH') {
     throw 'REPOSITORY_ENTRY_CONTRACT_DONOR_FAIL_CLOSED_MISSING'
