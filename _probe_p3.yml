@@ -1,5 +1,0 @@
-name: t
-jobs:
-  a:
-    steps:
-      - run: echo "a: b"
