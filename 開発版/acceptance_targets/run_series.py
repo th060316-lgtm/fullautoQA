@@ -149,7 +149,11 @@ def series_hq_readback(records,output):
         context=CoordinatorContext(root=str(output),evidence_root=str(output),results=[],identity=None,
                                    extras={'sales_evidence':dict(sales_bundle)})
         report=evaluate_sales(context)
-        out['sales']=_domain_payload(report)
+        sales_payload=_domain_payload(report)
+        sales_readback=getattr(report,'readback',None) or {}
+        sales_payload['human_test_performed']=bool(sales_readback.get('human_test_performed'))
+        out['sales']=sales_payload
+        out['human_test']='PASS' if sales_payload['human_test_performed'] else 'NOT_RUN'
     satisfied=out.get('management',{}).get('status')=='PASS' and out.get('sales',{}).get('status')=='PASS'
     out['status']='PASS' if satisfied else 'NOT_PASS'
     out['product_acceptance']='HOLD'
