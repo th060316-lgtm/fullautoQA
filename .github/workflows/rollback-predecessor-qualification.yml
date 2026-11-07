@@ -36,8 +36,10 @@ jobs:
           sparse-checkout: |
             開発版/complete_v033
             開発版/rollback
-            開発版/source/scripts/REPOSITORY_ENTRY.ps1
+            開発版/source/scripts
+            開発版/acceptance_targets
             開発版/transfer/TRANSFER_MANIFEST.json
+            開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
           sparse-checkout-cone-mode: false
 
       - name: The declared predecessor must resolve through the shared entry contract
