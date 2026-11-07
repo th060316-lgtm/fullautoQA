@@ -424,14 +424,22 @@ def _evaluate_signal(spec, bundle):
                      detail='the %s signal was recorded but carries no usable verdict' % metric),
                 record, None)
     expected = (expect == 'true')
-    if (metric == 'reproducibility' and value is True and
-            record.get('scope') == 'same_run_seed_replay'):
-        record['status'] = 'INCONCLUSIVE'
-        record['reason_code'] = 'MANAGEMENT_REPRODUCIBILITY_SCOPE_LIMITED'
-        return (_row(spec['gate'], 'INCONCLUSIVE', record['reason_code'],
-                     evidence=record['evidence'],
-                     detail='same-run seed replay is established; broader run reproducibility was not established'),
-                record, None)
+    if metric == 'reproducibility' and value is True:
+        scope = record.get('scope')
+        if scope == 'same_run_seed_replay':
+            record['status'] = 'INCONCLUSIVE'
+            record['reason_code'] = 'MANAGEMENT_REPRODUCIBILITY_SCOPE_LIMITED'
+            return (_row(spec['gate'], 'INCONCLUSIVE', record['reason_code'],
+                         evidence=record['evidence'],
+                         detail='same-run seed replay is established; independent-run reproducibility was not established'),
+                    record, None)
+        if scope != 'cross_run_same_target':
+            record['status'] = 'INCONCLUSIVE'
+            record['reason_code'] = 'MANAGEMENT_REPRODUCIBILITY_SCOPE_UNSUPPORTED'
+            return (_row(spec['gate'], 'INCONCLUSIVE', record['reason_code'],
+                         evidence=record['evidence'],
+                         detail='reproducibility evidence is true, but its scope is not the accepted independent-run scope'),
+                    record, None)
     if value == expected:
         record['status'] = 'PASS'
         return (_row(spec['gate'], 'PASS', None, evidence=record['evidence'],
