@@ -42,12 +42,13 @@ The visible LOCAL_FINAL_ACCEPTANCE_<RunTag> directory beside the repository cont
 - three RunN_RESULT_FOR_CHATGPT.zip files after a complete A-B-A series
 - rollback_predecessor/ qualification evidence and rollback result readback
 - ROLLBACK_PREDECESSOR.log
-- start/end network observations plus per-run network observations
+- start/end and per-run network observations, plus ENVIRONMENT_CHANGE_MONITOR.json for continuous local-run network observation
 - persistent user/machine PATH before/after comparison
-- SERIES_HQ_READBACK.json and ENVIRONMENT_AUDIT.json under series/
+- continuous HKCU/HKLM Registry subtree change notification and recursive Program Files filesystem monitoring
+- SERIES_HQ_READBACK.json and the bounded ENVIRONMENT_AUDIT.json under series/
 - step logs
 
-A local technical PASS now requires: standard-user execution, Candidate/source/selftest/A-B-A success, preserved-predecessor rollback selftest PASS, unchanged persistent user/machine PATH, and no up non-loopback IP interfaces observed at local-run start, throughout all three Final runs, and at local-run end. This is still not a complete Registry-write audit and does not automatically promote Human test, Product Acceptance, Stable, or Release.
+A local technical PASS now requires: standard-user execution, Candidate/source/selftest/A-B-A success, preserved-predecessor rollback selftest PASS, unchanged persistent user/machine PATH, no Registry change notification anywhere under HKCU/HKLM for the monitored local-completion interval, no recursive Program Files change event or watcher error, and no up non-loopback IP address observed by both the checkpoint evidence and the continuous network monitor. Monitor setup/readback failure is NOT_MEASURED and blocks the local technical PASS. None of these technical observations automatically promotes Human test, Product Acceptance, Stable, or Release.
 
 ## What the summary reports, and what it does not
 
@@ -55,14 +56,15 @@ A local technical PASS now requires: standard-user execution, Candidate/source/s
 
 - `management_gate` and `sales_gate`: the verdicts of the Management and Sales headquarters, evaluated over the complete A-B-A series. The Management gate needs evidence that the *same target* behaved reproducibly across two independent fresh extractions; a single run can only observe its own seed replay, and the evaluator still refuses that narrower scope. The Sales gate stays NOT_RUN unless a review was ingested; a proxy review adds observations but never sets the human test.
 - `independent_hq_final_verdict`: the combined series-level verdict of those two domains.
-- `registry_write_audit` and `program_files_write_audit`: the unqualified Issue #1 claims. They remain `NOT_MEASURED` unless evidence with the corresponding complete scope exists. The current automated observer deliberately does **not** promote its narrower measurements into these fields.
-- `registry_environment_audit` and `program_files_top_level_audit`: the bounded before/after observations currently implemented. The Registry observation covers the per-user/machine Environment keys and the Program Files observation covers only the top level of each Program Files root. Their exact scope is also recorded in `environment_audit_scope`. A measurement that did not happen is reported as `NOT_MEASURED` and is never reported as unchanged.
+- `registry_write_audit` and `program_files_write_audit`: the unqualified Issue #1 claims from the continuous local-run monitor. Registry monitoring uses `RegNotifyChangeKeyValue` with subtree monitoring on HKCU and HKLM; Program Files monitoring uses recursive filesystem notifications on every discovered Program Files root. A monitor that cannot start, reports an error/buffer failure, or cannot be read back remains `NOT_MEASURED` and cannot satisfy the final local gate.
+- `offline_continuous_audit`: the continuous network observation. It combines network-change events with 250 ms local interface sampling and fails if an up interface with a non-loopback address is observed. It is required in addition to the existing start/per-run/end checkpoints when `-RequireOffline` is used.
+- `registry_environment_audit` and `program_files_top_level_audit`: independent bounded before/after corroboration. The Registry observation covers the per-user/machine Environment keys and the Program Files observation covers only the top level of each Program Files root. Their exact scope is recorded in `environment_audit_scope`; these bounded fields never substitute for the continuous full-scope fields above.
 
 `product_acceptance` and `stable` remain `HOLD` throughout this pre-freeze route. `human_test` remains `NOT_RUN` unless validated review evidence identifies a real human reviewer, records a cold-start session with provenance, and the Sales evaluator accepts that evidence. A model/proxy review can never set `human_test=PASS`.
 
 ## Offline observation
 
-The offline observation is fail-closed. The address query runs with an explicit error stop and a correctly typed interface index; a query that fails is reported as `NOT_MEASURED` with the failing adapters listed, never as "no external address". A machine is only reported as offline when the observation actually succeeded and found no up adapter with a non-loopback address.
+Offline acceptance is fail-closed in two independent layers. The checkpoint query runs with an explicit error stop and a correctly typed interface index; a query that fails is `NOT_MEASURED`, never "offline". In parallel, the local-completion process subscribes to network-change events and samples all local interfaces every 250 ms for the entire monitored interval. Any observed up interface with a non-loopback address fails the continuous audit. The final local gate requires both the checkpoint sequence and the continuous audit when offline execution is requested.
 
 ## Source-tree identity
 
