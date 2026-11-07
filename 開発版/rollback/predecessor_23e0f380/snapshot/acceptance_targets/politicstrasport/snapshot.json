@@ -1,0 +1,11 @@
+{
+  "repository": "th060316-lgtm/PoliticsTrasport",
+  "branch": "main",
+  "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+  "selected_path": "開発版/runtime",
+  "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
+  "prototype_type": "logic",
+  "original_files": 65,
+  "target_repo_access": "read-only",
+  "product_acceptance": "HOLD"
+}

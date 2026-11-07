@@ -1,6 +1,33 @@
 import copy,json,os,sys,tempfile,unittest,zipfile
 from pathlib import Path
-from run_series import OPERATION_LOG,compare_records,extract,origin_record,run_logged,summarize_execution_environment
+from run_series import (OPERATION_LOG,_series_review_payload,_stage_review_payload,
+                        compare_records,cross_run_reproducibility,extract,origin_record,
+                        run_logged,series_hq_readback,summarize_execution_environment)
+
+def write_sales_zip_evidence(archive, payload):
+    archive.writestr('sales_evidence.json', json.dumps(payload))
+    refs = []
+    if isinstance(payload, dict) and payload.get('review_evidence_source'):
+        refs.append(payload['review_evidence_source'])
+    audience = payload.get('audience_summary_evidence') if isinstance(payload, dict) else None
+    if isinstance(audience, str):
+        refs.append(audience)
+    elif isinstance(audience, (list, tuple)):
+        refs.extend(audience)
+    for session in (payload.get('sessions') or []) if isinstance(payload, dict) else []:
+        if not isinstance(session, dict):
+            continue
+        for record in (session.get('phases') or {}).values():
+            if not isinstance(record, dict):
+                continue
+            value = record.get('evidence')
+            if isinstance(value, str):
+                refs.append(value)
+            elif isinstance(value, (list, tuple)):
+                refs.extend(value)
+    for ref in sorted(set(str(item).replace('\\', '/') for item in refs if str(item))):
+        archive.writestr(ref, b'test-evidence')
+
 
 class SeriesIntegrityTests(unittest.TestCase):
     def setUp(self):
@@ -39,6 +66,36 @@ class SeriesIntegrityTests(unittest.TestCase):
     def test_origin_names_are_normalized_without_inventing_identity(self):
         value=origin_record({'origin':{'repository':'r','commit':'c','source_tree_sha':'t','source_path':'game'}})
         self.assertEqual(value,{'repository':'r','commit':'c','source_tree':'t','selected_path':'game'})
+
+    def test_cross_run_reproducibility_requires_same_candidate_target_and_distinct_extractions(self):
+        def row(run_id, fresh_id, candidate='candidate', fingerprint='A'*64, digest='required-digest'):
+            return {
+                'run_id':run_id,
+                'fresh_extraction_id':fresh_id,
+                'target_key':'A',
+                'target':{'fingerprint':fingerprint},
+                'candidate_sha256':candidate,
+                'required_case_digest':digest,
+                'required_case_count':3,
+                'required_nonpass':[],
+            }
+        good=cross_run_reproducibility([row('a1','fresh1'),row('a2','fresh2')])
+        self.assertTrue(good['status'])
+        self.assertEqual(good['scope'],'cross_run_same_target')
+
+        reused=cross_run_reproducibility([row('a1','same'),row('a2','same')])
+        self.assertFalse(reused['status'])
+        self.assertIn('FRESH_EXTRACTION_NOT_INDEPENDENT',reused['reasons'])
+
+        different_candidate=cross_run_reproducibility(
+            [row('a1','fresh1',candidate='c1'),row('a2','fresh2',candidate='c2')])
+        self.assertFalse(different_candidate['status'])
+        self.assertIn('CANDIDATE_IDENTITY_DIVERGED',different_candidate['reasons'])
+
+        different_target=cross_run_reproducibility(
+            [row('a1','fresh1',fingerprint='A'*64),row('a2','fresh2',fingerprint='B'*64)])
+        self.assertFalse(different_target['status'])
+        self.assertIn('TARGET_IDENTITY_DIVERGED',different_target['reasons'])
 
     def test_controller_marker_is_scoped_to_child_environment(self):
         with tempfile.TemporaryDirectory() as td:
@@ -84,5 +141,158 @@ class SeriesIntegrityTests(unittest.TestCase):
         self.assertEqual(data['local_windows_offline'],'NOT_VERIFIED')
         self.assertEqual(data['non_admin_series'],'NOT_VERIFIED')
         self.assertEqual(data['controller_only_series'],'NOT_VERIFIED')
+
+    def test_series_review_manifest_binds_each_review_to_candidate_and_target(self):
+        target={'fingerprint':'fp-a','game_id':'gameA'}
+        review={'schema_version':1,'reviewer':{'kind':'human','id':'h1'},
+                'human_test_performed':True,'sessions':[{'cold_start':True,
+                'provenance':{'source':'human'},'phases':{'first_30_seconds':{
+                'status':'PASS','evidence':['r.mp4']}}}]}
+        manifest={'schema_version':1,'series_reviews':[{
+            'index':1,'target_key':'A',
+            'target_fingerprint':'fp-a','game_id':'gameA','review':review}]}
+        with tempfile.TemporaryDirectory() as td:
+            path=Path(td)/'reviews.json';path.write_text(json.dumps(manifest),encoding='utf-8')
+            payload=_series_review_payload(path,1,'A','candidate',target)
+            self.assertEqual(payload['series_binding']['target_key'],'A')
+            self.assertEqual(payload['series_binding']['candidate_sha256'],'candidate')
+            self.assertFalse(payload['series_binding']['candidate_sha256_declared'])
+            manifest['series_reviews'][0]['candidate_sha256']='candidate'
+            path.write_text(json.dumps(manifest),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'CANDIDATE_MISMATCH'):
+                _series_review_payload(path,1,'A','other',target)
+            self.assertIsNone(
+                _series_review_payload(path,2,'B','candidate',
+                                       {'fingerprint':'fp-b','game_id':'gameB'}))
+            manifest['series_reviews'][0].pop('candidate_sha256',None)
+            manifest['series_reviews'].append(dict(manifest['series_reviews'][0]))
+            path.write_text(json.dumps(manifest),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'BINDING_AMBIGUOUS'):
+                _series_review_payload(path,1,'A','candidate',target)
+
+    def test_series_review_stage_copies_relative_attachments_outside_candidate(self):
+        payload={'schema_version':1,'reviewer':{'kind':'human','id':'h1'},
+                 'human_test_performed':True,'sessions':[{'cold_start':True,
+                 'provenance':{'source':'human'},'phases':{'first_30_seconds':{
+                 'status':'PASS','evidence':['captures/review.mp4']}}}]}
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);source=root/'input';source.mkdir()
+            (source/'captures').mkdir()
+            (source/'captures'/'review.mp4').write_bytes(b'review-video')
+            manifest=source/'reviews.json';manifest.write_text('{}',encoding='utf-8')
+            stage=root/'Run1'/'review_input'
+            target,copied=_stage_review_payload(payload,manifest,stage)
+            staged=json.loads(target.read_text(encoding='utf-8'))
+            self.assertEqual(['files/captures/review.mp4'],
+                             staged['sessions'][0]['phases']['first_30_seconds']['evidence'])
+            self.assertEqual(b'review-video',
+                             (stage/'files'/'captures'/'review.mp4').read_bytes())
+            self.assertEqual(['files/captures/review.mp4'],copied)
+
+    def test_series_review_stage_rejects_missing_or_escaping_attachment(self):
+        payload={'sessions':[{'phases':{'first_30_seconds':{
+                 'status':'PASS','evidence':['missing.mp4']}}}]}
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);source=root/'input';source.mkdir()
+            manifest=source/'reviews.json';manifest.write_text('{}',encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'ATTACHMENT_MISSING'):
+                _stage_review_payload(payload,manifest,root/'stage1')
+            payload['sessions'][0]['phases']['first_30_seconds']['evidence']=['../escape.mp4']
+            with self.assertRaisesRegex(ValueError,'PATH_ESCAPE'):
+                _stage_review_payload(payload,manifest,root/'stage2')
+
+    def test_series_hq_requires_every_run_not_only_the_last(self):
+        def management(fp,offline=True):
+            return {'evidence_kind':'real_game','measurements':{
+                'cpu_percent':{'value':1,'unit':'percent'},'ram_mb':{'value':1,'unit':'mb'},
+                'handles':{'value':1,'unit':'count'},'runtime_seconds':{'value':1,'unit':'seconds'},
+                'disk_bytes':{'value':1,'unit':'bytes'},'evidence_bytes':{'value':1,'unit':'bytes'}},
+                'performance_regression':False,
+                'reproducibility':{'status':True,'scope':'same_run_seed_replay'},
+                'fresh_run':True,'target_fingerprint':fp,'one_click':True,
+                'manual_intervention':False,'no_admin':True,'offline':offline,
+                'integrity':True,'residual_risk':[]}
+        def sales(human=True):
+            return {'evidence_kind':'real_human' if human else 'model_proxy',
+                'reviewer':{'kind':'human' if human else 'model_proxy','id':'h1'},
+                'human_test_performed':human,
+                'review_evidence_source':'review_evidence/sales_review.json' if human else None,
+                'audience_summary':{'status':'GENERATED','entries':[{
+                    'what_game':'move','product_description':'move to a goal'}],
+                    'description_contract':{'brand_price_independent':True}},
+                'audience_summary_evidence':['audience_summary.json'],
+                'sessions':[{'cold_start':True,'provenance':{'source':'fresh'},
+                    'phases':{
+                        'first_30_seconds':{'status':'PASS','evidence':['30.mp4']},
+                        'first_5_minutes':{'status':'PASS','evidence':['5.mp4']},
+                        'product_shelf_test':{'status':'PASS','evidence':['shelf.png']},
+                        'communication_readability':{'status':'PASS','evidence':['notes.txt']}}}]}
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);records=[]
+            for index,label in enumerate(['A','B','A'],1):
+                slot=root/('Run'+str(index));slot.mkdir()
+                fp='fp-a' if label=='A' else 'fp-b'
+                with zipfile.ZipFile(slot/'RESULT_FOR_CHATGPT.zip','w') as z:
+                    z.writestr('management_evidence.json',json.dumps(management(fp,offline=(index!=2))))
+                    write_sales_zip_evidence(z,sales(human=(index!=2)))
+                records.append({'index':index,'target_key':label,'run_id':'run'+str(index),
+                    'fresh_extraction_id':'fresh'+str(index),'candidate_sha256':'candidate',
+                    'required_case_digest':'same','required_case_count':3,'required_nonpass':[],
+                    'target':{'fingerprint':fp,'game_id':'game'+label},'evidence_root':str(slot)})
+            result=series_hq_readback(records,root,expected_count=3)
+            self.assertNotEqual(result['management']['status'],'PASS')
+            self.assertNotEqual(result['sales']['status'],'PASS')
+            self.assertEqual(len(result['management']['per_run']),3)
+            self.assertEqual(len(result['sales']['per_run']),3)
+            self.assertEqual(result['human_test'],'NOT_RUN')
+
+    def test_sales_series_requires_each_distinct_target_not_duplicate_a_review(self):
+        def management(fp):
+            return {'evidence_kind':'real_game','measurements':{
+                'cpu_percent':{'value':1,'unit':'percent'},'ram_mb':{'value':1,'unit':'mb'},
+                'handles':{'value':1,'unit':'count'},'runtime_seconds':{'value':1,'unit':'seconds'},
+                'disk_bytes':{'value':1,'unit':'bytes'},'evidence_bytes':{'value':1,'unit':'bytes'}},
+                'performance_regression':False,'fresh_run':True,'target_fingerprint':fp,
+                'one_click':True,'manual_intervention':False,'no_admin':True,'offline':True,
+                'integrity':True,'residual_risk':[]}
+        def sales(human):
+            if not human:
+                return {'evidence_kind':'model_proxy',
+                        'reviewer':{'kind':'model_proxy','id':'auto'},
+                        'human_test_performed':False,'sessions':[]}
+            return {'evidence_kind':'real_human','reviewer':{'kind':'human','id':'h1'},
+                    'human_test_performed':True,
+                    'review_evidence_source':'review_evidence/sales_review.json',
+                    'audience_summary':{'status':'GENERATED','entries':[{
+                        'what_game':'move','product_description':'move to a goal'}],
+                        'description_contract':{'brand_price_independent':True}},
+                    'audience_summary_evidence':['audience_summary.json'],
+                    'sessions':[{'cold_start':True,'provenance':{'source':'fresh'},
+                        'phases':{
+                            'first_30_seconds':{'status':'PASS','evidence':['30.mp4']},
+                            'first_5_minutes':{'status':'PASS','evidence':['5.mp4']},
+                            'product_shelf_test':{'status':'PASS','evidence':['shelf.png']},
+                            'communication_readability':{'status':'PASS','evidence':['notes.txt']}}}]}
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);records=[]
+            for index,label in enumerate(['A','B','A'],1):
+                slot=root/('Run'+str(index));slot.mkdir()
+                fp='fp-a' if label=='A' else 'fp-b'
+                # A1 and B are reviewed; A3 is intentionally automated-only.
+                human=index in (1,2)
+                with zipfile.ZipFile(slot/'RESULT_FOR_CHATGPT.zip','w') as z:
+                    z.writestr('management_evidence.json',json.dumps(management(fp)))
+                    write_sales_zip_evidence(z,sales(human))
+                records.append({'index':index,'target_key':label,'run_id':'run'+str(index),
+                    'fresh_extraction_id':'fresh'+str(index),'candidate_sha256':'candidate',
+                    'required_case_digest':'same','required_case_count':3,'required_nonpass':[],
+                    'target':{'fingerprint':fp,'game_id':'game'+label},'evidence_root':str(slot)})
+            result=series_hq_readback(records,root,expected_count=3)
+            self.assertEqual(result['sales']['status'],'PASS')
+            self.assertEqual(result['human_test'],'PASS')
+            self.assertEqual(
+                {row['target_key']:row['status'] for row in result['sales']['per_target']},
+                {'A':'PASS','B':'PASS'})
+            self.assertEqual(result['sales']['per_target'][0]['reviewed_run_ids'],['run1'])
 
 if __name__=='__main__':unittest.main()

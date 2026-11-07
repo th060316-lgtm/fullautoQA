@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "series": [
+    "A",
+    "B",
+    "A"
+  ],
+  "target_update_policy": "restart_series_after_candidate_profile_or_target_change",
+  "targets": {
+    "A": {
+      "repository": "th060316-lgtm/PoliticsTrasport",
+      "branch": "main",
+      "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+      "source_tree": "73013c3dbe66ac10ef25c5b9fa6f6866ac42841c",
+      "selected_path": "開発版/runtime",
+      "profile_version": "1.4-final-contract",
+      "bundle_path": "politicstrasport"
+    },
+    "B": {
+      "repository": "th060316-lgtm/codegeas",
+      "branch": "main",
+      "commit": "b5a0d2207a77854be5187a0b00fc2d234b0745b8",
+      "source_tree": "a40b156db48444d4b72d96ff19a15f2d3e00b62a",
+      "selected_path": "game",
+      "profile_version": "1.2-probe",
+      "bundle_path": "codegeas"
+    }
+  },
+  "final_candidate": null,
+  "status": "FINAL_READY",
+  "human_test": "NOT_RUN",
+  "product_acceptance": "HOLD",
+  "stable": "HOLD",
+  "historical_run_ids": [
+    "20261103T123711_d00902ba"
+  ],
+  "preflight_evidence": {
+    "source_tree": "2711f302c3516816e35132670fb27ef247b5490e",
+    "source_suite": 41769703166,
+    "source_selftest": 41765580524,
+    "target_a": 41769703178,
+    "archive_readback": 41771998026,
+    "source_test_count": 363,
+    "selftest_required_pass": 170,
+    "target_a_required_pass": 49
+  }
+}

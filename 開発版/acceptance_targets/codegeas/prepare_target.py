@@ -43,7 +43,17 @@ if scene_text.count('path="res://save/SaveManager.gd"') != 1:
 scene.write_text(scene_text.replace('path="res://save/SaveManager.gd"', 'path="res://qa_save_observer.gd"', 1), encoding='utf-8')
 profile = json.loads((here / 'profile.json').read_text(encoding='utf-8'))
 profile['save']['file'] = 'isolated_user/APPDATA/Godot/app_userdata/' + app_name + '/saves/slot1.json'
-profile['storage']['locations'] = ['APPDATA/Godot/app_userdata/' + app_name + '/saves']
+# The declared storage location is derived from the target's own identity
+# (the Godot application name) so it can never drift away from where the game
+# actually writes its save.  When the checked-in profile already declares a
+# location, it MUST agree with the derived one: a silent substitution would
+# hide an unobservable required storage contract.
+derived_locations = ['APPDATA/Godot/app_userdata/' + app_name + '/saves']
+declared_locations = list((profile.get('storage') or {}).get('locations') or [])
+if declared_locations and declared_locations != derived_locations:
+    raise SystemExit('STORAGE_LOCATION_DECLARATION_DIVERGES_FROM_TARGET_IDENTITY')
+profile['storage']['locations'] = derived_locations
+profile['storage']['required'] = True
 profile_path = root / 'PROFILES/targets/codegeas.json'
 profile_path.parent.mkdir(parents=True, exist_ok=True)
 profile_path.write_text(json.dumps(profile, ensure_ascii=False, indent=2), encoding='utf-8')

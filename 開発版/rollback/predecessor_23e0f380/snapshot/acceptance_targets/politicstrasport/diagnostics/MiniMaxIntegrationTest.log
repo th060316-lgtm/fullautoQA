@@ -1,0 +1,299 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QA Bridge listening on 127.0.0.1:17777
+=== PoliticsTrasport v0.2 MiniMax (50%) integration test ===
+PASS: 赤港 is port-capable (coastal)
+PASS: 赤都 is inland (no port)
+PASS: Port can be built at a coastal city
+PASS: Settlement has_port flag set after build
+PASS: Port build cost deducted
+PASS: Duplicate port build rejected
+PASS: Port cannot be built inland
+PASS: Port build blocked when funds insufficient
+PASS: Second port built after restoring funds
+PASS: ship system present
+PASS: Ship connection created between two ports
+PASS: Ship connection type is SHIP
+PASS: Ship capacity is large (70)
+PASS: Ship is slower than rail (long-haul profile)
+PASS: Ship build cost recorded
+PASS: Ship route has a sea path
+PASS: Ship route length computed
+PASS: Ship connection rejected without ports at both ends
+PASS: Ship carries cargo after simulation
+PASS: Ship earns revenue
+PASS: Ship carries passenger/food/fuel
+PASS: Sea path exists between two coastal cities
+PASS: Airport can be built
+PASS: Second airport can be built
+PASS: Duplicate airport rejected
+PASS: Air connection created between two airports
+PASS: Air connection type is AIR
+PASS: Air is the fastest mode
+PASS: Air capacity is low/medium
+PASS: Air build cost is expensive
+PASS: Air connection rejected without airport at destination
+PASS: Air carries cargo after simulation
+PASS: Air earns revenue
+PASS: Player + 2 AI companies exist
+PASS: Company has company_id
+PASS: Company has a name
+PASS: Company has a display colour
+PASS: Company has finite funds
+PASS: Company has company_id
+PASS: Company has a name
+PASS: Company has a display colour
+PASS: Company has finite funds
+PASS: AI starts with limited funds (not infinite)
+PASS: Company has company_id
+PASS: Company has a name
+PASS: Company has a display colour
+PASS: Company has finite funds
+PASS: AI starts with limited funds (not infinite)
+PASS: Exactly 2 AI companies
+PASS: AI cannot build when funds are insufficient
+PASS: AI built at least one connection
+PASS: AI connections exist in world
+PASS: AI owns connections
+PASS: AI funds changed (build cost and/or revenue applied)
+PASS: AI funds never negative
+PASS: AI earned revenue from operation
+ERROR: FAIL: AI ground requests went through GroundTransportAdapter boundary :: 0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_ai_build_decision (res://tests/MiniMaxIntegrationTest.gd:291)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:112)
+SCRIPT ERROR: Out of bounds get index '-1' (on base: 'Array')
+   at: _test_ai_build_decision (res://tests/MiniMaxIntegrationTest.gd:292)
+   GDScript backtrace (most recent call first):
+       [0] _test_ai_build_decision (res://tests/MiniMaxIntegrationTest.gd:292)
+       [1] _run_all (res://tests/MiniMaxIntegrationTest.gd:112)
+ERROR: FAIL: AI requested a ground connection via the adapter boundary
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_ai_remove_decision (res://tests/MiniMaxIntegrationTest.gd:305)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:113)
+ERROR: FAIL: Requested ground connection is owned by the AI company
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_ai_remove_decision (res://tests/MiniMaxIntegrationTest.gd:307)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:113)
+SCRIPT ERROR: Invalid access to property or key 'profit' on a base object of type 'Nil'.
+   at: _test_ai_remove_decision (res://tests/MiniMaxIntegrationTest.gd:318)
+   GDScript backtrace (most recent call first):
+       [0] _test_ai_remove_decision (res://tests/MiniMaxIntegrationTest.gd:318)
+       [1] _run_all (res://tests/MiniMaxIntegrationTest.gd:113)
+ERROR: FAIL: Player route created
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_competition_share_allocation (res://tests/MiniMaxIntegrationTest.gd:338)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:114)
+ERROR: FAIL: AI can enter the same market (different company, same city pair)
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_competition_share_allocation (res://tests/MiniMaxIntegrationTest.gd:341)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:114)
+ERROR: FAIL: Demand share split sums to 1.0 :: 0.0 + 0.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_competition_share_allocation (res://tests/MiniMaxIntegrationTest.gd:345)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:114)
+ERROR: FAIL: Player no longer gets 100% of the market :: 0.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_competition_share_allocation (res://tests/MiniMaxIntegrationTest.gd:346)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:114)
+ERROR: FAIL: AI receives a positive market share :: 0.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_competition_share_allocation (res://tests/MiniMaxIntegrationTest.gd:347)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:114)
+ERROR: FAIL: Third company can join the same market
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_competition_share_allocation (res://tests/MiniMaxIntegrationTest.gd:350)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:114)
+ERROR: FAIL: Player share drops further when a third company enters :: 0.0 -> 0.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_competition_share_allocation (res://tests/MiniMaxIntegrationTest.gd:352)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:114)
+ERROR: FAIL: Three-way split still sums to 1.0 :: 0.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_competition_share_allocation (res://tests/MiniMaxIntegrationTest.gd:354)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:114)
+ERROR: FAIL: Player solo route created
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_player_share_loss_on_ai_entry (res://tests/MiniMaxIntegrationTest.gd:361)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:115)
+SCRIPT ERROR: Invalid access to property or key 'carried_passenger' on a base object of type 'Nil'.
+   at: _test_player_share_loss_on_ai_entry (res://tests/MiniMaxIntegrationTest.gd:363)
+   GDScript backtrace (most recent call first):
+       [0] _test_player_share_loss_on_ai_entry (res://tests/MiniMaxIntegrationTest.gd:363)
+       [1] _run_all (res://tests/MiniMaxIntegrationTest.gd:115)
+PASS: War started
+PASS: Two supply bases generated (one per belligerent)
+PASS: Supply base exists and is active
+PASS: Supply base has support_nation_id
+PASS: Supply base exists and is active
+PASS: Supply base has support_nation_id
+PASS: One base supports nation A
+PASS: One base supports nation B
+PASS: Bases support different nations
+PASS: Exactly 2 supply bases in the world
+PASS: Base A supports nation A
+ERROR: FAIL: Supply route from friendly city created
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_war_supply_correct_side_bonus (res://tests/MiniMaxIntegrationTest.gd:409)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:117)
+ERROR: FAIL: Friendly-side supply increases war bonus :: 0.0 -> 0.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_war_supply_correct_side_bonus (res://tests/MiniMaxIntegrationTest.gd:414)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:117)
+ERROR: FAIL: War bonus increase is written to the event log
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_war_supply_correct_side_bonus (res://tests/MiniMaxIntegrationTest.gd:415)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:117)
+SCRIPT ERROR: Invalid access to property or key 'last_revenue' on a base object of type 'Nil'.
+   at: _test_war_supply_correct_side_bonus (res://tests/MiniMaxIntegrationTest.gd:416)
+   GDScript backtrace (most recent call first):
+       [0] _test_war_supply_correct_side_bonus (res://tests/MiniMaxIntegrationTest.gd:416)
+       [1] _run_all (res://tests/MiniMaxIntegrationTest.gd:117)
+ERROR: FAIL: Route from enemy city to enemy-ally base created
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_war_supply_enemy_city_no_bonus (res://tests/MiniMaxIntegrationTest.gd:428)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:118)
+PASS: Enemy-city supply does NOT increase war bonus
+PASS: War bonus stays at zero for the wrong side
+ERROR: FAIL: Invalid supply is logged with a reason
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_war_supply_enemy_city_no_bonus (res://tests/MiniMaxIntegrationTest.gd:434)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:118)
+ERROR: FAIL: Blue city -> Blue base increases Blue war bonus :: 0.0 -> 0.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_war_supply_enemy_city_no_bonus (res://tests/MiniMaxIntegrationTest.gd:441)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:118)
+PASS: Red war bonus still zero (no cross-credit)
+PASS: War ends when the countdown reaches zero
+PASS: Primary supply base id cleared
+PASS: Supply base id list cleared
+PASS: War result changes at least one city ownership
+PASS: Post-war connection stays in place for the owner to decide
+PASS: Post-war connection is flagged obsolete
+PASS: Supply base A deactivated after war
+PASS: Supply base B deactivated after war
+PASS: No supply base remains in the world data
+PASS: Supply base A object removed from world
+PASS: Obsolete connection remains active (removable)
+ERROR: FAIL: Obsolete connection stops earning revenue :: 21.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_war_supply_base_cleanup (res://tests/MiniMaxIntegrationTest.gd:491)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:120)
+PASS: Owner can remove the obsolete connection
+PASS: Removed connection becomes inactive
+PASS: No route references a supply base after removal
+PASS: World back to 6 cities after cleanup
+PASS: 100 war iterations executed
+PASS: No temporary supply base accumulates over 100 wars
+PASS: Settlement count stable after 100 wars
+PASS: No route stays attached to a removed supply base
+PASS: Routes do not accumulate indefinitely (3 companies x 15 city pairs max)
+PASS: Event log stays bounded over 100 wars
+PASS: GroundTransportAdapter exists as the Grok-side boundary
+PASS: Adapter runs in mock mode until Grok provides an implementation
+ERROR: FAIL: Adapter returns a connection id for a ground request
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_ground_adapter_boundary (res://tests/MiniMaxIntegrationTest.gd:552)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:122)
+ERROR: FAIL: Requested connection is owned by the requesting company
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _ok (res://tests/MiniMaxIntegrationTest.gd:24)
+       [1] _test_ground_adapter_boundary (res://tests/MiniMaxIntegrationTest.gd:554)
+       [2] _run_all (res://tests/MiniMaxIntegrationTest.gd:122)
+PASS: Request was recorded for integration inspection
+PASS: Request log records company_id / mode / origin / destination
+PASS: Requested mode matches ROAD
+PASS: Self-connection rejected
+PASS: Non-ground mode rejected by the ground boundary
+PASS: Adapter accepts a Grok-side provider
+PASS: Provider decision is delegated (mock provider refuses)
+PASS: Provider request result is delegated
+PASS: Provider actually received the request
+PASS: 365-day simulation keeps city values finite and non-negative
+PASS: 365-day player funds stay finite and non-negative
+PASS: 365-day route capacity never goes negative
+PASS: 365-day AI funds stay finite and non-negative
+PASS: Supply bases stay bounded during the long run
+PASS: Event log stays bounded during the long run
+PASS: Route count stays bounded during the long run
+NOT RUN: Grok ground provider による実地上接続 (provider 実装が未提供のため) :: 統合後に grok_provider を configure_ground_provider() に設定して再実行すること
+NOT RUN: Grok 側 地上PathFinder / タイル敷設を伴う地上接続の統合 :: 地上交通は Grok 管轄。MiniMax 側は接続要求の境界 (GroundTransportAdapter) までのみ実装
+NOT RUN: Grok 側 地上建設UI からの接続作成との統合 :: 地上建設UI は Grok 管轄。Main.tscn / UIController.gd は無改変
+NOT RUN: 統合後 MiniMax 輸送エンジンの地上回帰 (ROAD/RAIL の輸送量一致確認) :: 統合後に Grok 版 EconomySystem でEconomySystem を置換して再実行すること
+NOT RUN: Grok 版 Route / WorldState との字段整合の実地検証 :: 統合後に Route.company_id 等 新規フィールドが保持されるか確認すること
+PASS: Same seed + same actions produce identical state (including AI, ship, air and war)
+=== SUMMARY ===
+PASS COUNT: 110
+FAIL COUNT: 21
+NOT RUN COUNT: 5
+FAILED: AI ground requests went through GroundTransportAdapter boundary :: 0
+FAILED: AI requested a ground connection via the adapter boundary
+FAILED: Requested ground connection is owned by the AI company
+FAILED: Player route created
+FAILED: AI can enter the same market (different company, same city pair)
+FAILED: Demand share split sums to 1.0 :: 0.0 + 0.0
+FAILED: Player no longer gets 100% of the market :: 0.0
+FAILED: AI receives a positive market share :: 0.0
+FAILED: Third company can join the same market
+FAILED: Player share drops further when a third company enters :: 0.0 -> 0.0
+FAILED: Three-way split still sums to 1.0 :: 0.0
+FAILED: Player solo route created
+FAILED: Supply route from friendly city created
+FAILED: Friendly-side supply increases war bonus :: 0.0 -> 0.0
+FAILED: War bonus increase is written to the event log
+FAILED: Route from enemy city to enemy-ally base created
+FAILED: Invalid supply is logged with a reason
+FAILED: Blue city -> Blue base increases Blue war bonus :: 0.0 -> 0.0
+FAILED: Obsolete connection stops earning revenue :: 21.0
+FAILED: Adapter returns a connection id for a ground request
+FAILED: Requested connection is owned by the requesting company
+SKIPPED: Grok ground provider による実地上接続 (provider 実装が未提供のため) :: 統合後に grok_provider を configure_ground_provider() に設定して再実行すること
+SKIPPED: Grok 側 地上PathFinder / タイル敷設を伴う地上接続の統合 :: 地上交通は Grok 管轄。MiniMax 側は接続要求の境界 (GroundTransportAdapter) までのみ実装
+SKIPPED: Grok 側 地上建設UI からの接続作成との統合 :: 地上建設UI は Grok 管轄。Main.tscn / UIController.gd は無改変
+SKIPPED: 統合後 MiniMax 輸送エンジンの地上回帰 (ROAD/RAIL の輸送量一致確認) :: 統合後に Grok 版 EconomySystem でEconomySystem を置換して再実行すること
+SKIPPED: Grok 版 Route / WorldState との字段整合の実地検証 :: 統合後に Route.company_id 等 新規フィールドが保持されるか確認すること
+WARNING: 10747 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 6 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

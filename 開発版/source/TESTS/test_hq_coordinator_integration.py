@@ -58,7 +58,8 @@ def management_bundle():
             'evidence_bytes': {'value': 4096, 'unit': 'bytes'},
         },
         'performance_regression': False,
-        'reproducibility': True,
+        'reproducibility': {'status': True, 'scope': 'cross_run_same_target',
+                            'source': 'series_records', 'evidence': ['SERIES_RECORDS.json']},
         'fresh_run': True,
         'target_generation': 3,
         'one_click': True,
@@ -74,6 +75,8 @@ def sales_bundle(reviewer='human'):
     return {
         'evidence_kind': 'real_human' if reviewer == 'human' else 'model_proxy',
         'reviewer': {'kind': reviewer, 'id': 'reviewer-1'},
+        'human_test_performed': reviewer == 'human',
+        'review_evidence_source': 'review_evidence/sales_review.json',
         'audience_summary': {
             'schema_version': 1,
             'status': 'GENERATED',
@@ -92,10 +95,10 @@ def sales_bundle(reviewer='human'):
             'cold_start': True,
             'provenance': {'source': 'fresh_install', 'run_id': 'r1'},
             'phases': {
-                'first_30_seconds': {'observed': True, 'status': 'pass', 'findings': []},
-                'first_5_minutes': {'observed': True, 'status': 'pass', 'findings': []},
-                'product_shelf_test': {'observed': True, 'status': 'pass', 'findings': []},
-                'communication_readability': {'observed': True, 'status': 'pass', 'findings': []},
+                'first_30_seconds': {'observed': True, 'status': 'pass', 'findings': [], 'evidence': ['rec30.mp4']},
+                'first_5_minutes': {'observed': True, 'status': 'pass', 'findings': [], 'evidence': ['rec5m.mp4']},
+                'product_shelf_test': {'observed': True, 'status': 'pass', 'findings': [], 'evidence': ['shelf.png']},
+                'communication_readability': {'observed': True, 'status': 'pass', 'findings': [], 'evidence': ['notes.txt']},
             },
         }],
     }
@@ -104,6 +107,30 @@ def sales_bundle(reviewer='human'):
 def write(root, name, payload):
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
+    if name == SALES_EVIDENCE and isinstance(payload, dict):
+        refs = []
+        if payload.get('review_evidence_source'):
+            refs.append(payload['review_evidence_source'])
+        audience = payload.get('audience_summary_evidence')
+        if isinstance(audience, str):
+            refs.append(audience)
+        elif isinstance(audience, (list, tuple)):
+            refs.extend(audience)
+        for session in payload.get('sessions') or []:
+            if not isinstance(session, dict):
+                continue
+            for record in (session.get('phases') or {}).values():
+                if isinstance(record, dict):
+                    value = record.get('evidence')
+                    if isinstance(value, str):
+                        refs.append(value)
+                    elif isinstance(value, (list, tuple)):
+                        refs.extend(value)
+        for ref in refs:
+            target = root / str(ref)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_bytes(b'test-evidence')
     (root / name).write_text(json.dumps(payload), encoding='utf-8')
     return root
 

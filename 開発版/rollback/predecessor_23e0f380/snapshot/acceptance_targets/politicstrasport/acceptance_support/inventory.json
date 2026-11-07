@@ -1,0 +1,25 @@
+{
+  "repository": "th060316-lgtm/PoliticsTrasport",
+  "commit": "03d120ae08ce3c7e42b9e74a807358c08f02ab4b",
+  "contract_path": ".github/workflows/full-prototype-test.yml",
+  "files": [
+    {
+      "file": "DestructiveTest.gd",
+      "origin_path": ".ci/DestructiveTest.gd",
+      "git_blob_sha": "5ab751b97234ddb1b05de484b408689d864535ca",
+      "sha256": "2273cee4981052a7bac06d5efc421018b62a48a782c4f2849145b5840678f31d"
+    },
+    {
+      "file": "FontSupportTest.gd",
+      "origin_path": ".ci/FontSupportTest.gd",
+      "git_blob_sha": "60851bd97a91aecdfab847267e6fa12cd292e520",
+      "sha256": "88494ce7fba5c6bdbd94761889bd5ee22e20e854f053d78ed684da8888bd19fa"
+    },
+    {
+      "file": "UIInteractionTest.gd",
+      "origin_path": ".ci/UIInteractionTest.gd",
+      "git_blob_sha": "ab0b990df045ea6b120c5042d8c106cbce878774",
+      "sha256": "113fb929f34feef0acc714d039df9ede95b87fbcdc9e5e318694c19bf5bb40fe"
+    }
+  ]
+}

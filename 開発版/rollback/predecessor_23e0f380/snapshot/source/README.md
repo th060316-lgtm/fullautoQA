@@ -1,0 +1,1 @@
+この階層はコード閲覧用の54ファイルです。全460ファイルは ../transfer/FullAutoQA_Recovery_Source_20261102.zip に原本どおり収録しています。Runtime/Payload未同梱、CORE Manifest未再発行、実行用Candidateではありません。

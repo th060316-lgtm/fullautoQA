@@ -125,6 +125,27 @@ class WindowsEvidencePathTests(unittest.TestCase):
         ev.manifest();archive=result_zip(self.root,True)
         self.assertEqual(validate_result_zip(archive,True,'run')['overall'],'PASS')
 
+    def test_result_zip_rejects_missing_hq_readback_evidence(self):
+        ev=Evidence(self.root,'run')
+        report(self.root,{'run_id':'run','overall':'PASS','results':[],
+                          'sales_readback':{'gate_status':[{
+                              'name':'sales.first_30_seconds','status':'PASS',
+                              'evidence':['review_evidence/missing.mp4']}]}})
+        ev.manifest()
+        with self.assertRaisesRegex(OSError,'REFERENCED_EVIDENCE_MISSING'):
+            result_zip(self.root,True)
+
+    def test_result_zip_accepts_present_hq_readback_evidence(self):
+        proof=self.root/'review_evidence'/'present.mp4'
+        proof.parent.mkdir(parents=True);proof.write_bytes(b'review')
+        ev=Evidence(self.root,'run')
+        report(self.root,{'run_id':'run','overall':'PASS','results':[],
+                          'sales_readback':{'gate_status':[{
+                              'name':'sales.first_30_seconds','status':'PASS',
+                              'evidence':['review_evidence/present.mp4']}]}})
+        ev.manifest();archive=result_zip(self.root,True)
+        self.assertEqual(validate_result_zip(archive,True,'run')['overall'],'PASS')
+
 
     def test_regular_replaced_leaf_is_not_resolved_by_handle(self):
         file=self.root/'bridge.json';file.write_text('{}')
