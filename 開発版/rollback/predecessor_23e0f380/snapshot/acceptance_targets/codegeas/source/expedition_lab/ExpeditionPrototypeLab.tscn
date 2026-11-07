@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://expedition_lab/ExpeditionController.gd" id="1_controller"]
+[ext_resource type="Script" path="res://expedition_lab/ExpeditionArena.gd" id="2_arena"]
+[ext_resource type="Script" path="res://expedition_lab/ui/ExpeditionHUD.gd" id="3_hud"]
+[ext_resource type="Script" path="res://expedition_lab/ExpeditionCamera.gd" id="4_camera"]
+
+[node name="ExpeditionPrototypeLab" type="Node2D"]
+script = ExtResource("1_controller")
+
+[node name="ExpeditionArena" type="Node2D" parent="."]
+script = ExtResource("2_arena")
+
+[node name="ExpeditionCamera" type="Camera2D" parent="."]
+script = ExtResource("4_camera")
+
+[node name="ExpeditionHUD" type="CanvasLayer" parent="."]
+script = ExtResource("3_hud")
+
+

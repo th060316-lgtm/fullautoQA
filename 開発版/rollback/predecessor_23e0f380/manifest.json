@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "purpose": "offline functional rollback to the last verified predecessor Candidate source contract",
+  "predecessor": {
+    "source_commit": "23e0f3809ecb0da2ab68d62ffee443c68e68e408",
+    "source_tree": "d2fac7374b68677f037c5166d92e0da7a72e53b3",
+    "acceptance_tree": "8639920ec6af48496f8559b3a8d3d6bb84ad76d5",
+    "verified_candidate": {
+      "size": 1022018941,
+      "sha256": "1609669c150b738c5ef82c4ab8f5e163aaf26618cd12c66ed073f0015cd2c8d2",
+      "build_run": 41778937768,
+      "final_series_run": 41778937797,
+      "selftest_required": "170/170 PASS",
+      "fault_detectors": "30/30 PASS"
+    }
+  },
+  "donor": {
+    "size": 1099679545,
+    "sha256": "8858cd388d283a294e13ed3e9d9e87e930b26d84bd83fe548dba10883007816c",
+    "path": "開発版/complete_v033"
+  },
+  "recovery_source": {
+    "path": "開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip",
+    "sha256": "bfd9dc6942f6fe4cd8204bedb3d115b2db54cab1ac760729db1e0ad313e4084f"
+  },
+  "snapshot": {
+    "source_path": "snapshot/source",
+    "acceptance_path": "snapshot/acceptance_targets",
+    "source_file_count": 95,
+    "acceptance_file_count": 255,
+    "storage": "Git tree reuses the exact historical blob objects; no Actions artifact is required."
+  },
+  "semantics": {
+    "raw_donor_is_not_the_predecessor_candidate": true,
+    "product_acceptance": "HOLD",
+    "stable": "HOLD"
+  }
+}
