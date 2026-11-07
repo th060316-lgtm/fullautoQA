@@ -152,7 +152,7 @@ class CrossRunReproducibilityTests(unittest.TestCase):
                 report = evaluate_management(CoordinatorContext(
                     root=root, results=(), settings={}, extras={}))
                 recorded = report.readback['signals']['reproducibility']
-                self.assertEqual(expected, recorded['status'], 'scope ' + scope)
+                self.assertEqual(expected, recorded['status'], 'scope {!r}'.format(scope))
                 self.assertEqual(scope, recorded['scope'])
 
     @unittest.skipIf(run_series is None, 'the acceptance targets are not present')
