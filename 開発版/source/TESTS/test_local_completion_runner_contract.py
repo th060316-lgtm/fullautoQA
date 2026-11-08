@@ -167,5 +167,28 @@ class LocalCompletionRunnerContractTests(unittest.TestCase):
                             'the route must refuse an elevated session')
 
 
+    def test_local_summary_seals_handoff_input_identity(self):
+        self.assertContains('handoff_identity',
+                            'the summary must preserve the identity of the local handoff inputs')
+        self.assertContains('runner_sha256',
+                            'the runner bytes must be identifiable from failure evidence')
+        self.assertContains('entry_contract_sha256',
+                            'the entry-contract bytes must be identifiable from failure evidence')
+        self.assertContains('transfer_manifest_sha256',
+                            'the transfer-manifest bytes must be identifiable from failure evidence')
+        self.assertContains('$Summary.handoff_identity.runner_sha256 = Get-Sha256File -Path $PSCommandPath',
+                            'the live route must hash the runner actually being executed')
+        self.assertContains('$Summary.handoff_identity.entry_contract_sha256 = Get-Sha256File -Path $entryModulePath',
+                            'the live route must hash the entry contract actually loaded')
+
+    def test_ps51_environment_contract_executes_network_snapshot(self):
+        self.assertContains('$snapshot=Get-NetworkSnapshot',
+                            'the hosted PS5.1 behavioural contract must execute the checkpoint network query')
+        self.assertContains('NETWORK_SNAPSHOT_NOT_MEASURED',
+                            'a PowerShell network-query regression must fail the behavioural contract')
+        self.assertContains('NETWORK_SNAPSHOT_ROUTE_COUNT_MISSING',
+                            'a malformed measured network snapshot must fail the behavioural contract')
+
+
 if __name__ == '__main__':
     unittest.main()

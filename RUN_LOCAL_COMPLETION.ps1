@@ -54,13 +54,19 @@ $EnvironmentMonitorStartedUtc = $null
 $EnvironmentMonitorFinalized = $false
 
 $Summary = [ordered]@{
-  schema_version = 8
+  schema_version = 9
   run_tag = $RunTag
   status = 'STARTING'
   source_tree_fingerprint = $null
   source_tree_fingerprint_algorithm = 'relative-path-tab-size-tab-sha256; rows ordinal; LF; UTF-8; excludes __pycache__ and .pyc/.pyo'
   prepared_source_fingerprint = $null
   handoff_preflight = 'NOT_RUN'
+  handoff_identity = [ordered]@{
+    summary_schema_version = 9
+    runner_sha256 = $null
+    entry_contract_sha256 = $null
+    transfer_manifest_sha256 = $null
+  }
   purpose = 'Local Windows Candidate rebuild, selftest, Source regression and fresh A-B-A acceptance without GitHub Actions artifact transfer'
   physical_repository_root = $PhysicalRepoRoot
   logical_repository_root = $null
@@ -673,6 +679,13 @@ function Invoke-EnvironmentMonitorContractTest {
     }
     if (-not $monitor.NetworkReady -or [long]$monitor.NetworkSampleCount -le 0) {
       throw ('NETWORK_MONITOR_NOT_READY:'+$monitor.NetworkErrorDetail)
+    }
+    $snapshot=Get-NetworkSnapshot
+    if ($snapshot.status -ne 'MEASURED') {
+      throw ('NETWORK_SNAPSHOT_NOT_MEASURED:'+[string]$snapshot.reason)
+    }
+    if ($null -eq $snapshot.external_route_count) {
+      throw 'NETWORK_SNAPSHOT_ROUTE_COUNT_MISSING'
     }
     Write-Host 'ENVIRONMENT_MONITOR_CONTRACT_PASS'
   } finally {
@@ -1300,7 +1313,10 @@ if ($EnvironmentMonitorContractTest) {
 
 try {
   if ($env:OS -ne 'Windows_NT') { throw 'LOCAL_COMPLETION_REQUIRES_WINDOWS' }
-  . (Resolve-RepositoryEntryModule)
+  $entryModulePath = Resolve-RepositoryEntryModule
+  . $entryModulePath
+  $Summary.handoff_identity.runner_sha256 = Get-Sha256File -Path $PSCommandPath
+  $Summary.handoff_identity.entry_contract_sha256 = Get-Sha256File -Path $entryModulePath
 
   $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
   $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -1367,6 +1383,11 @@ try {
   # way under Windows PowerShell 5.1 and PowerShell 7.
   Write-Host '=== 0/8 Real-machine handoff preflight ==='
   $sourceRootDirectory = Get-RepositorySourceRoot
+  $transferManifestPath = Get-TransferManifestPath -SourceRoot $sourceRootDirectory
+  if (Test-Path -LiteralPath $transferManifestPath -PathType Leaf) {
+    $Summary.handoff_identity.transfer_manifest_sha256 = Get-Sha256File -Path $transferManifestPath
+  }
+  Write-Summary
   $declaredEntries = Get-DeclaredRepositoryEntries -RepositoryRoot $RepoRoot -SourceRoot $sourceRootDirectory
   $entryProblems = Test-DeclaredRepositoryEntries -Entries $declaredEntries
   if ($entryProblems.Count -gt 0) {

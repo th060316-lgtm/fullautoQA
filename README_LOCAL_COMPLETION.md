@@ -64,7 +64,7 @@ The contract reads `transfer/TRANSFER_MANIFEST.json` explicitly as UTF-8 and res
 
 The expensive SHA-256 scan of all donor blocks and of the reconstructed large donor archive is deliberately not duplicated in step 0; `JOIN_COMPLETE.ps1` remains the authoritative implementation of those byte-identity checks immediately afterward.
 
-If the preflight fails, `handoff_preflight` never becomes PASS and nothing is built.
+If the preflight fails, `handoff_preflight` never becomes PASS and nothing is built. The summary also seals a `handoff_identity` containing SHA-256 values for the exact runner, shared entry contract and transfer manifest bytes used by that attempt. This lets a returned failure be tied to the actual handoff instead of assuming that a similarly named extraction was the current PR head. Evidence from an older runner that does not contain `handoff_identity` is historical evidence only and cannot establish the state of the current handoff.
 
 ## Evidence
 
