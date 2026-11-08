@@ -264,7 +264,9 @@
   },
   "storage": {
     "root": "isolated_user",
-    "locations": [],
+    "locations": [
+      "APPDATA/Godot/app_userdata/GeassDisasterSurvival_Core/saves"
+    ],
     "required": true,
     "contract": "persisted_save",
     "scenarios": [
@@ -379,4 +381,3 @@
   ],
   "adapter_version": "read-only-load-observer-1"
 }
-

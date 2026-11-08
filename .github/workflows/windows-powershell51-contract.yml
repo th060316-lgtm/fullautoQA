@@ -1,0 +1,194 @@
+name: Windows PowerShell 5.1 contract
+
+# The hosted CI used to execute the completion route with PowerShell 7 while
+# the real machine runs Windows PowerShell 5.1.  Every difference between the
+# two interpreters was therefore invisible to CI and fatal on the machine:
+#
+#   * a BOM-less .ps1 is read with the system ANSI code page by 5.1 and with
+#     UTF-8 by 7, so a non-ASCII literal is mojibake on the machine;
+#   * 5.1 rejects an Int32 -InterfaceIndex, so the offline observer silently
+#     produced an empty address list and reported the machine as offline;
+#   * 5.1 raises on [Net.IPAddress]::TryParse with a $null [ref] target.
+#
+# This workflow executes the route under Windows PowerShell 5.1 itself and
+# asserts the behaviour that the real machine depends on.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'RUN_LOCAL_COMPLETION.ps1'
+      - 'RUN_LOCAL_COMPLETION.cmd'
+      - '開発版/source/**'
+      - '開発版/rollback/**'
+      - '開発版/acceptance_targets/**'
+      - '開発版/transfer/TRANSFER_MANIFEST.json'
+      - '.github/workflows/windows-powershell51-contract.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'RUN_LOCAL_COMPLETION.ps1'
+      - 'RUN_LOCAL_COMPLETION.cmd'
+      - '開発版/source/**'
+      - '開発版/rollback/**'
+      - '開発版/acceptance_targets/**'
+      - '開発版/transfer/TRANSFER_MANIFEST.json'
+      - '.github/workflows/windows-powershell51-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ps51-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  script-contracts:
+    name: PowerShell source contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            RUN_LOCAL_COMPLETION.ps1
+            RUN_LOCAL_COMPLETION.cmd
+            開発版/source
+            開発版/rollback
+            開発版/transfer/TRANSFER_MANIFEST.json
+          sparse-checkout-cone-mode: false
+
+      - name: Every shipped script must be ASCII-only or UTF-8 with BOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s "開発版/source/TESTS" -p "test_windows_script_encoding.py" -v
+
+      - name: The runner must resolve its inputs through the shared entry contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s "開発版/source/TESTS" -p "test_local_completion_runner_contract.py" -v
+
+  ps51-contracts:
+    name: Windows PowerShell 5.1 behavioural contract
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            RUN_LOCAL_COMPLETION.ps1
+            RUN_LOCAL_COMPLETION.cmd
+            開発版/complete_v033
+            開発版/source
+            開発版/acceptance_targets
+            開発版/rollback
+            開発版/transfer/TRANSFER_MANIFEST.json
+            開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip
+          sparse-checkout-cone-mode: false
+
+      - name: Parse every PowerShell script with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          Get-ChildItem -LiteralPath $PWD -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens = $null; $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count) { throw ($_.FullName + ": " + ($parseErrors | Out-String)) }
+          }
+          Write-Host "POWERSHELL_51_PARSE_PASS"
+
+      - name: Continuous environment monitor contract (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1') -EnvironmentMonitorContractTest
+          if ($LASTEXITCODE -ne 0) { throw ('ENVIRONMENT_MONITOR_CONTRACT_FAILED:'+$LASTEXITCODE) }
+
+      - name: Repository entry contract (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1') -RepositoryEntryContractTest
+          if ($LASTEXITCODE -ne 0) { throw "REPOSITORY_ENTRY_CONTRACT_TEST_FAILED:$LASTEXITCODE" }
+
+      - name: Prepared baseline contract (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PWD 'RUN_LOCAL_COMPLETION.ps1') -PreparedBaselineContractTest
+          if ($LASTEXITCODE -ne 0) { throw "PREPARED_BASELINE_CONTRACT_TEST_FAILED:$LASTEXITCODE" }
+
+      - name: The PowerShell and Python fingerprints must agree byte for byte
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sourceRoot = (Get-ChildItem -LiteralPath $PWD -Directory | Where-Object {
+            Test-Path -LiteralPath (Join-Path $_.FullName 'source/scripts') -PathType Container
+          } | Select-Object -First 1).FullName
+          if (-not $sourceRoot) { throw "SOURCE_ROOT_NOT_FOUND" }
+          $tree = Join-Path $sourceRoot 'source'
+          $script = Join-Path $tree 'scripts/SOURCE_TREE_FINGERPRINT.ps1'
+          $powerShellValue = & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -Root $tree
+          if ($LASTEXITCODE -ne 0) { throw "CANONICAL_FINGERPRINT_FAILED:$LASTEXITCODE" }
+          $powerShellValue = ([string](@($powerShellValue | Where-Object { $_.Trim() })[-1])).Trim().ToLowerInvariant()
+          if ($powerShellValue -notmatch '^[0-9a-f]{64}$') { throw "CANONICAL_FINGERPRINT_INVALID:$powerShellValue" }
+          $pythonValue = python (Join-Path $tree 'scripts/source_tree_immutability.py') snapshot --root $tree --output (Join-Path $env:RUNNER_TEMP 'fingerprint.json')
+          if ($LASTEXITCODE -ne 0) { throw "PYTHON_FINGERPRINT_FAILED:$LASTEXITCODE" }
+          $pythonValue = ([string](@($pythonValue | Where-Object { $_ -like 'SOURCE_TREE_FINGERPRINT=*' })[-1])).Trim().Replace('SOURCE_TREE_FINGERPRINT=', '').ToLowerInvariant()
+          if ($pythonValue -ne $powerShellValue) { throw "FINGERPRINT_IMPLEMENTATIONS_DISAGREE:ps51=$powerShellValue:python=$pythonValue" }
+          Write-Host "FINGERPRINT_PARITY_PASS $powerShellValue"
+
+      - name: The offline observer must measure under Windows PowerShell 5.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYEOF'
+          import pathlib, re
+          source = next(pathlib.Path('.').glob('*/source/CORE/phase3_run_evidence.py'))
+          text = source.read_text(encoding='utf-8')
+          match = re.search(r'script = r"""(.*?)"""', text, re.S)
+          if not match:
+              raise SystemExit('EMBEDDED_OBSERVER_SCRIPT_NOT_FOUND')
+          pathlib.Path('observer.ps1').write_text(match.group(1), encoding='ascii')
+          PYEOF
+      - name: Run the embedded offline observer under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $raw = & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PWD 'observer.ps1')
+          if ($LASTEXITCODE -ne 0) { throw "OFFLINE_OBSERVER_FAILED:$LASTEXITCODE" }
+          $observation = ($raw -join '') | ConvertFrom-Json
+          $failed = @()
+          if ($observation.PSObject.Properties.Name -contains 'failed') { $failed = @($observation.failed) }
+          if ($failed.Count -ne 0) { throw ("OFFLINE_OBSERVER_ADDRESS_QUERY_FAILED:" + ($failed -join ',')) }
+          $rows = @()
+          if ($observation.PSObject.Properties.Name -contains 'rows') { $rows = @($observation.rows) }
+          if ($rows.Count -eq 0) { throw "OFFLINE_OBSERVER_RETURNED_NO_ADAPTERS" }
+          Write-Host ("OFFLINE_OBSERVER_MEASURED adapters=" + $rows.Count)
+
+      - name: The rollback entrypoint must resolve its predecessor from the manifest
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $module = (Get-ChildItem -LiteralPath $PWD -Recurse -Filter 'REPOSITORY_ENTRY.ps1' | Select-Object -First 1).FullName
+          if (-not $module) { throw "REPOSITORY_ENTRY_MODULE_NOT_FOUND" }
+          . $module
+          $sourceRoot = Get-RepositorySourceRoot
+          $entries = Get-DeclaredRepositoryEntries -RepositoryRoot $PWD -SourceRoot $sourceRoot
+          $problems = Test-DeclaredRepositoryEntries -Entries $entries
+          if ($problems.Count -ne 0) { throw ("DECLARED_ENTRIES_INVALID:" + ($problems -join ',')) }
+          $expected = (Get-ChildItem -LiteralPath $PWD -Directory | Where-Object {
+            Test-Path -LiteralPath (Join-Path $_.FullName 'complete_v033/manifest.json') -PathType Leaf
+          } | Select-Object -First 1)
+          if (-not $expected) { throw "COMPLETE_V033_NOT_FOUND" }
+          $expectedRoot = Join-Path $expected.FullName 'complete_v033'
+          if ([IO.Path]::GetFullPath($entries.donor_root) -ne [IO.Path]::GetFullPath($expectedRoot)) {
+            throw ("DECLARED_DONOR_ROOT_DIVERGES:" + $entries.donor_root)
+          }
+          Write-Host ("DECLARED_PREDECESSOR_RESOLVES " + $entries.donor_root)

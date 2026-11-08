@@ -7,7 +7,8 @@ param(
   [Parameter(Mandatory=$true)][string]$SourceRoot,
   [Parameter(Mandatory=$true)][string]$OutputDir,
   [string]$CandidateName='FullAutoQA_PHASE3_CANDIDATE.zip',
-  [string]$SourceBaseline=''
+  [string]$SourceBaseline='',
+  [string]$ManifestRegenerator=''
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
@@ -19,17 +20,18 @@ function Get-SHA256([string]$Path) {
   finally { $h.Dispose(); $s.Dispose() }
 }
 function Get-TreeFingerprint([string]$Root) {
-  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
-  $prefix=$rootFull+[IO.Path]::DirectorySeparatorChar
-  $rows=New-Object 'System.Collections.Generic.List[string]'
-  foreach ($file in @(Get-ChildItem -LiteralPath $rootFull -Recurse -File | Sort-Object FullName)) {
-    $relative=$file.FullName.Substring($prefix.Length).Replace([IO.Path]::DirectorySeparatorChar,'/')
-    $rows.Add(($relative + [char]9 + $file.Length + [char]9 + (Get-SHA256 $file.FullName)))
-  }
-  $bytes=[Text.Encoding]::UTF8.GetBytes(($rows -join [Environment]::NewLine))
-  $alg=[Security.Cryptography.SHA256]::Create()
-  try { return ([BitConverter]::ToString($alg.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() }
-  finally { $alg.Dispose() }
+  # ONE canonical Source-tree fingerprint implementation is shared with the
+  # runner and with CI: scripts/SOURCE_TREE_FINGERPRINT.ps1 next to this
+  # script.  A private copy here would let the baseline the runner binds and
+  # the tree this builder hashes drift apart.
+  $canonical=Join-Path $PSScriptRoot 'SOURCE_TREE_FINGERPRINT.ps1'
+  if (-not (Test-Path -LiteralPath $canonical -PathType Leaf)) { throw 'SOURCE_TREE_FINGERPRINT_SCRIPT_MISSING' }
+  $output=& (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') `
+    -NoLogo -NoProfile -ExecutionPolicy Bypass -File $canonical -Root $Root
+  if ($LASTEXITCODE -ne 0) { throw ('SOURCE_TREE_FINGERPRINT_FAILED:'+$LASTEXITCODE) }
+  $value=([string](@($output | Where-Object { $_.Trim() })[-1])).Trim().ToLowerInvariant()
+  if ($value -notmatch '^[0-9a-f]{64}$') { throw ('SOURCE_TREE_FINGERPRINT_INVALID:'+$value) }
+  return $value
 }
 function Copy-Tree([string]$Src,[string]$Dst) {
   if (-not (Test-Path -LiteralPath $Src -PathType Container)) { throw ('SOURCE_TREE_MISSING:'+ $Src) }
@@ -124,7 +126,12 @@ try {
     $overlaid += $_.Name
   }
 
-  $regen=Join-Path $work 'scripts\PHASE3_REGEN_MANIFEST.ps1'
+  if ([string]::IsNullOrWhiteSpace($ManifestRegenerator)) {
+    $regen=Join-Path $work 'scripts\PHASE3_REGEN_MANIFEST.ps1'
+  } else {
+    $regen=[IO.Path]::GetFullPath($ManifestRegenerator)
+  }
+  if (-not (Test-Path -LiteralPath $regen -PathType Leaf)) { throw 'MANIFEST_REGENERATOR_MISSING' }
   & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $regen -Tree $work
   if ($LASTEXITCODE -ne 0) { throw ('MANIFEST_REGEN_FAILED:'+ $LASTEXITCODE) }
 

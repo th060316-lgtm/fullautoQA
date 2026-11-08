@@ -33,16 +33,34 @@ jobs:
             開発版/transfer/TRANSFER_MANIFEST.json
           sparse-checkout-cone-mode: false
 
-      - name: Reconstruct complete source test substrate
+      - name: Reconstruct complete source test substrate with Windows PowerShell 5.1
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $sourceRoot = & "./開発版/source/scripts/PREPARE_SOURCE.ps1" -RepositoryRoot $PWD -Destination (Join-Path $PWD "_recovery")
+          # The real machine reconstructs the Source with Windows PowerShell
+          # 5.1, so the Windows leg of this matrix reconstructs it with the
+          # SAME interpreter.  Preparing with PowerShell 7 hid every
+          # difference between the two.  There is no Windows PowerShell on
+          # Linux, so the Linux leg keeps using PowerShell 7.
+          $prepareScript = (Resolve-Path './開発版/source/scripts/PREPARE_SOURCE.ps1').Path
+          $destination = Join-Path $PWD "_recovery"
+          if ($env:OS -eq 'Windows_NT') {
+            $prepared = & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $prepareScript -RepositoryRoot $PWD -Destination $destination
+            if ($LASTEXITCODE -ne 0) { throw "PREPARE_SOURCE_FAILED:$LASTEXITCODE" }
+          } else {
+            $prepared = & $prepareScript -RepositoryRoot $PWD -Destination $destination
+          }
+          $sourceRoot = ([string](@($prepared | Where-Object { $_.Trim() })[-1])).Trim()
+          if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot 'CORE') -PathType Container)) { throw "PREPARED_SOURCE_ROOT_INVALID:$sourceRoot" }
           "SOURCE_ROOT=$sourceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "ACCEPTANCE_ROOT=$((Resolve-Path './開発版/acceptance_targets').Path)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Compile reconstructed Python source
         shell: pwsh
+        env:
+          # Keep every bytecode cache outside the reconstructed Source tree so
+          # the tree stays byte-identical to the tree that is shipped.
+          PYTHONPYCACHEPREFIX: ${{ github.workspace }}/_pycache
         run: python -m compileall -q "$env:SOURCE_ROOT/CORE" "$env:SOURCE_ROOT/TESTS"
 
       - name: Run reconstructed source unit tests

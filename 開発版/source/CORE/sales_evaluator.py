@@ -26,9 +26,11 @@ Rules that this module enforces
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from common import stamp
 from hq_evidence import (ReadbackDomainReport, collect_evidence, get_any, has_any, jsonable,
-                         lookup, resolve_thresholds, stable_fingerprint, truthiness)
+                         lookup, resolve_thresholds, safe_join, stable_fingerprint, truthiness)
 
 DOMAIN = 'sales'
 READBACK_SCHEMA_VERSION = 1
@@ -38,6 +40,7 @@ SALES_COLD_START_EVIDENCE_ABSENT = 'SALES_COLD_START_EVIDENCE_ABSENT'
 SALES_COLD_START_PROVENANCE_MISSING = 'SALES_COLD_START_PROVENANCE_MISSING'
 SALES_PHASE_EVIDENCE_ABSENT = 'SALES_PHASE_EVIDENCE_ABSENT'
 SALES_OBSERVATION_INCOMPLETE = 'SALES_OBSERVATION_INCOMPLETE'
+SALES_PHASE_EVIDENCE_MISSING = 'SALES_PHASE_EVIDENCE_MISSING'
 SALES_PHASE_FAILED = 'SALES_PHASE_FAILED'
 SALES_BLOCKING_FINDINGS_RECORDED = 'SALES_BLOCKING_FINDINGS_RECORDED'
 SALES_MODEL_PROXY_IS_NOT_HUMAN_TEST = 'SALES_MODEL_PROXY_IS_NOT_HUMAN_TEST'
@@ -79,12 +82,12 @@ PHASES = (
                                    'communication_test', 'clarity')),
 )
 
-_HUMAN_KINDS = frozenset({'human', 'human_reviewer', 'real_human', 'person', 'player',
-                          'tester', 'manual_reviewer', 'human_tester'})
-_PROXY_KINDS = frozenset({'model', 'model_proxy', 'llm', 'ai', 'proxy', 'synthetic',
-                           'simulated', 'agent', 'automated', 'self_review'})
-_FIXTURE_KINDS = frozenset({'fixture', 'selftest', 'self_test', 'unit', 'unit_test',
-                             'synthetic', 'mock', 'stub', 'dry_run'})
+# The reviewer classification is owned by the review intake so that the
+# intake and this judgement can never disagree about what counts as a human.
+from review_intake import FIXTURE_KINDS as _FIXTURE_KINDS
+from review_intake import HUMAN_KINDS as _HUMAN_KINDS
+from review_intake import PROXY_KINDS as _PROXY_KINDS
+from review_intake import sanitize_sales_bundle
 
 _KIND_ALIASES = ('evidence_kind', 'kind', 'mode', 'run_mode', 'execution_kind')
 _REVIEWER_ALIASES = ('reviewer', 'reviewed_by', 'human_test', 'reviewer_kind', 'evaluator')
@@ -254,6 +257,33 @@ def _evidence_list(record):
     return []
 
 
+def _evidence_scope(context):
+    root = Path(getattr(context, 'evidence_root', None)
+                or getattr(context, 'root', None) or '.')
+    extras = getattr(context, 'extras', None) or {}
+    inventory = extras.get('sales_evidence_inventory') if isinstance(extras, dict) else None
+    if isinstance(inventory, (list, tuple, set)):
+        inventory = {str(item).replace('\\', '/') for item in inventory}
+    else:
+        inventory = None
+    return root, inventory
+
+
+def _evidence_exists(root, inventory, reference):
+    text = str(reference or '').replace('\\', '/').strip()
+    if not text or text.startswith('/') or ':' in text or '..' in Path(text).parts:
+        return False
+    if inventory is not None:
+        return text in inventory
+    path = safe_join(root, text)
+    return bool(path is not None and path.is_file())
+
+
+def _missing_evidence(root, inventory, references):
+    return [str(ref) for ref in references or []
+            if not _evidence_exists(root, inventory, ref)]
+
+
 # --------------------------------------------------------------------------- #
 # gates
 # --------------------------------------------------------------------------- #
@@ -290,7 +320,7 @@ def _provenance_of(session):
     return {}
 
 
-def _evaluate_phase(gate, name, session, threshold):
+def _evaluate_phase(gate, name, session, threshold, evidence_root, evidence_inventory):
     """Evaluate one player-facing review phase."""
     if session is None:
         record = {'phase': name, 'session_id': None, 'status': 'NOT_RUN',
@@ -321,6 +351,7 @@ def _evaluate_phase(gate, name, session, threshold):
                 record)
     findings = _findings_of(record_raw)
     evidence = _evidence_list(record_raw)
+    missing_evidence = _missing_evidence(evidence_root, evidence_inventory, evidence)
     notes = get_any(record_raw, ['notes', 'note', 'comment', 'summary', 'description'])
     explicit = _explicit_status(record_raw)
     blocking, informational = _blocking_findings(findings) if findings is not None else ([], [])
@@ -336,7 +367,7 @@ def _evaluate_phase(gate, name, session, threshold):
             'findings': jsonable(findings) if findings is not None else [],
             'blocking_findings': jsonable(blocking),
             'informational_findings': jsonable(informational),
-            'evidence': evidence, 'available': True,
+            'evidence': evidence, 'missing_evidence': missing_evidence, 'available': True,
             'threshold': jsonable(threshold)}
     if threshold_violation:
         base['status'] = 'FAIL'
@@ -352,6 +383,14 @@ def _evaluate_phase(gate, name, session, threshold):
                      detail='the %s phase was recorded as failed' % name),
                 base)
     if explicit is True:
+        if not evidence or missing_evidence:
+            base['status'] = 'NOT_RUN'
+            base['reason_code'] = SALES_PHASE_EVIDENCE_MISSING
+            return (_row(gate, 'NOT_RUN', SALES_PHASE_EVIDENCE_MISSING,
+                         evidence=evidence,
+                         detail='the %s phase records a positive outcome but referenced evidence is absent: %s'
+                                % (name, ','.join(missing_evidence) if missing_evidence else 'no reference')),
+                    base)
         base['status'] = 'PASS'
         base['reason_code'] = None
         return (_row(gate, 'PASS', None, evidence=evidence,
@@ -364,6 +403,14 @@ def _evaluate_phase(gate, name, session, threshold):
             return (_row(gate, 'FAIL', SALES_BLOCKING_FINDINGS_RECORDED, evidence=evidence,
                          detail='%d blocking finding(s) were recorded in the %s phase'
                                 % (len(blocking), name)),
+                    base)
+        if not evidence or missing_evidence:
+            base['status'] = 'NOT_RUN'
+            base['reason_code'] = SALES_PHASE_EVIDENCE_MISSING
+            return (_row(gate, 'NOT_RUN', SALES_PHASE_EVIDENCE_MISSING,
+                         evidence=evidence,
+                         detail='the %s phase has no blocking finding but referenced evidence is absent: %s'
+                                % (name, ','.join(missing_evidence) if missing_evidence else 'no reference')),
                     base)
         base['status'] = 'PASS'
         base['reason_code'] = None
@@ -475,12 +522,22 @@ def evaluate_sales(context):
     ``NOT_RUN`` for its own gate and the domain stays non-PASS.
     """
     settings = getattr(context, 'settings', None) or {}
+    evidence_root, evidence_inventory = _evidence_scope(context)
     bundle, sources = collect_evidence(context, DOMAIN, SALES_EVIDENCE_FILES)
+    # A collected bundle may claim a human test it cannot prove.  The intake
+    # owns that rule, so it is applied here as well: a proxy review may add
+    # observations, but it can never buy the human gate.
+    bundle, sanitizer_notes = sanitize_sales_bundle(bundle)
     table, threshold_sources, ignored = resolve_thresholds(settings, DOMAIN, bundle)
 
     rows = []
     risks = []
     notes = []
+    for note in sanitizer_notes:
+        risks.append({'code': note, 'severity': 'ERROR',
+                      'detail': 'a collected human-test claim was rejected because the '
+                                'recorded reviewer is not a real human'})
+        notes.append(note)
     sessions = _sessions(bundle)
 
     cold_session = _cold_start_session(sessions)
@@ -531,7 +588,8 @@ def evaluate_sales(context):
     for name, aliases in PHASES:
         gate = 'sales.' + name
         threshold = table.get(name)
-        row, record = _evaluate_phase(gate, name, cold_session, threshold)
+        row, record = _evaluate_phase(gate, name, cold_session, threshold,
+                                      evidence_root, evidence_inventory)
         rows.append(row)
         phase_rows[name] = row
         phase_records[name] = record
@@ -552,6 +610,8 @@ def evaluate_sales(context):
     elif not isinstance(audience_evidence, (list, tuple)):
         audience_evidence = []
     audience_evidence = [str(x) for x in audience_evidence if str(x)]
+    audience_missing = _missing_evidence(evidence_root, evidence_inventory, audience_evidence)
+    audience_evidence_valid = bool(audience_evidence) and not audience_missing
     contract = audience.get('description_contract') if isinstance(audience.get('description_contract'), dict) else {}
     generated = audience.get('status') == 'GENERATED' and bool(audience_entries)
     descriptions = [
@@ -563,7 +623,7 @@ def evaluate_sales(context):
         for entry in audience_entries if isinstance(entry, dict)
     ]
 
-    if generated and audience_evidence and descriptions and all(descriptions) and contract.get('brand_price_independent') is True:
+    if generated and audience_evidence_valid and descriptions and all(descriptions) and contract.get('brand_price_independent') is True:
         product_description_row = _row(
             'sales.product_description_independent', 'PASS', None,
             evidence=audience_evidence,
@@ -578,7 +638,7 @@ def evaluate_sales(context):
         )
     rows.append(product_description_row)
 
-    if generated and audience_evidence and what_game and all(what_game):
+    if generated and audience_evidence_valid and what_game and all(what_game):
         what_game_row = _row(
             'sales.what_game_summary', 'PASS', None, evidence=audience_evidence,
             detail='what-the-player-does summary was derived from packaged mechanics evidence'
@@ -592,7 +652,7 @@ def evaluate_sales(context):
     rows.append(what_game_row)
 
     communication_row = phase_rows.get('communication_readability') or {}
-    if not (generated and audience_evidence):
+    if not (generated and audience_evidence_valid):
         nontechnical_row = _row(
             'sales.nontechnical_report', 'NOT_RUN', SALES_AUDIENCE_SUMMARY_ABSENT,
             evidence=audience_evidence,
@@ -631,9 +691,16 @@ def evaluate_sales(context):
     human_evidence = False
     if reviewer_kind == 'human':
         present, value = lookup(bundle, ['human_test_performed', 'human_test_evidence'])
-        human_evidence = truthiness(value) is True or truthiness(value) is None
-        if present and truthiness(value) is False:
-            human_evidence = False
+        review_source = bundle.get('review_evidence_source') if isinstance(bundle, dict) else None
+        review_source_present = bool(
+            review_source and _evidence_exists(evidence_root, evidence_inventory, review_source)
+        )
+        # Human identity alone is not evidence that a human test occurred.
+        # The performed flag must be explicitly true, the reviewer identified,
+        # and the preserved review source must exist in this run's evidence.
+        human_evidence = bool(
+            present and truthiness(value) is True and reviewer_id and review_source_present
+        )
     if reviewer_kind == 'model_proxy':
         human_row = _row('sales.human_test', 'NOT_RUN', SALES_MODEL_PROXY_IS_NOT_HUMAN_TEST,
                          detail='the review was produced by a model proxy; a model proxy is '
@@ -647,7 +714,8 @@ def evaluate_sales(context):
                       'detail': 'the sales evidence is fixture evidence'})
     elif reviewer_kind == 'human' and human_evidence:
         human_row = _row('sales.human_test', 'PASS', None,
-                         detail='a real human reviewer produced the evidence')
+                         evidence=[str(review_source)],
+                         detail='a real human reviewer produced preserved review evidence')
     else:
         human_row = _row('sales.human_test', 'NOT_RUN', SALES_HUMAN_TEST_EVIDENCE_ABSENT,
                          detail='no real human review evidence was found')

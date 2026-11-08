@@ -3,3 +3,5 @@
 
 開発版/acceptance_targets/*/acceptance_support/** -text
 開発版/acceptance_targets/*/diagnostics/** -text
+# Verified predecessor rollback snapshot must remain byte-identical to its historical Git blobs.
+開発版/rollback/predecessor_23e0f380/snapshot/** -text

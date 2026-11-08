@@ -1,5 +1,12 @@
 # Reconstruct the preserved source substrate, then overlay the checked-out source.
 # Recovery input is declared by TRANSFER_MANIFEST.json or explicitly supplied.
+#
+# ASCII-only invariant: this file must never contain a byte above 0x7F.
+# Windows PowerShell 5.1 decodes a BOM-less script with the system ANSI code
+# page, so a non-ASCII literal here would be mojibake on a real machine while
+# a hosted PowerShell 7 run would still pass.  The repository source root is
+# therefore resolved structurally through the shared entry contract in
+# scripts/REPOSITORY_ENTRY.ps1 instead of by a hard-coded directory name.
 [CmdletBinding()]
 param(
   [Parameter(Mandatory=$true)][string]$RepositoryRoot,
@@ -11,35 +18,21 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-function Get-SHA256([string]$Path) {
-  $stream=[IO.File]::OpenRead($Path)
-  $hash=[Security.Cryptography.SHA256]::Create()
-  try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
-  finally { $hash.Dispose(); $stream.Dispose() }
-}
-function Resolve-RepositoryRelativePath([string]$Root,[string]$Relative) {
-  if ([string]::IsNullOrWhiteSpace($Relative)) { throw 'DECLARED_REPOSITORY_PATH_EMPTY' }
-  $normalized=$Relative.Replace('/',[IO.Path]::DirectorySeparatorChar)
-  if ([IO.Path]::IsPathRooted($normalized) -or $normalized -match '(^|[\\/])\.\.([\\/]|$)') {
-    throw ('DECLARED_REPOSITORY_PATH_INVALID:'+ $Relative)
-  }
-  $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
-  $candidate=[IO.Path]::GetFullPath((Join-Path $rootFull $normalized))
-  if (-not ($candidate.Equals($rootFull,[StringComparison]::OrdinalIgnoreCase) -or
-            $candidate.StartsWith($rootFull+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase))) {
-    throw ('DECLARED_REPOSITORY_PATH_ESCAPE:'+ $Relative)
-  }
-  return $candidate
-}
+# Captured before the shared contract is dot-sourced: dot-sourcing assigns the
+# dot-sourced script's own $PSScriptRoot into the caller's scope.
+$ScriptDirectory=$PSScriptRoot
+. (Join-Path $ScriptDirectory 'REPOSITORY_ENTRY.ps1')
 
 $RepositoryRoot=[IO.Path]::GetFullPath($RepositoryRoot)
 $Destination=[IO.Path]::GetFullPath($Destination)
 if (Test-Path -LiteralPath $Destination) { throw 'SOURCE_DESTINATION_MUST_BE_FRESH' }
 
 if ([string]::IsNullOrWhiteSpace($RecoveryArchive)) {
-  $transferManifestPath=Resolve-RepositoryRelativePath -Root $RepositoryRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
-  if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
-  $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  $transferManifestPath=Get-TransferManifestPath -SourceRoot (Get-RepositorySourceRoot)
+  if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) {
+    throw ('TRANSFER_MANIFEST_MISSING:'+$transferManifestPath)
+  }
+  $transfer=Read-TransferManifest -ManifestPath $transferManifestPath
   if (-not $transfer.recovery_source -or [string]::IsNullOrWhiteSpace([string]$transfer.recovery_source.path)) {
     throw 'RECOVERY_SOURCE_DECLARATION_MISSING'
   }
@@ -52,7 +45,7 @@ if ([string]::IsNullOrWhiteSpace($RecoveryArchive)) {
 }
 
 if (-not (Test-Path -LiteralPath $RecoveryArchive -PathType Leaf)) { throw 'RECOVERY_SOURCE_ARCHIVE_MISSING' }
-$recoverySha=Get-SHA256 $RecoveryArchive
+$recoverySha=Get-Sha256File $RecoveryArchive
 if (-not [string]::IsNullOrWhiteSpace($ExpectedRecoverySha256) -and
     $recoverySha -ne $ExpectedRecoverySha256.ToLowerInvariant()) {
   throw ('RECOVERY_SOURCE_SHA256_MISMATCH:'+ $recoverySha)
@@ -66,7 +59,7 @@ $matches=@(Get-ChildItem -LiteralPath $Destination -Recurse -File -Filter 'test_
 if ($matches.Count -ne 1) { throw ('RECOVERY_SOURCE_ROOT_AMBIGUOUS:'+ $matches.Count) }
 $sourceRoot=$matches[0].Directory.Parent.FullName
 
-$current=Split-Path -Parent $PSScriptRoot
+$current=Split-Path -Parent $ScriptDirectory
 if (-not (Test-Path -LiteralPath (Join-Path $current 'CORE') -PathType Container)) { throw 'CURRENT_SOURCE_ROOT_INVALID' }
 Get-ChildItem -LiteralPath $current -Force | ForEach-Object {
   Copy-Item -LiteralPath $_.FullName -Destination $sourceRoot -Recurse -Force

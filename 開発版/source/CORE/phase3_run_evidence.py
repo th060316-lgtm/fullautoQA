@@ -15,6 +15,8 @@ from pathlib import Path
 
 from common import archive_eligible, inside, read_json, tree_size, write_json
 from audience_summary import build_audience_summary, render_audience_summary
+from review_intake import (load_review_evidence, materialize_review_evidence,
+                           merge_review_evidence)
 
 
 def _identity_snapshot(prepared):
@@ -135,11 +137,18 @@ def _network_adapter_snapshot():
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 $ErrorActionPreference='Stop'
 $rows=@()
-foreach($adapter in @(Get-NetAdapter -IncludeHidden -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' })) {
-  $addresses=@(Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue | ForEach-Object { [string]$_.IPAddress })
-  $rows += [pscustomobject]@{name=[string]$adapter.Name;addresses=$addresses}
+$failures=@()
+foreach($nic in @([Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces())){
+  if($nic.OperationalStatus -ne [Net.NetworkInformation.OperationalStatus]::Up){ continue }
+  $gateways=@()
+  try{
+    $gateways=@($nic.GetIPProperties().GatewayAddresses | ForEach-Object { [string]$_.Address })
+  } catch {
+    $failures += ('GATEWAY_QUERY_FAILED:'+[string]$nic.Name)
+  }
+  $rows += [pscustomobject]@{name=[string]$nic.Name;gateways=$gateways}
 }
-if($rows.Count -eq 0){[Console]::Out.WriteLine('[]')}else{$rows | ConvertTo-Json -Compress -Depth 4}
+[pscustomobject]@{rows=$rows;failed=$failures} | ConvertTo-Json -Compress -Depth 4
 """
     try:
         proc = subprocess.run(
@@ -158,20 +167,31 @@ if($rows.Count -eq 0){[Console]::Out.WriteLine('[]')}else{$rows | ConvertTo-Json
                 "exit_code": proc.returncode,
             }
         raw = (proc.stdout or "").strip()
-        rows = json.loads(raw or "[]")
-        if isinstance(rows, dict):
-            rows = [rows]
+        payload = json.loads(raw or "{}")
+        if isinstance(payload, list):
+            payload = {"rows": payload, "failed": []}
+        failed = payload.get("failed") or []
+        if failed:
+            # Fail closed: an address query that did not complete is not an
+            # observation of "no external address".
+            return {
+                "status": "NOT_MEASURED",
+                "reason": "NETWORK_GATEWAY_QUERY_FAILED",
+                "failed_queries": sorted(str(name) for name in failed),
+                "method": "dotnet_up_interfaces_with_default_gateway",
+            }
+        rows = payload.get("rows") or []
         if not isinstance(rows, list):
             raise ValueError("WINDOWS_NETWORK_QUERY_SCHEMA")
-        up_external = []
+        external_routes = []
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            addresses = row.get("addresses") or []
-            if isinstance(addresses, str):
-                addresses = [addresses]
+            gateways = row.get("gateways") or []
+            if isinstance(gateways, str):
+                gateways = [gateways]
             usable = False
-            for raw_address in addresses:
+            for raw_address in gateways:
                 raw_address = str(raw_address).split("%", 1)[0]
                 try:
                     ip = ipaddress.ip_address(raw_address)
@@ -181,12 +201,12 @@ if($rows.Count -eq 0){[Console]::Out.WriteLine('[]')}else{$rows | ConvertTo-Json
                     usable = True
                     break
             if usable:
-                up_external.append(str(row.get("name") or "unnamed"))
+                external_routes.append(str(row.get("name") or "unnamed"))
         return {
             "status": "MEASURED",
-            "up_adapter_count": len(up_external),
-            "up_adapters": sorted(up_external),
-            "method": "windows_powershell_up_adapters_with_nonloopback_ip",
+            "external_route_count": len(external_routes),
+            "external_routes": sorted(external_routes),
+            "method": "dotnet_up_interfaces_with_default_gateway",
         }
     except Exception as ex:
         return {"status": "NOT_MEASURED", "reason": type(ex).__name__}
@@ -277,11 +297,11 @@ def _signals(results, start_qa, fresh, environment_evidence, root, environment=N
         }
 
     network = environment.get("network_observation") or {}
-    if network.get("status") == "MEASURED" and network.get("up_adapter_count") == 0:
+    if network.get("status") == "MEASURED" and network.get("external_route_count") == 0:
         out["offline"] = {
             "status": True,
             "evidence": [environment_evidence],
-            "scope": "no_up_non_loopback_ip_interfaces_observed",
+            "scope": "no_external_default_route_observed",
         }
 
     if os.name == "nt":
@@ -384,7 +404,7 @@ def build_sales_evidence(*, e, sessions, results, run_mode):
     if phase is not None and duration is not None and duration >= 300:
         session["phases"]["first_5_minutes"] = dict(phase)
 
-    return {
+    bundle = {
         "schema_version": 1,
         "evidence_kind": "model_proxy",
         "reviewer": {"kind": "model_proxy", "id": "fullautoqa-automated-run"},
@@ -394,6 +414,30 @@ def build_sales_evidence(*, e, sessions, results, run_mode):
         "product_acceptance": "HOLD",
         "stable": "HOLD",
     }
+
+    # Review evidence produced outside the automated run (a human cold-start
+    # playtest, or a validated review analyser) is ingested here.  The intake
+    # preserves the reviewer kind, so a proxy review stays a proxy and can
+    # never satisfy the human gate; an absent or malformed review leaves the
+    # bundle exactly as the automated run produced it.
+    review, review_problems, review_source = load_review_evidence(e.root, run_id=e.run_id)
+    materialized_files = []
+    if review is not None:
+        review, materialize_problems, materialized_files = materialize_review_evidence(
+            review, e.root
+        )
+        review_problems = list(review_problems) + list(materialize_problems)
+    bundle["review_evidence"] = {
+        "source": review_source,
+        "status": "PRESENT" if review is not None else (
+            "INVALID" if review_problems else "ABSENT"
+        ),
+        "problems": list(review_problems),
+        "materialized_files": list(materialized_files),
+    }
+    if review is not None:
+        bundle, _ = merge_review_evidence(bundle, review)
+    return bundle
 
 
 def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
@@ -420,6 +464,7 @@ def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
 
     write_json(Path(e.root) / "management_evidence.json", management)
     write_json(Path(e.root) / "sales_evidence.json", sales)
+    review_files = list((sales.get("review_evidence") or {}).get("materialized_files") or [])
     return [
         "phase3_environment.json",
         "phase3_preseal_integrity.json",
@@ -427,4 +472,4 @@ def write_phase3_hq_evidence(*, e, sessions, results, run_mode, prepared):
         "sales_evidence.json",
         "audience_summary.json",
         "AUDIENCE_SUMMARY.txt",
-    ]
+    ] + review_files
