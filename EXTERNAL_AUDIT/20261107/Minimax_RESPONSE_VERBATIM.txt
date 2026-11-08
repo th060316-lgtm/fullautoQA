@@ -1,0 +1,938 @@
+Map1issue unchecked
+# Issue #1 — evidence-based audit against current `main` (`17f6f9b`)
+
+Repo read-only, unmodified. Block 1 of `/workspace/issue1.txt` is the Issue #1 body (the file's `NODES: 28` line + first `=`×100 rule are a dump header, not body text).
+
+**Extraction integrity:** the body block is valid UTF‑8 with **no mojibake**. A full codepoint scan of the body yields only `≠`, `→`, `—` as non-CJK/ASCII characters; no U+FFFD, no `??` sequences anywhere in the file. The `ルー` occurrences are ordinary katakana (`ループ` at body lines 84, 99, 158) — not corruption. Body tally: **127 `- [x]`, 22 `- [ ]`**.
+
+---
+
+## 1. Unchecked items (22, verbatim)
+
+| # | Section.item | Verbatim text |
+|---|---|---|
+| 1 | A‑3.5 | `- [ ] Windows完全オフライン・管理者権限不要・Registry/PATH変更なしを維持` |
+| 2 | A‑4.1 | `- [ ] 実ゲーム投入時に低負担でTarget/Profile生成・選択可能` |
+| 3 | B‑1.1 | `- [ ] Godot / Unity / Unreal / Java / Node / Python / C / EXE の実ゲーム適用をProfile/Adapter方式で維持` |
+| 4 | B‑1.2 | `- [ ] Black-boxゲームは Screenshot / Window / Input / OCR / Log を用いて検証` |
+| 5 | B‑1.4 | `- [ ] Bridgeなしでも最低限のPlayable QAが成立すること` |
+| 6 | B‑4.3 | `- [ ] 保存後→変更→再起動→復元を検証` |
+| 7 | B‑4.4 | `- [ ] 壊れたStorage/旧Version/Migration/複数Slot/Autosaveを対応可能な範囲で検査` |
+| 8 | B‑5.1 | `- [ ] 初見30秒評価Evidence` |
+| 9 | B‑5.2 | `- [ ] 5分行動→反応→判断→結果ループEvidence` |
+| 10 | B‑5.3 | `- [ ] 操作、移動、Camera、Menu、Combat/UI/Sound/Tutorial/Retry/SaveLoad/Main Loop をProfile要求に応じ確認` |
+| 11 | C‑2.2 | `- [ ] Profile順序反転でもRequired結果が変化しない` |
+| 12 | C‑3.4 | `- [ ] ネット接続要求がないこと` |
+| 13 | C‑3.5 | `- [ ] Program Files / Registry / PATH恒久変更がないこと` |
+| 14 | D‑1.1 | `- [ ] ゲーム固有の事前知識なしで開始した評価を別Run/別Sessionとして保持` |
+| 15 | D‑1.3 | `- [ ] 初見30秒で目的・操作が読み取れるかEvidence化` |
+| 16 | D‑1.4 | `- [ ] 5分で継続理由/フィードバックループが存在するかEvidence化` |
+| 17 | D‑2.1 | `- [ ] ゲーム名/IP/無料条件に依存しない商品名説明テスト` |
+| 18 | D‑2.2 | `- [ ] 「何をするゲームか」をEvidenceから要約` |
+| 19 | D‑3.1 | `- [ ] RESULT/SUMMARY/HTML reportが技術者以外にも読める` |
+| 20 | G‑8 | `- [ ] 管理総本山Gate PASS` |
+| 21 | G‑9 | `- [ ] 営業総本山Gate PASS` |
+| 22 | G‑15 | `- [ ] Rollback可能` |
+
+---
+
+## 2. Classification table
+
+| Section.item | Verbatim (short) | Class | Decisive evidence | Rationale |
+|---|---|---|---|---|
+| A‑3.5 | Windows完全オフライン・管理者権限不要・Registry/PATH変更なし | **c** | `local_acceptance_observer.ps1:154-156` (`registry_full_write_audit=NOT_RUN`, `program_files_write_audit=NOT_RUN`, `fully_offline=NOT_RUN`); `LOCAL_OBSERVATION_LIMITS.md:13-14,19`; `phase3_run_evidence.py:279-292`; `run_series.py:16-27,223` | Admin token + PATH boundary fingerprints are measurable (a), but the observer states in-repo that full offline and Program Files/Registry write auditing **always stay NOT_RUN** — the claim cannot be certified by design. |
+| A‑4.1 | 低負担でTarget/Profile生成・選択 | **a** | `target_intake.py:46-69,138-150,153-199,202-220`; `TESTS/test_target_intake_cli.py:13-29` | `discover`/`starter`/`select` CLI is complete, unit-tested, returns `SELECTED_UNRUN`; only final-package/real-machine evidence missing. |
+| B‑1.1 | Godot/Unity/Unreal/Java/Node/Python/C/EXE をProfile/Adapter方式で | **a** | `adapters.py:7-28,76-84` (no engine branch); `tools.py:45-108`; `TESTS/test_issue1_generic_profile_matrix.py:68-87` | One Profile/Adapter contract covers all 8 families (matrix test). Only Godot has a real acceptance target — per-engine evidence missing, not code. |
+| B‑1.2 | Black-box: Screenshot/Window/Input/OCR/Log | **a** | `adapters.py:29-62`; `windows.py:88-137` (SendInput + BitBlt capture); `ocr_backend.py`; `observations.py:26-44`; `windows_runner.py:309-310,323-339` | All five observation channels exist with provenance; bridge-less capability reported honestly (`internal_state:false`). |
+| B‑1.4 | Bridgeなしでも最低限のPlayable QA | **a** | `windows_runner.py:313,373,386-388`; `agents.py:150-160,203-212`; `SUPPLEMENTARY/blackbox/politics_profile.json` (no `bridge`); `acceptance_targets/supplementary_browser_lantern/run_acceptance.py` | Observational (screen-delta) learning + a real bridge-less playable target and runner exist. |
+| B‑4.3 | 保存後→変更→再起動→復元 | **a** | `storage_qa.py:289,292-378` (restart_restore at `:356-365`); `windows_runner.py:259-289` (real process restart `:278-281`); `contracts.py:36-46`; `TESTS/test_issue1_storage_lifecycle.py:17-18`; **but** `acceptance_targets/codegeas/profile.json:267` `"locations": []` | Engine + tests complete, but the real target declares **empty storage locations** → I reproduced `HARNESS_ERROR / STORAGE_NO_DECLARED_LOCATIONS`. Missing pieces are target data + real-machine evidence. |
+| B‑4.4 | 壊れたStorage/旧Version/Migration/複数Slot/Autosave | **a** | `storage_qa.py:289,366-373`; `windows_runner.py:242-250` (invalid_save = corrupt path, wired by `contracts.py:35`), `:251-258` (migration), `:266-269` (undeclared → NOT_RUN); `TESTS/test_issue1_storage_lifecycle.py:20-27` | All 5 features implemented and unit-tested; corrupt-save is already REQUIRED for codegeas via `save.invalid_expected`; the other four are NOT_RUN only because no target declares them. |
+| B‑5.1 | 初見30秒評価Evidence | **c** | `windows_runner.py:417` → `self.verdict(case+'.30s','INCONCLUSIVE' if elapsed>=30 else 'NOT_RUN','READABILITY_REQUIRES_VALIDATED_PROXY',...,gate='OPTIONAL')`; `phase3_run_evidence.py:344-355`; `sales_evaluator.py:374-379` | The 30-second verdict is **hard-coded to INCONCLUSIVE/NOT_RUN**; the observer emits “recording exists, but no review outcome was produced”. No reviewer can assert it. |
+| B‑5.2 | 5分行動→反応→判断→結果ループEvidence | **a** | `windows_runner.py:418-419` (`ok = elapsed>=300 and changed>=10` → PASS, claim “Automated proxy cycles only”); `agents.py:203-212` | Production-side action/reaction cycle evidence can PASS (needs ≥300 s + ≥10 state-changing actions). Only the *Sales* reading of it is (c) — see D‑1.4. |
+| B‑5.3 | 操作/移動/Camera/Menu/Combat/UI/Sound/Tutorial/Retry/SaveLoad/Main Loop | **a** | `contracts.py:24-75`; `windows_runner.py:408-414`; `observations.py:9-17`; `TESTS/test_issue1_generic_profile_matrix.py:18-28,89-96` (“profile data, not CORE hardcoded categories”) | The Profile-driven mechanism exists and is explicitly tested as profile data. Real targets simply declare no such expectations (`codegeas/profile.json:348` `"tests": []`). |
+| C‑2.2 | Profile順序反転でもRequired結果が変化しない | **a** | `TESTS/test_issue1_order_and_bindings.py:22-31` (AB vs BA full-struct equality: required case list, identity, baseline, runtime cache, latest binding, tool statuses); `contracts.py:24-75` | Plan/binding/baseline/runtime order-independence is automated. Caveat: it compares frozen structures, not two real games' executed PASS/FAIL rows. |
+| C‑3.4 | ネット接続要求がないこと | **c** | `phase3_run_evidence.py:279-285` (offline only if `up_adapter_count==0`); `run_series.py:87-105`; `local_acceptance_observer.ps1:64,156`; `LOCAL_OBSERVATION_LIMITS.md:14,19` (“Full offline always remains NOT_RUN”) | Only a passive adapter count is observed; the project's own observer declares full offline NOT_RUN by design. |
+| C‑3.5 | Program Files / Registry / PATH恒久変更がないこと | **c** | `run_series.py:16-27,223` (`'registry_write_audit':'NOT_RUN'`); `local_acceptance_observer.ps1:154-155`; `LOCAL_OBSERVATION_LIMITS.md:13,19`; grep: **no reference to “Program Files” anywhere in `source/` or `acceptance_targets/`** | Only the two `Environment` root PATH values are fingerprinted. Program Files and full Registry auditing are explicitly NOT_RUN. |
+| D‑1.1 | 事前知識なしで開始した評価を別Run/別Sessionで保持 | **a** (scoped) | `phase3_run_evidence.py:358-379` (session_id, `cold_start`, provenance `fresh_extraction_start_qa`); `sales_evaluator.py:260-283,486-526`; `TESTS/test_phase3_integrated.py:241-256` | A separate Session record with cold-start provenance is emitted and gated. Caveat: `session_id == run_id` (same Run) and “no prior knowledge” is *inferred* from the fresh-extraction marker, not observed. |
+| D‑1.3 | 初見30秒で目的・操作が読み取れるか | **c** | same as B‑5.1 (`windows_runner.py:417`, `sales_evaluator.py:374-379`) | Same hard-coded INCONCLUSIVE; the readability gate can never produce a positive verdict. |
+| D‑1.4 | 5分で継続理由/フィードバックループ | **c** | `phase3_run_evidence.py:344-355`; `sales_evaluator.py:348-379` (phase needs explicit status or findings) | The 5-minute phase record carries a video but no verdict → `sales.first_5_minutes` = NOT_RUN (SALES_OBSERVATION_INCOMPLETE). |
+| D‑2.1 | ゲーム名/IP/無料条件に依存しない商品名説明 | **a** | `audience_summary.py:42-92` (`excluded_metadata: game_id,game_name,title,ip,license,price,free`; `brand_price_independent:True`); `sales_evaluator.py:555-579`; `phase3_run_evidence.py:404-419` | Implemented and PASS-able once `player_review_packet.json` exists (`windows_runner.py:659-665`). Needs a real run. |
+| D‑2.2 | 「何をするゲームか」をEvidenceから要約 | **a** | `audience_summary.py:55-59`; `sales_evaluator.py:581-592` | Same path as D‑2.1; `sales.what_game_summary` can PASS. |
+| D‑3.1 | RESULT/SUMMARY/HTML reportが技術者以外に読める | **a** (artifact) / **c** (gate) | `audience_summary.py:95-119` → `AUDIENCE_SUMMARY.txt`; `phase3_run_evidence.py:409-412`; `common.py:148-177`; `hq_report.py:60-127`; gate `sales_evaluator.py:594-619` | Plain-language artifact exists and is emitted; but the certifying readability gate `sales.nontechnical_report` requires `sales.communication_readability == PASS`, which the CORE never produces → NOT_RUN. |
+| G‑8 | 管理総本山Gate PASS | **c** | `phase3_run_evidence.py:252-262` (reproducibility scope fixed to `same_run_seed_replay`) vs `management_evaluator.py:116-119,427-434` (REQUIRED + forced INCONCLUSIVE) | The only producer of `management.reproducibility` emits a scope the evaluator explicitly refuses to accept ⇒ domain can never be PASS from CORE evidence. |
+| G‑9 | 営業総本山Gate PASS | **c** | `phase3_run_evidence.py:389-391` (`reviewer.kind='model_proxy'`, `human_test_performed=False`); `sales_evaluator.py:637-642` (REQUIRED → NOT_RUN); `:531-534` | `sales.human_test` is a REQUIRED gate that a model proxy can never satisfy; two phase gates have no verdict source. |
+| G‑15 | Rollback可能 | **a** | `開発版/rollback/RESTORE_PREDECESSOR.ps1:1-3,132-137`; `RUN_LOCAL_COMPLETION.ps1:852-891`; `.github/workflows/rollback-predecessor-qualification.yml:39-51` | Executable predecessor-restore entrypoint + CI job + local step 6/7 exist; never executed on a real machine. Caveat: restores the **preserved predecessor Candidate**, not `安定版/` (which contains only `README.md`). |
+
+**Counts:** (a) = 13 · (b) = **0** · (c) = 8 · (d) = 0 · (a/c) = 1.
+
+---
+
+## MANAGEMENT GATE
+
+### What it measures
+`evaluate_management()` (`management_evaluator.py:546-736`) reads one bundle (`management_evidence.json`, produced only by `phase3_run_evidence.build_management_evidence`, `phase3_run_evidence.py:311-341`) and emits **REQUIRED** rows; the domain is PASS only if every REQUIRED row is PASS (`management_evaluator.py:161-174`).
+
+REQUIRED rows = `management.evidence_kind` + `management.measurement_coverage` + the REQUIRED subset of `SIGNAL_GATES` (`management_evaluator.py:110-155,289-307`):
+`reproducibility`(true) · `fresh_run`(true) · `target_generation_integrity` · `one_click`(true) · `manual_intervention`(false) · `no_admin`(true) · `offline`(true) · `integrity`(true) · `residual_risk`(present, no blocker).
+The six numeric measurements (`cpu_percent, ram_mb, handles, runtime_seconds, disk_bytes, evidence_bytes`) are **ADVISORY** unless a threshold is configured, in which case they become REQUIRED and enforceable (`management_evaluator.py:581-583`); with no threshold they stay INCONCLUSIVE-but-advisory (`:340-347`) — the project deliberately invents no limits.
+
+### What it requires to emit PASS
+1. `evidence_kind == 'real_game'` → identities certifying a real target **and** `run_mode=='target'` **and** a PASS `*.launch` row (`phase3_run_evidence.py:313-323,118-122`).
+2. `measurement_coverage` PASS → all six metrics present (`management_evaluator.py:102-104,598-614`); `cpu_percent` needs ≥2 samples per pid with `cpu_seconds` (`phase3_run_evidence.py:62-83`; sampled at `windows.py:152`, `windows_runner.py:358`).
+3. `reproducibility == true` → the **only** producer derives it from `*.seed_replay` rows and stamps `scope:'same_run_seed_replay'` (`phase3_run_evidence.py:252-262`); the evaluator then forces `INCONCLUSIVE / MANAGEMENT_REPRODUCIBILITY_SCOPE_LIMITED` (`management_evaluator.py:427-434`). Repo test asserts this: `TESTS/test_management_hq.py:469-484`.
+4. `fresh_run` → `FULLAUTOQA_FRESH_EXTRACTION=1` + id (`phase3_run_evidence.py:264-265,320`; set by `source/START_QA.cmd:4-9`).
+5. `one_click` → `FULLAUTOQA_START_QA=1` **and** `reproduction.json` exists (`phase3_run_evidence.py:266-270`; written at `windows_runner.py:653`).
+6. `manual_intervention == false` → requires `FULLAUTOQA_AUTOMATED_CONTROLLER=1` (`phase3_run_evidence.py:272-277`; set only by the series controller, `acceptance_targets/run_series.py:182`).
+7. `no_admin == true` → `IsUserAnAdmin()==False` on Windows (`phase3_run_evidence.py:287-292`; the local runner refuses elevated sessions, `RUN_LOCAL_COMPLETION.ps1:657-660`).
+8. `offline == true` → PowerShell `Get-NetAdapter` snapshot returns MEASURED with **zero** Up non-loopback-IP adapters (`phase3_run_evidence.py:125-192,279-285`). Repo test: `TESTS/test_phase3_integrated.py:164-182` (adapter Up ⇒ no offline signal).
+9. `integrity == true` → `preflight.core` PASS and every PASS row's evidence file exists (`phase3_run_evidence.py:218-242,294-296`).
+10. `target_generation_integrity` PASS → bundle generation/fingerprint must match the frozen identity (`management_evaluator.py:482-540`; frozen identity injected at `coordinator.py:391-397`).
+11. `residual_risk` with no blocker → the producer lists **every REQUIRED non-PASS row** as `severity:'blocker'` (`phase3_run_evidence.py:298-307`), which `_blocking_residual_risk` turns into FAIL (`management_evaluator.py:402-414`).
+
+### Can a standard, non-admin, offline Windows run of the real game satisfy it?
+**No — the gate cannot turn PASS by design, independent of the machine.**
+
+I executed the real producer + evaluator on a faithful real-target bundle (non-admin, fresh extraction, controller marker, all measurements present, `*.launch` PASS, `*.seed_replay` PASS):
+
+* without a `.seed_replay` row → `NOT_RUN / MANAGEMENT_SIGNAL_ABSENT` (`management.reproducibility` absent — and **neither** acceptance target declares `verify_seed_replay`: `codegeas/profile.json` and `politicstrasport/profile.json`; only `source/PROFILES/fixture_procedural.json:312` does).
+* with a `.seed_replay` row → `NOT_RUN / MANAGEMENT_IDENTITY_UNAVAILABLE`, and `management.reproducibility = INCONCLUSIVE / MANAGEMENT_REPRODUCIBILITY_SCOPE_LIMITED`.
+
+Every other observation (evidence kind, measurements, fresh_run, one_click, manual_intervention, no_admin, integrity, target generation) **is** producible by a standard-user offline run; `offline` is producible **only** if the machine has literally zero Up non-loopback-IP interfaces (a wired NIC left enabled with an APIPA address counts as Up ⇒ signal absent). The single structural blocker is #3 — the producer can only emit a scope the evaluator rejects. The evaluator itself *can* PASS (`management_evaluator.py:435-440`; `TESTS/test_management_hq.py:440-445` asserts `report.status=='PASS'` with `reproducibility: True` unscoped) — so the gap is on the **observer/producer** side, not in the evaluator.
+
+---
+
+## SALES GATE
+
+### What it measures
+`evaluate_sales()` (`sales_evaluator.py:471-714`) reads `sales_evidence.json` (produced only by `phase3_run_evidence.build_sales_evidence`, `phase3_run_evidence.py:358-396`) and evaluates 10 REQUIRED rows: `cold_start_session`, `cold_start_provenance`, the four phase gates `first_30_seconds / first_5_minutes / product_shelf_test / communication_readability` (`sales_evaluator.py:69-80`), `product_description_independent`, `what_game_summary`, `nontechnical_report`, `human_test`.
+
+### What it requires to emit PASS
+* A session flagged `cold_start` with ≥1 review phase and recorded provenance (`sales_evaluator.py:486-526`).
+* **Each** phase row must carry an explicit verdict **or** a findings list with no blocking finding (`sales_evaluator.py:348-373`); a phase record with neither → `NOT_RUN / SALES_OBSERVATION_INCOMPLETE` (`:374-379`).
+* `product_description_independent` / `what_game_summary` PASS only when the audience summary is `GENERATED` with non-empty, name/IP/price-blind descriptions (`sales_evaluator.py:555-592`; `audience_summary.py:42-92`).
+* `nontechnical_report` PASS requires `communication_readability == PASS` (`sales_evaluator.py:594-619`).
+* `human_test` PASS requires `reviewer.kind == 'human'` (`sales_evaluator.py:629-656`); `model_proxy` → REQUIRED NOT_RUN (`sales_evaluator.py:637-642`).
+
+### Can a standard, non-admin, offline Windows run of the real game satisfy it?
+**No.** I ran the real CORE producer + evaluator on a faithful bundle (fresh extraction, 305 s of samples, video present):
+
+```
+sales.cold_start_session        PASS
+sales.cold_start_provenance     PASS
+sales.first_30_seconds          NOT_RUN  SALES_OBSERVATION_INCOMPLETE
+sales.first_5_minutes           NOT_RUN  SALES_OBSERVATION_INCOMPLETE
+sales.product_shelf_test        NOT_RUN  SALES_PHASE_EVIDENCE_ABSENT
+sales.communication_readability NOT_RUN  SALES_PHASE_EVIDENCE_ABSENT
+sales.product_description_independent  NOT_RUN  SALES_AUDIENCE_SUMMARY_ABSENT*
+sales.what_game_summary         NOT_RUN  SALES_AUDIENCE_SUMMARY_ABSENT*
+sales.nontechnical_report       NOT_RUN  SALES_READABILITY_REVIEW_REQUIRED
+sales.human_test                NOT_RUN  SALES_MODEL_PROXY_IS_NOT_HUMAN_TEST
+=> domain NOT_RUN / SALES_OBSERVATION_INCOMPLETE
+```
+(*these two become PASS once `player_review_packet.json` exists — `windows_runner.py:659-665`.)
+
+Root cause, quoted: the only phase record the producer can emit is `phase3_run_evidence.py:344-355` — `{'observed': True, 'evidence': ['FULL_EVIDENCE/screen.mp4'], 'notes': 'recording exists, but no review outcome was produced; automated capture is not a comprehension, enjoyment, readability, or product-quality verdict'}`. And `phase3_run_evidence.py:389-391` hard-codes `'evidence_kind': 'model_proxy'`, `'human_test_performed': False`. The repo asserts this itself: `TESTS/test_phase3_integrated.py:213-240` (`test_sales_recording_is_observation_not_positive_review`) and `TESTS/test_sales_hq.py`. Historical real-run readback in-repo agrees: `.github/issue1_audit/sales/sales_read_after_session_02.json` → sales `NOT_RUN / SALES_OBSERVATION_INCOMPLETE`, all four phases `NOT_RUN`.
+
+The only escape hatch is a **human-authored** bundle: `hq_evidence._file_bundles` also scans `<evidence_root>/evidence/sales*.json` (`hq_evidence.py` `_file_bundles`, `SALES_EVIDENCE_FILES` at `sales_evaluator.py:59-66`) and later bundles win (`merge_bundles`). No CORE code, tool, workflow or documented procedure produces such a file — so it is an unimplemented human-review workflow, not a missing configuration.
+
+---
+
+## HIGH-CONFIDENCE SOURCE GAPS
+
+Only items that are genuinely **(b)** or **(c)**. None is (b) — no listed item lacks an implementation entirely.
+
+**G1. `management.reproducibility` has no producer that can ever yield PASS (c) — blocks G‑8 管理総本山Gate PASS.**
+Missing capability: an *independent-run* reproducibility observation (same target, separate extraction/run, compared) — as opposed to the intra-run seed replay that exists today. The only producer stamps `scope:'same_run_seed_replay'` (`phase3_run_evidence.py:252-262`) and the evaluator rejects exactly that scope (`management_evaluator.py:427-434`). Neither real acceptance target even declares `verify_seed_replay`, so today the signal is simply absent.
+Owner: `開発版/source/CORE/phase3_run_evidence.py::_signals` (producer) — with `development_acceptance_targets/*/profile.json` needing a `verify_seed_replay` scenario, and `management_evaluator.py` needing to accept a broader scope (or the producer needing to emit one).
+
+**G2. No reviewer/observer for the 30-second and 5-minute player phases (c) — blocks B‑5.1, D‑1.3, D‑1.4 and the Sales readability chain (D‑3.1).**
+Missing capability: something that turns a recorded session (video/screenshots/state trace) into a **verdict or findings list** for the phase — the evaluator accepts nothing else (`sales_evaluator.py:348-379`). Today the producer deliberately refuses to produce one (`phase3_run_evidence.py:344-355`), and the production-side 30 s row is hard-coded `INCONCLUSIVE` (`windows_runner.py:417`).
+Owner: `phase3_run_evidence.py::_phase_evidence` + `windows_runner.py` `if s.get('evaluation')` block — i.e. a new observer/analyser (or a human-review intake) whose output the evaluator can consume as `status`/`findings`.
+
+**G3. `sales.human_test` is a REQUIRED gate with no non-automated source (c) — blocks G‑9 営業総本山Gate PASS.**
+Missing capability: a human-review intake (reviewer identity, session, per-phase findings) and a documented merge path into the run evidence. The producer is hard-wired to `model_proxy` (`phase3_run_evidence.py:389-391`) and the evaluator refuses to promote a proxy (`sales_evaluator.py:637-642`); `coordinator.py:239-247` even revokes any `human_test_performed` claim that the Sales readback contradicts.
+Owner: new human-review intake module (would feed `hq_evidence` via `extras.sales_evidence` or `evidence/sales_evidence.json`) + `sales_evaluator.py` phase contract.
+
+**G4. Offline / Registry / Program Files permanence cannot be certified (c) — blocks A‑3.5, C‑3.4, C‑3.5.**
+Missing capability: (i) continuous network isolation proof — the only observable is a passive adapter count and the project states “Full offline always remains NOT_RUN” (`local_acceptance_observer.ps1:64,156`; `LOCAL_OBSERVATION_LIMITS.md:14,19`); (ii) a Program Files write audit — no code anywhere references “Program Files” (`local_acceptance_observer.ps1:155` `status='NOT_RUN', reason='NOT_COLLECTED'`); (iii) a Registry write audit beyond the two `Environment` root values (`run_series.py:223` `registry_write_audit:'NOT_RUN'`).
+Owner: `開発版/local_acceptance_kit/local_acceptance_observer.ps1` (+ `phase3_run_evidence.py::_network_adapter_snapshot`).
+
+**G5. No engine-agnostic “product quality” observer (c) — relevant to D‑1.1 / D‑1.3 (and to the already-checked D‑2.3).**
+Missing capability: an observer that can judge “操作不能・意味不明・無反応・debug表示依存” and “目的・操作が読み取れるか” from observation alone. The codebase deliberately refuses: `phase3_run_evidence.py:344-355`, `windows_runner.py:417`, `agents.py:203-212` (no-reaction is counted as failure, not as a product finding).
+Owner: same as G2 (a product-level reviewer), plus `sales_evaluator.py` to accept its findings.
+
+### Notes / caveats
+- No item was classified **(d)**: every unchecked line maps onto a real mechanism; none is redundant.
+- One item is **(a)-scoped** and worth flagging explicitly: **B‑4.3** — the real target declares `restart_restore` as REQUIRED (`codegeas/profile.json:270-273`) but with `"locations": []` (`:267`); I reproduced `HARNESS_ERROR / STORAGE_NO_DECLARED_LOCATIONS`. Even a fully green real-machine run would fail this case until the target declares its save locations.
+- Source-suite state in this checkout: `python -m unittest discover -s 開発版/source/TESTS` → **475 tests, 42 errors + 1 failure**, all 43 in `test_campaigns.py` / `test_rework_v030.py` and caused by `開発版/source/VALIDATION_PROFILES/` being absent from the repository (`git ls-files` → 0 files) — an environment/checkout artifact, unrelated to the 22 items. The modules relevant to this audit pass cleanly: `TESTS.test_management_hq`, `test_sales_hq`, `test_issue1_storage_lifecycle`, `test_issue1_generic_profile_matrix`, `test_issue1_order_and_bindings`, `test_audience_summary` → **82 tests, 0 failures**; plus `test_phase3_integrated.py` (HQ/network/offline/sales-phase contracts).
+
+I have everything I need. Here is the audit.
+
+---
+
+# CI / Verification Layer Audit — `th060316-lgtm/fullautoQA`
+
+**Repo:** `/workspace/faqa` @ `main` = `17f6f9b` ("Merge pull request #28 from th060316-lgtm/work/issue25-real-machine-finalization-20261107")
+**Method:** read-only local inspection + `git` history + GitHub HTML (`github.com`, browser UA) + GitHub REST API (rate limit reset mid-audit; both were used).
+
+---
+
+## 1. Workflow inventory (12 workflows on `main`)
+
+`/workspace/faqa/.github/workflows/` contains exactly 12 files. A 13th exists **only on branch `download/local-final-acceptance`** (not `main`): `.github/workflows/download-updater-validation.yml` ("Lightweight updater validation").
+
+### 1.1 `target-a-preflight.yml` — "Frozen target A compatibility preflight"
+| | |
+|---|---|
+| Triggers | `workflow_dispatch`; `pull_request`→`main`, paths: `開発版/source/CORE/**`, `開発版/source/scripts/PREPARE_SOURCE.ps1`, `開発版/transfer/FullAutoQA_Recovery_Source_20261102.zip`, `開発版/transfer/TRANSFER_MANIFEST.json`, `開発版/acceptance_targets/politicstrasport/**`, `.github/workflows/target-a-preflight.yml`, `.gitattributes` (L3–13) |
+| Jobs | `inputs` (`ubuntu-latest`, L19); `preflight` (`windows-latest`, L38, 45 min) |
+| Shells | **all `shell: pwsh`** (L56, L76, L82). `inputs` uses `actions/github-script` (Node) |
+| Executes | `PREPARE_SOURCE.ps1` (L59, pwsh); `package_integrity.py` (L66); `PHASE3_REGEN_MANIFEST.ps1` (L69, in-process pwsh); `prepare_target.py` (L71); `run_target.py` (L78); **bundled** Source regression (L88) |
+| Triggered by | `PREPARE_SOURCE.ps1` ✅ · `RUN_LOCAL_COMPLETION.ps1` ❌ · `RESTORE_PREDECESSOR.ps1` ❌ |
+
+### 1.2 `source-overlay-selftest.yml` — "Source overlay Windows selftest"
+| | |
+|---|---|
+| Triggers | `workflow_dispatch`; `pull_request`→`main`, paths: `開発版/source/**`, transfer zip, `TRANSFER_MANIFEST.json`, workflow file (L3–10) |
+| Jobs | `inputs` (`ubuntu-latest`, L19); `diagnostic` (`windows-latest`, L46, 80 min) |
+| Shells | **all `shell: pwsh`** (L63, L68, L85, L90, L98) |
+| Executes | `PREPARE_SOURCE.ps1` (L65, pwsh); `package_integrity.py` (L77); `PHASE3_REGEN_MANIFEST.ps1` (L80); `probe_native_fixture_faults.py` (L87); `START_QA.cmd -SelfTest` (L93); **bundled** Source regression (L104) |
+| Triggered by | `PREPARE_SOURCE.ps1` ✅ (via `開発版/source/**`) · others ❌ |
+
+### 1.3 `rollback-predecessor-qualification.yml` — "Rollback predecessor qualification"
+| | |
+|---|---|
+| Triggers | `push`→`main` (paths: `開発版/complete_v033/**`, `TRANSFER_MANIFEST.json`, `開発版/rollback/RESTORE_PREDECESSOR.ps1`, workflow file) · `pull_request`→`main` (same paths) · `workflow_dispatch` (L4–18) |
+| Jobs | `qualify-v033-predecessor` (`windows-latest`, L29, 75 min) |
+| Shells | step shell is **`shell: pwsh`** (L40), **but L47 launches `…\WindowsPowerShell\v1.0\powershell.exe` = Windows PowerShell 5.1 as a child process** |
+| Executes | `RESTORE_PREDECESSOR.ps1` **under PS 5.1** (L47) → which itself launches `powershell.exe` for `JOIN_COMPLETE.ps1` (script L71–73) and runs `START_QA.cmd -SelfTest` (script L101) |
+| Triggered by | `RESTORE_PREDECESSOR.ps1` ✅ · others ❌ |
+
+### 1.4 `preserve-candidate-chunks.yml` — "Preserve existing Candidate chunks"
+Triggers: `pull_request` (paths: workflow file only) + `workflow_dispatch` (L3–6). Job `preserve` (`ubuntu-latest`, L12). Shell: **`shell: python`** (L22). Executes only Python (zip split/verify). No `.ps1`. Triggers on none of the three files.
+
+### 1.5 `phase3-windows-candidate-build.yml` — "Phase 3 Windows Candidate Build"
+| | |
+|---|---|
+| Triggers | `push`→`main` paths: `開発版/source/**`, `開発版/acceptance_targets/**`, `TRANSFER_MANIFEST.json`, workflow file · `workflow_dispatch` · `pull_request`→`main` paths: workflow file, `開発版/source/**`, `開発版/acceptance_targets/**`, transfer zip, `TRANSFER_MANIFEST.json` (L4–16) |
+| Jobs | `candidate-inputs` (`windows-latest`, L28, github-script); `build-candidate` (`windows-latest`, L64, 120 min, **`if: … && github.event_name != 'pull_request'` → skipped on PR**, L63); `fixture-probe` (`windows-latest`, L256) |
+| Shells | `shell: pwsh` at L82, L118, L138, L143, L162, L188, L205, L264, L275; **`shell: powershell` (PS 5.1) at L128 — parse-only** |
+| Executes | `PREPARE_SOURCE.ps1` (L89, pwsh); `python -B -m compileall` + `python -B -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v` (L120–123, **host python**); PS 5.1 **parse** of every `*.ps1` under `$SOURCE_ROOT` (L131–135); `JOIN_COMPLETE.ps1` via `powershell.exe` (L147); `PHASE3_OVERLAY_REBUILD.ps1` via `powershell.exe` (L169); `package_integrity.py` (L198, L271); `START_QA.cmd -SelfTest` (L278) |
+| Triggered by | `PREPARE_SOURCE.ps1` ✅ · others ❌ |
+
+### 1.6 `phase3-real-game.yml` — "Phase 3 Selected Real Game E2E"
+Triggers: `workflow_dispatch`; `pull_request`→`main` paths: **workflow file only** (L3–7). Job `real-game` (`windows-latest`, L17). Shells: **all `shell: pwsh`** (L76, L109, L116). Executes: candidate locate (github-script), `package_integrity.py`, `git ls-files` byte-compare vs Candidate (L100–105), `codegeas/test_driver.py` (L111), `prepare_target.py` (L113), `run_target.py` (L118). **No `.ps1` executed.** Triggers on none of the three files.
+
+### 1.7 `phase2-source-tests.yml` — "Phase 2 Source Tests"
+| | |
+|---|---|
+| Triggers | `push`→`main` (**no paths filter**), `workflow_dispatch`, `pull_request`→`main` (**no paths filter**) — L4–10 |
+| Jobs | `source-tests`, matrix `os: [windows-latest, ubuntu-latest]` (L23), `runs-on: ${{ matrix.os }}` (L24) |
+| Shells | `shell: pwsh` at L37, L45, L49, L66; **`shell: powershell` (PS 5.1) at L55**, guarded `if: runner.os == 'Windows'` (L54) → **parse-only** of `*.ps1` under `$SOURCE_ROOT` and `$ACCEPTANCE_ROOT` (L58–62) |
+| Executes | `PREPARE_SOURCE.ps1` (L40, pwsh); `python -m compileall` (L46); `python -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v` (L50); `test*.py` acceptance helpers (L68–70) |
+| Triggered by | **all three** ✅ (no paths filter) |
+
+### 1.8 `local-completion-runner-syntax.yml` — "Local completion runner syntax"
+| | |
+|---|---|
+| Triggers | `pull_request`→`main` paths: `RUN_LOCAL_COMPLETION.ps1`, workflow file; `push`→`main` same paths (L3–13) |
+| Jobs | `parse` (`windows-latest`, L20) |
+| Shells | **all four steps `shell: powershell` (PS 5.1)** — L29, L37, L42, L47 |
+| Executes | PS 5.1 **parse** of `RUN_LOCAL_COMPLETION.ps1` (L33); then **only** the three self-test modes, each as a PS 5.1 child: `-NativeProcessContractTest` (L39), `-EvidenceExportContractTest` (L44), `-RepositoryDiscoveryContractTest` (L49). `RUN_LOCAL_COMPLETION.cmd` is checked out (L26) but **never executed** |
+| Triggered by | `RUN_LOCAL_COMPLETION.ps1` ✅ · others ❌ |
+
+### 1.9 `issue1-source-substrate.yml` — "Issue 1 source substrate preservation"
+`pull_request`→`main`, paths: workflow file + transfer zip + `TRANSFER_MANIFEST.json` (L3–9). Job `preserve-source-substrate` (`ubuntu-latest`, L14). Shell: **default** (bash on ubuntu) at L23–37. Python heredoc verifying the recovery zip git blob + manifest binding. Triggers on none of the three files.
+
+### 1.10 `final-aba-series.yml` — "Frozen final A-B-A series"
+Triggers: `push`→`main` paths `開発版/source/**`, `開発版/acceptance_targets/**`, workflow file; `workflow_dispatch`; `pull_request`→`main` (**no paths filter**, L7–9) (L3–9). Jobs: `candidate` (`ubuntu-latest`, L19, **`if: github.event_name != 'pull_request'`**, L18); `final-series` (`windows-latest`, L55); `offline-delivery` (`ubuntu-latest`, L142). Shells: `shell: pwsh` L71, L91, L96; **`shell: bash` L156** (ubuntu). Executes: `ACCEPTANCE/run_series.py` = **the PoliticsTrasport→codegeas→PoliticsTrasport A-B-A series** (L93, bundled python), `split_candidate.py` (L98). **No `.ps1` executed.** Triggered by `PREPARE_SOURCE.ps1` ✅ (push) · others ❌.
+
+### 1.11 `evidence-readback.yml` — "Evidence archive readback"
+`pull_request`→`main`, paths: workflow file + `.github/evidence_readback_request.json` (L3–5). Jobs `inputs` + `audit` (`ubuntu-latest`). Shell: **`shell: bash`** (L49). Reads artifacts only. Triggers on none of the three files.
+
+### 1.12 `browser-offline-acceptance.yml` — "Supplementary offline browser acceptance"
+`push`→**branch `work/issue1-browser-offline-20261104`** (L4 — *not* `main`) + `workflow_dispatch`. Job `browser`, matrix `[windows-latest, ubuntu-latest]` (L13). Shell: **`shell: pwsh`** (L23, L45). Runs `unittest discover -s '開発版/source/TESTS' -p test_browser_cdp.py` (L40) and `-p test_phase2_two_candidate_acceptance.py` (L42) — 2 modules only, **against the checked-out tree, not the reconstructed source**. Triggers on none of the three files on `main`.
+
+### 1.13 Shell summary
+| Shell | Where |
+|---|---|
+| `shell: powershell` (**PS 5.1**) | `phase2-source-tests.yml:55` (parse-only) · `phase3-windows-candidate-build.yml:128` (parse-only) · `local-completion-runner-syntax.yml:29,37,42,47` |
+| `shell: pwsh` (**PS 7**) | every other PowerShell step on Windows |
+| `shell: bash` | `evidence-readback.yml:49`, `final-aba-series.yml:156` (both ubuntu) |
+| `shell: python` | `preserve-candidate-chunks.yml:22` |
+| default (bash) | `issue1-source-substrate.yml:23` |
+| PS 5.1 launched as a **child process** | `local-completion-runner-syntax.yml:39,44,49` · `phase3-windows-candidate-build.yml:147,169` · `rollback-predecessor-qualification.yml:47` |
+
+---
+
+## 2. The four precise questions
+
+### 2.a) Is `RUN_LOCAL_COMPLETION.ps1` ever executed end-to-end in hosted CI?
+
+**NO.** It is never executed end-to-end. It is only (a) **parsed** and (b) run in its three **self-test** modes.
+
+* The main flow lives behind the dispatch block `RUN_LOCAL_COMPLETION.ps1:641-652`:
+  ```
+  641: if ($NativeProcessContractTest)      { Invoke-NativeProcessContractTest;      exit 0 }
+  645: if ($EvidenceExportContractTest)      { Invoke-EvidenceExportContractTest;      exit 0 }
+  649: if ($RepositoryDiscoveryContractTest) { Invoke-RepositoryDiscoveryContractTest; exit 0 }
+  654: try {  <-- main flow begins  ```
+  So the real flow (donor JOIN → `TRANSFER_MANIFEST` → `PREPARE_SOURCE` → Candidate build → Source regression → selftest → A-B-A → rollback → environment readback, L693–L900) is **unreachable in CI**.
+* Hosted CI invokes **only** the three self-test modes: `local-completion-runner-syntax.yml:39,44,49`, each as `powershell.exe -File RUN_LOCAL_COMPLETION.ps1 -<Mode>`.
+* The only other CI touch is the PS 5.1 **parse** step, `local-completion-runner-syntax.yml:33`.
+* `RUN_LOCAL_COMPLETION.cmd` (the real-machine entrypoint, `RUN_LOCAL_COMPLETION.cmd:4` → `powershell.exe … -RequireOffline`) is **checked out but never executed** by any workflow.
+
+### 2.b) Is `開発版/rollback/RESTORE_PREDECESSOR.ps1` ever executed in hosted CI?
+
+**YES — under Windows PowerShell 5.1.** `rollback-predecessor-qualification.yml:47`:
+```
+& "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File $script -RepositoryRoot $PWD -PredecessorSet $predecessor -Destination $destination -EvidenceDirectory $evidence -SelfTest
+```
+The step's own shell is `pwsh` (L40) but the script runs in a **PS 5.1 child**. The script itself then launches `powershell.exe` again for `JOIN_COMPLETE.ps1` (script L71–73) and runs `START_QA.cmd -SelfTest` (script L101).
+
+**Two caveats that matter for §3:**
+1. `-PredecessorSet` **is** passed → the script's `開発版` literal branch (`RESTORE_PREDECESSOR.ps1:51-53`) is **skipped**. The literal defect is never exercised.
+2. The workflow's sparse-checkout is `開発版/complete_v033` + `開発版/rollback` only (`rollback-predecessor-qualification.yml:34-37`) — `開発版/transfer` is **not** checked out, so the `TRANSFER_MANIFEST_MISSING` branch could never succeed there anyway.
+
+### 2.c) Is `開発版/source/scripts/PREPARE_SOURCE.ps1` ever executed in hosted CI?
+
+**YES — 4 times, always under `shell: pwsh` (PowerShell 7), never under PS 5.1:**
+
+| Workflow | Line | Shell decl. | OS |
+|---|---|---|---|
+| `phase2-source-tests.yml:40` | pwsh (L37) | windows-latest **and** ubuntu-latest |
+| `phase3-windows-candidate-build.yml:89` | pwsh (L82) | windows-latest (push only) |
+| `source-overlay-selftest.yml:65` | pwsh (L63) | windows-latest (PR only) |
+| `target-a-preflight.yml:59` | pwsh (L56) | windows-latest (PR only) |
+
+In all four, `-RecoveryArchive` is **not** passed, so the script's `開発版` literal branch (`PREPARE_SOURCE.ps1:40-41`) **is** taken — but under PowerShell 7, whose default encoding is UTF-8, so it resolves correctly. The defect is latent, not active, in hosted CI.
+
+### 2.d) Is the Python suite under `開発版/source/TESTS/` executed in hosted CI, and on which OSes?
+
+**YES.** Full-suite executions:
+
+| Workflow | Command | OSes | Trigger |
+|---|---|---|---|
+| `phase2-source-tests.yml:50` | `python -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v` | **windows-latest + ubuntu-latest** | every push/PR (no paths filter) |
+| `phase3-windows-candidate-build.yml:122` | `python -B -m unittest discover -s "$env:SOURCE_ROOT/TESTS" -v` | windows-latest | push to `main` |
+| `source-overlay-selftest.yml:104` | `& (Join-Path $env:FRESH_ROOT 'RUNTIME/python/python.exe') -B -E -s -m unittest discover -s (Join-Path $env:FRESH_ROOT 'TESTS') -v` | windows-latest | PR only |
+| `target-a-preflight.yml:88` | `& "$env:BUNDLED_PYTHON" -B -E -s -m unittest discover -s (Join-Path $env:FRESH_ROOT 'TESTS') -v` | windows-latest | PR only |
+| `browser-offline-acceptance.yml:40,42` | `unittest discover -s '開発版/source/TESTS' -p test_browser_cdp.py` / `-p test_phase2_two_candidate_acceptance.py` | windows-latest + ubuntu-latest | push to `work/issue1-browser-offline-20261104` only — **2 modules, not the suite** |
+
+**Is it the same command the real machine runs for "bundled Source regression"?** — **The real machine's command is `RUN_LOCAL_COMPLETION.ps1:796-797`:**
+```
+796: $sourceArgs=@('-B','-E','-s','-m','unittest','discover','-s',(Join-Path $SelftestRoot 'TESTS'),'-v')
+797: $sourceRun=Invoke-NativeLogged -FilePath $bundledPython -Arguments $sourceArgs -WorkingDirectory $SelftestRoot -LogPath …
+```
+where `$bundledPython` = `<freshly extracted Candidate>/RUNTIME/python/python.exe` and `$SelftestRoot/TESTS` = the **Candidate's** TESTS.
+
+* **Same form** → `target-a-preflight.yml:88` and `source-overlay-selftest.yml:104` (bundled python, `-B -E -s`, `discover -s <root>/TESTS -v`). **But both are PR-only / manual-dispatch**, and the bundled python comes from a *preserved old candidate* (artifact `run-id: 41636608324`) overlaid with current Source, not from a candidate built from the pushed commit.
+* **Different** → `phase2-source-tests.yml:50` and `phase3-windows-candidate-build.yml:122` use the **host** `python` (no `-E -s`; `-B` only in one) and run the **prepared source** (`$SOURCE_ROOT`), not the Candidate's bundled TESTS.
+* **Net:** on a **push to `main`**, no hosted workflow runs the bundled Source regression against the Candidate built from that push. The two that do are PR-only.
+* One further divergence: the hosted bundled regressions prepend the bundled FFmpeg directory to `PATH` (`target-a-preflight.yml:84-87`, `source-overlay-selftest.yml:100-103`); the real machine's `RUN_LOCAL_COMPLETION.ps1` does **not** (no ffmpeg/PATH manipulation anywhere in the file). The hosted variant is a strict superset of the real one there.
+
+---
+
+## 3. The defect hypothesis — **CONFIRMED (mechanism), with one correction**
+
+### (i) Exact byte / BOM status of the three files
+
+| File | Size | First bytes | UTF-8 BOM | UTF-8 decodable | Non-ASCII chars |
+|---|---|---|---|---|---|
+| `RUN_LOCAL_COMPLETION.ps1` | 46 822 | `23 20 46 75 6c 6c 41 75 74 6f 51 41 20 6c 6f 63` (`# FullAutoQA lo…`) | **NO** | yes | **18** (6 × `開発版`) |
+| `開発版/rollback/RESTORE_PREDECESSOR.ps1` | 6 803 | `23 20 52 65 73 74 6f 72 65 20 74 68 6520 70 72` (`# Restore the pr…`) | **NO** | yes | **3** (1 × `開発版`) |
+| `開発版/source/scripts/PREPARE_SOURCE.ps1` | 4 038 | `23 20 52 65 63 6f 6e 73 74 72 75 63 74 20 74 68` (`# Reconstruct th…`) | **NO** | yes | **3** (1 × `開発版`) |
+
+**Repo-wide scan of all 11 `.ps1` files: 0 have a BOM. Exactly 3 contain non-ASCII — the three named in the hypothesis.** The other 8 (`BOOTSTRAP.ps1`, `PHASE3_OVERLAY_REBUILD.ps1`, `PHASE3_REGEN_MANIFEST.ps1`, `JOIN_COMPLETE.ps1`, `APPLY_REWORK.ps1`, `launch_final_series.ps1` ×2, `local_acceptance_observer.ps1`) are pure ASCII and therefore immune.
+
+### (ii) Exact lines where the literals appear / are read
+
+`RUN_LOCAL_COMPLETION.ps1` (6 occurrences, all of `開発版`):
+```
+425:  if (-not $live.Contains('開発版/transfer/TRANSFER_MANIFEST.json') -or      ← self-test needle
+693:  $transferManifestPath=Resolve-RepositoryRelativePath -Root $RepoRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
+694:  if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
+722:  $prepare = … -Relative '開発版/source/scripts/PREPARE_SOURCE.ps1'
+723:  $rebuildDeclared = … -Relative '開発版/source/scripts/PHASE3_OVERLAY_REBUILD.ps1'
+744:  $plan = … -Relative '開発版/acceptance_targets/FINAL_SERIES_PLAN.json'
+853:  $rollbackScript = … -Relative '開発版/rollback/RESTORE_PREDECESSOR.ps1'
+```
+`開発版/rollback/RESTORE_PREDECESSOR.ps1`:
+```
+51:  if ([string]::IsNullOrWhiteSpace($PredecessorSet)) {     ← only when -PredecessorSet is ABSENT
+52:    $transferPath=Resolve-RepositoryRelativePath -Root $RepositoryRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
+53:    if (-not (Test-Path -LiteralPath $transferPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
+```
+`開発版/source/scripts/PREPARE_SOURCE.ps1`:
+```
+39:  if ([string]::IsNullOrWhiteSpace($RecoveryArchive)) {     ← only when -RecoveryArchive is ABSENT
+40:    $transferManifestPath=Resolve-RepositoryRelativePath -Root $RepositoryRoot -Relative '開発版/transfer/TRANSFER_MANIFEST.json'
+41:    if (-not (Test-Path -LiteralPath $transferManifestPath -PathType Leaf)) { throw 'TRANSFER_MANIFEST_MISSING' }
+```
+
+### (iii) The `Get-Content` asymmetry — **CONFIRMED exactly as hypothesised**
+
+* Self-test read, **NO `-Encoding`** → inherits PS 5.1 `Default` = ANSI code page:
+  ```
+  404:  $source=Get-Content -LiteralPath $PSCommandPath -Raw
+  408:  $normalizedSource=$source.Replace("`r`n","`n")
+  412:  $live=$normalizedSource.Substring($mainIndex)
+  425:  if (-not $live.Contains('开发版/transfer/TRANSFER_MANIFEST.json') …
+  ```
+* Manifest read, **DOES use `-Encoding UTF8`** (correct):
+  ```
+  695:  $transfer=Get-Content -LiteralPath $transferManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  ```
+  (same pattern in `PREPARE_SOURCE.ps1:42` and `RESTORE_PREDECESSOR.ps1:54`)
+
+**Consequence:** under Windows PowerShell 5.1 the *script text* is decoded with the ANSI code page, so **both** sides of the `.Contains()` comparison at line 425 are the same mojibake string → the assertion is **vacuous**; it can never fail. Meanwhile the *live* path built at line 693 from the same mojibake literal points at a non-existent directory → `Test-Path` fails → `TRANSFER_MANIFEST_MISSING`.
+
+This is not folklore; it is documented Microsoft behaviour. `about_Character_Encoding` (powershell-5.1 view):
+> "Creating PowerShell scripts on a Unix-like platform or using a cross-platform editor on Windows, such as Visual Studio Code, results in a file encoded using `UTF8NoBOM`. These files work fine in PowerShell, but may break in Windows PowerShell if the file contains non-Ascii characters. … **Without the BOM, Windows PowerShell misinterprets your script as being encoded in the legacy "ANSI" codepage.**"
+>
+> "For cmdlets that read string data in the absence of a BOM: **`Get-Content` and `Import-PowerShellDataFile` uses the `Default` ANSI encoding. ANSI is also what the PowerShell engine uses when it reads source code from files.**"
+
+### (iv) Does **any** existing test assert encoding / BOM / non-ASCII resolution under PS 5.1?
+
+**NO. There is none.** Exhaustive search results:
+
+* **`開発版/source/TESTS/`** — searching `encoding|utf-8-sig|utf8_sig|BOM|chardet|cp932|cp1252|code page|Encoding.Default|ANSI|utf-16`:
+  * Every hit is a **Python** `read_text(encoding=…)` / `decode('utf-8-sig')` on JSON/data files. Python always decodes UTF-8 correctly, so **none of them exercise what PowerShell 5.1 would see**.
+  * `test_issue25_strategic_route_contract.py:9,20` read the two `.ps1` files with explicit `encoding="utf-8"` and only assert on **ASCII** substrings (`"TRANSFER_MANIFEST.json"`, `"Resolve-RepositoryRelativePath"`, `"SOURCE_BASELINE_MISMATCH"`, …). The `開発版` literal is never asserted, and BOM presence is never checked.
+  * `test_phase3_integrated.py:283,292,293` likewise `read_text(encoding='utf-8')` and assert on ASCII substrings.
+  * `test_audit_v032.py:237-242` `test_japanese_path_utf8_and_bom_json_read` is the **only** Japanese-path test — but it exercises **Python's** `common.read_json` on a `日本語.json` **JSON** file (UTF-8 and UTF-8-SIG). It does **not** touch a `.ps1`, a BOM, or PowerShell.
+  * `test_start_entrypoint.py:18,21-22,29` writes a `.ps1` (`BOOTSTRAP.ps1`) with `encoding="utf-8"` — no BOM, but the content is pure ASCII, so it proves nothing about the defect.
+* **Workflows** — searching the same terms: every hit is `read_text(encoding='utf-8-sig')` on **JSON** evidence (`issue1-source-substrate.yml:31`, `final-aba-series.yml:161,163`, `evidence-readback.yml:58,76,92,131`). **No workflow asserts a script's encoding, BOM presence, or resolves a non-ASCII path under PS 5.1.**
+* The only PS 5.1 script checks are `[Parser]::ParseFile` — `phase2-source-tests.yml:58-62`, `phase3-windows-candidate-build.yml:131-135`, `local-completion-runner-syntax.yml:33`. **Parse-only.** A BOM-less non-ASCII `.ps1` *parses fine* under PS 5.1 (the mojibake stays inside the string literal; no quote/bracket is corrupted by `開発版`'s byte sequence), so **the parse step cannot detect this defect class**. This is directly confirmed by the run history: `phase3-windows-candidate-build` run #140 step 5 "Parse Windows PowerShell scripts before expensive build" = **success**, while the workflow still failed later.
+* The one place the project *does* show awareness of PS 5.1 + non-ASCII is `RUN_LOCAL_COMPLETION.ps1:348` — `Invoke-NativeProcessContractTest` builds the string `日本語` from **char codes** (`[char]0x65E5+[char]0x672C+[char]0x8A9E`) instead of a literal, precisely so the source file stays ASCII. That guard covers *runtime path arguments*, not *the script's own encoding*.
+
+### Does **any** hosted-CI check catch this class of defect? — **NO. Stated plainly:**
+
+> **No hosted-CI check in this repository can detect the UTF-8-without-BOM / non-ASCII-literal defect class.** Every PS 5.1 check is either a *parse* (which is encoding-insensitive) or a *self-test* whose own assertion is self-referentially satisfied by the same wrong decoding. The Python suite decodes with explicit UTF-8 and therefore never sees the ANSI view. The one hosted execution of `RESTORE_PREDECESSOR.ps1` passes `-PredecessorSet`, which is exactly the argument that bypasses the defective branch. And the one hosted execution of `PREPARE_SOURCE.ps1` that *does* take the defective branch runs under PowerShell 7, where the bug does not exist.
+
+### Independent corroboration that the defect is real, not theoretical
+
+The repo itself records the exact symptom on the real machine:
+
+* **Issue #25 comment `6690050689`** (2026-11-06T16:38:09Z): "The two user runs (offline and online) both stopped before substantive QA at the same handoff boundary: `TRANSFER_MANIFEST_MISSING`".
+* **Issue #25 comment `6690557490`** (2026-11-06T17:02:07Z): a **third** stop, this time from a **fresh self-contained freeze** (i.e. a complete, valid tree), again `TRANSFER_MANIFEST_MISSING`, with "donor join / Candidate build / source regression / selftest / A-B-A / rollback: all NOT_RUN" — i.e. it died exactly at `RUN_LOCAL_COMPLETION.ps1:693-694`, before any substantive stage.
+* That same comment records "network observation: **NOT_MEASURED due PowerShell argument-type mismatch**" — consistent with `RUN_LOCAL_COMPLETION.ps1:127` (`[Net.IPAddress]::TryParse($candidate,[ref]$ip)` with `$ip=$null`), a known **Windows PowerShell 5.1**-specific failure mode (`Argument types do not match`) that does not occur in PowerShell 7. This independently confirms the real machine really did run the script under **PS 5.1** (`RUN_LOCAL_COMPLETION.cmd:4` → `powershell.exe`).
+* `git` history shows the project **already knew** about this: PR #19, commit `ed15668` (2026-11-05 19:27 JST), *"Merge PR #19: encoding-safe local completion path discovery — Remove non-ASCII path literals from the local completion execution chain and discover required inputs by repository structure."* It stripped the `開発版` literals from `RUN_LOCAL_COMPLETION.ps1` and `PREPARE_SOURCE.ps1` (using `Get-ChildItem -Recurse` / `$PSScriptRoot` instead). The Issue #25 work **re-introduced** them:
+  * `84e7d1f` (2026-11-06 20:07 JST) → `開発版/transfer/TRANSFER_MANIFEST.json` back into `RUN_LOCAL_COMPLETION.ps1`
+  * `077c8bf` (2026-11-06 20:07 JST) → back into `PREPARE_SOURCE.ps1`
+  * `7681b33` (2026-11-06 23:02 JST) → into `RESTORE_PREDECESSOR.ps1`
+
+### Correction to the hypothesis (one point)
+
+The hypothesis says "`Invoke-RepositoryDiscoveryContractTest` … asserts `$live.Contains('開発版/transfer/TRANSFER_MANIFEST.json')` where `$live = Get-Content …`". Precisely: `$live` is the **substring** of the decoded source starting at the `try { if ($env:OS -ne 'Windows_NT')` anchor (`RUN_LOCAL_COMPLETION.ps1:408-412`), and the needle literal at line 425 is itself compiled from the same ANSI-mangled source — so yes, mojibake vs mojibake, always equal. **Confirmed.**
+
+The one thing that needs sharpening: the self-test is **not merely vacuous — it is also brittle in the opposite direction.** The self-test compares against a *textual* occurrence inside the live block. When PR #29's branch (`work/issue25-handoff-preflight-20261107`, commit `c80facb`) moved the literal out of the live block into a new `Assert-RealMachineHandoff` function (which sits **before** the anchor), the literal no longer appears in `$live`:
+
+```
+live.Contains('開発版/transfer/TRANSFER_MANIFEST.json')  -> False   (0 occurrences in $live; 2 in the whole file)
+```
+
+…and the hosted CI **failed** exactly there:
+
+> **Run #98** (`local-completion-runner-syntax`, `work/issue25-handoff-preflight-20261107`, sha `c80facb`, 2026-11-06T16:36:52Z, 25 s) — **FAILURE**
+> failing step (job `parse`, id `128016293035`): **"Run repository-discovery contract test on Windows PowerShell 5.1" — "Process completed with exit code 1."**
+
+This is a direct empirical proof that the contract test is a **text-match assertion on the script's own source text**, not a behavioural test of path resolution — and that it can be broken by *moving a literal* without any functional change.
+
+### Second latent instance inside the local runner (not covered by the hypothesis)
+
+`RUN_LOCAL_COMPLETION.ps1:859-866` launches the rollback entrypoint as a **PS 5.1 child** (`Start-Process` via `Invoke-NativeLogged`, L301-321):
+```
+859:  $rollbackArgs=@('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$rollbackScript,
+863:    '-EvidenceDirectory',$rollbackEvidence, '-SelfTest')
+866:  $rollbackRun=Invoke-NativeLogged -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" …
+```
+**`-PredecessorSet` is NOT passed** → in the child, `RESTORE_PREDECESSOR.ps1:51` is true → line 52 builds the mojibake path → the child throws `TRANSFER_MANIFEST_MISSING`. So even if line 693 were fixed, stage 6/7 would fail for the same reason. `PREPARE_SOURCE.ps1:40` is *not* reached from the local runner because line 737 passes `-RecoveryArchive`.
+
+### Fix surface (for completeness, not applied — read-only audit)
+1. Add a UTF-8 **BOM** to the three files, **or**
+2. Eliminate the `開発版` literals from the three `.ps1` files (revert to the PR #19 structural-discovery approach, or read the paths out of `TRANSFER_MANIFEST.json`, which is already read with `-Encoding UTF8`), **or**
+3. Make the paths ASCII-safe for the PS 5.1 engine.
+4. Add a CI guard that *fails* if any `.ps1` contains a byte `> 0x7F` (or lacks a BOM while containing non-ASCII) — currently absent — and a **behavioural** PS 5.1 test that actually `Test-Path`s a non-ASCII path and asserts the resolved path is the real one (not a self-text `.Contains`).
+
+---
+
+## 4. GitHub Actions run history
+
+### 4.1 Recent runs on `main` (`?query=branch:main`)
+Source: `https://github.com/th060316-lgtm/fullautoQA/actions?query=branch%3Amain` (HTML, HTTP 200) + REST API corroboration.
+
+| Workflow | Run # | Conclusion | Date (UTC) | Duration | Commit | Triggering message |
+|---|---|---|---|---|---|---|
+| Local completion runner syntax | **97** | **success** | 2026-11-06T16:22:09Z | 22 s | `17f6f9b` | Merge pull request #28 … real-machine-finalization-20261107 |
+| Phase 2 Source Tests | **185** | **success** | 2026-11-06T16:22:09Z | 50 s | `17f6f9b` | (same) |
+| Local completion runner syntax | 95 | success | 2026-11-06T14:19:34Z | 23 s | `7a48d3e` | Merge PR #26: strategic Issue #25 completion-route restructure |
+| Phase 2 Source Tests | 180 | success | 2026-11-06T14:19:34Z | 55 s | `7a48d3e` | (same) |
+| Frozen final A-B-A series | 140 | **failure** | 2026-11-06T14:19:34Z | 1 m 27 s | `7a48d3e` | (same) |
+| Phase 3 Windows Candidate Build | 140 | **failure** | 2026-11-06T14:19:34Z | 1 m 20 s | `7a48d3e` | (same) |
+| Rollback predecessor qualification | 11 | **failure** | 2026-11-06T14:19:34Z | 17 m 51 s | `7a48d3e` | (same) |
+| Frozen final A-B-A series | 72 | failure | 2026-11-05T12:44:31Z | 3 m 41 s | `dcad269` | Merge PR #22: harden final local acceptance path |
+| Phase 3 Windows Candidate Build | 72 | failure | 2026-11-05T12:44:31Z | 3 m 33 s | `dcad269` | (same) |
+| Local completion runner syntax | 27 | success | 2026-11-05T12:44:31Z | 21 s | `dcad269` | (same) |
+| Phase 2 Source Tests | 112 | success | 2026-11-05T12:44:31Z | 35 s | `dcad269` | (same) |
+| Local completion runner syntax | 4 | success | 2026-11-05T11:52:29Z | 26 s | `6311396` | Merge PR #21: compact chat evidence and correct Source regression |
+| Phase 2 Source Tests | 89 | success | 2026-11-05T11:52:29Z | 42 s | `6311396` | (same) |
+| Phase 2 Source Tests | 87 | success | 2026-11-05T11:13:26Z | 37 s | `16bcf4e` | Merge PR #20: short local acceptance workspace |
+| Local completion runner syntax | 2 | success | 2026-11-05T11:13:26Z | 17 s | `16bcf4e` | (same) |
+| Phase 2 Source Tests | 85 | success | 2026-11-05T10:27:41Z | 25 s | `ed15668` | Merge PR #19: **encoding-safe local completion path discovery** |
+| Frozen final A-B-A series | 47 | failure | 2026-11-05T10:27:41Z | 3 m 34 s | `ed15668` | (same) |
+| Phase 3 Windows Candidate Build | 51 | failure | 2026-11-05T10:27:41Z | 3 m 32 s | `ed15668` | (same) |
+| Phase 2 Source Tests | 83 | success | 2026-11-05T10:07:47Z | 45 s | `c176b97` | Merge pull request #15 … |
+| Phase 2 Source Tests | 82 | **cancelled** | 2026-11-05T10:07:29Z | 35 s | `a82d643` | Merge pull request #13 … |
+| Phase 2 Source Tests | 81 | success | 2026-11-05T03:39:57Z | 34 s | `165ca40` | Merge PR #18: add local final-completion runner |
+| Frozen final A-B-A series | 42 | failure | 2026-11-05T00:52:01Z | 3 m 29 s | `2c8d4ee` | Merge PR #17: converge remaining QA gates and evidence |
+| Phase 3 Windows Candidate Build | 49 | failure | 2026-11-05T00:52:01Z | 3 m 26 s | `2c8d4ee` | (same) |
+| Phase 2 Source Tests | 79 | success | 2026-11-05T00:52:01Z | 34 s | `2c8d4ee` | (same) |
+| Frozen final A-B-A series | 30 | success | 2026-11-04T05:23:21Z | 53 m 22 s | `23e0f38` | Merge PR #16: repair realtime fixture loop injection |
+
+Workflows with **no run on `main`**: `target-a-preflight`, `source-overlay-selftest`, `phase3-real-game`, `evidence-readback`, `preserve-candidate-chunks`, `browser-offline-acceptance` (PR-only / dispatch-only / non-`main` branch).
+
+### 4.2 Failure detail (fetched from the job pages)
+* **`phase3-windows-candidate-build` #140 (main, `7a48d3e`)** — job `build-candidate`, 14 steps:
+  steps 1–7 **success** (incl. step 4 "Compile and run complete Source regression before donor JOIN" ✅ and step 5 **"Parse Windows PowerShell scripts before expensive build" ✅**), step 8 **"Build Phase 3 complete Candidate" → failure**; steps 9 & 11 skipped; job `fixture-probe` skipped.
+* **`final-aba-series` #140 (main)** — job `candidate` (ubuntu): annotation **"Unhandled error: Error: FINAL_CANDIDATE_OR_SELFTEST_NONPASS"** (i.e. it failed *because* the candidate-build run failed).
+* **`rollback-predecessor-qualification` #11 (main)** — job `qualify-v033-predecessor`, 17 m 51 s: failing step **"Execute the exact rollback entrypoint on a fresh destination" → "Process completed with exit code 1."**
+* **`local-completion-runner-syntax` #98 (branch `work/issue25-handoff-preflight-20261107`, `c80facb`)** — job `parse`: failing step **"Run repository-discovery contract test on Windows PowerShell 5.1" → exit code 1** (see §3).
+
+### 4.3 The "empty / `steps=null`" pattern — **CORROBORATED, and the root cause identified**
+
+GitHub HTML and the REST API were both reachable. Scanning **500 of 923 total runs** (API, pages 1–6): conclusions are only `success` / `failure` / `skipped` / `cancelled`. **No `startup_failure`, no `conclusion: null`** — so the *hosted-runner-startup-termination* failure mode is **not** present in this repo's history.
+
+**However, three runs are genuinely empty and failed**, and they are exactly the "`steps=null`" signature:
+
+| Run id | run# | name / path | conclusion | created / started / updated | jobs |
+|---|---|---|---|---|---|
+| `42208456434` | 89 | `.github/workflows/phase3-windows-candidate-build.yml` | **failure** | 2026-11-06T11:12:06Z (all three timestamps identical) | **0** (`job_groups_batch` → `{"jobGroups":[],"totalCount":0,"hasMore":false}`) |
+| `42208469858` | 90 | same path | **failure** | 2026-11-06T11:12:12Z | **0** |
+| `42208476858` | 91 | same path | **failure** | 2026-11-06T11:12:15Z | **0** |
+
+**Root cause (identified, not guessed):** these are **"Invalid workflow file"** runs, not runner crashes.
+
+* Evidence1 — the run `name` is the **file path**, not the workflow's `name:` key (`Phase 3 Windows Candidate Build`). GitHub falls back to the path exactly when it cannot parse the workflow file.
+* Evidence 2 — `event: push` on branch `work/issue25-strategic-route-restructure-20261106`, yet the workflow's push trigger is `branches: [main]` only (`phase3-windows-candidate-build.yml:4-6`). A normal run on that branch is impossible.
+* Evidence 3 — the file at those commits is **invalid YAML**. Commit `98fceaf` ("Issue #25: propagate manifest and prepared-source identity into candidate CI") embedded a PowerShell here-string in a YAML `run: |` block with **un-indented** body lines:
+  ```
+ 94          $fingerprintScript = @'
+   95  import hashlib, pathlib, sys        ← column 0, ends the block scalar
+   96  root=pathlib.Path(sys.argv[1))
+   …
+ 103  '@                                   ← column 0
+  ```
+  Column-0 line census: `98fceaf` → **11** column-0 lines (5 legitimate top-level keys + **8 stray**); `f001d79` and `b70f7fd` → same 11; the fix `aa80973` ("Issue #25: use the builder fingerprint algorithm in CI", 2026-11-06T11:12:30Z, i.e. **15 s after the last empty run**) → **5** column-0 lines; `main` today → **5**.
+* Evidence 4 — the API returns **no job list at all** for these runs (hence no `steps`), i.e. the "`steps=null`" symptom, while the run is nonetheless `conclusion: failure`.
+
+**Caveat on the issue's wording:** the Issue #25 comment does **not** actually mention `steps=null` or `BlobNotFound` — I read all 5 comments of Issue #25 (ids 6683456310, 6683799279, 6689833245, 6690050689, 6690557490) and none contains either string; grep for `BlobNotFound` / `steps=null` over the issue HTML and the comments API returned 0 hits. What the comments do say is the `TRANSFER_MANIFEST_MISSING` real-machine stop (§3) and, in comment `6690557490`, the third same-class stop. The "`steps=null`/empty run" pattern is nonetheless **real and reproducible in this repo**, with the mechanism identified above.
+
+---
+
+## 5. VERIFIED vs. NOT VERIFIED
+
+**VERIFIED (with file:line or URL evidence)**
+* Complete inventory of all 12 workflows on `main` (+1 on a non-`main` branch): triggers, path filters, job names, `runs-on`, and the exact shell of every `run:` step.
+* `RUN_LOCAL_COMPLETION.ps1` is **never** run end-to-end in CI — only parsed and run in its 3 self-test modes (`RUN_LOCAL_COMPLETION.ps1:641-652`; `local-completion-runner-syntax.yml:33,39,44,49`).
+* `RESTORE_PREDECESSOR.ps1` **is** executed in CI under **Windows PowerShell 5.1** (`rollback-predecessor-qualification.yml:47`), with `-PredecessorSet` supplied so the defective branch is skipped; `開発版/transfer` is not even checked out there.
+* `PREPARE_SOURCE.ps1` **is** executed in CI 4×, always under **PowerShell 7** (`pwsh`), never PS 5.1.
+* The Python suite is executed in CI on **windows-latest + ubuntu-latest** (`phase2-source-tests.yml:23,50`) plus several Windows-only paths; the real machine's "bundled Source regression" is `RUN_LOCAL_COMPLETION.ps1:796-797`, replicated verbatim in form only by the **PR-only** `target-a-preflight.yml:88` / `source-overlay-selftest.yml:104`.
+* Byte/BOM status of all 11 `.ps1` files; the 3 hypothesis files are UTF-8 without BOM and are the only ones with non-ASCII.
+* The `Get-Content` asymmetry: `RUN_LOCAL_COMPLETION.ps1:404` (no `-Encoding`) vs `:695` (`-Encoding UTF8`); same pattern in the other two scripts.
+* Microsoft's documented PS 5.1 behaviour (ANSI fallback for BOM-less scripts; `Get-Content` default = ANSI) from `about_Character_Encoding`.
+* **No** test or workflow anywhere asserts script encoding, BOM presence, or non-ASCII path resolution under PS 5.1. The PS 5.1 checks are parse-only (encoding-insensitive) and the one self-test is self-referentially satisfied.
+* The vacuous-assertion claim is **empirically demonstrated**: PR #29's branch moved the literal out of `$live` and CI run #98 failed at exactly that assertion.
+* The real machine genuinely fails at `RUN_LOCAL_COMPLETION.ps1:693-694` with `TRANSFER_MANIFEST_MISSING`, three times, including from a complete valid tree (Issue #25 comments `6690050689`, `6690557490`).
+* `git` history: PR #19 (`ed15668`) removed the non-ASCII literals; `84e7d1f` / `077c8bf` / `7681b33` re-introduced them.
+* Actions run history for `main` and per workflow; the specific failing steps of runs #140 (phase3), #140 (final-aba), #11 (rollback), #98 (local-completion).
+* Three zero-job / `conclusion: failure` runs, and the invalid-YAML root cause of the `phase3-windows-candidate-build.yml` workflow at commits `98fceaf`/`f001d79`/`b70f7fd`, fixed by `aa80973`.
+
+**NOT VERIFIED / could not be determined**
+* **Exact stdout/stderr of the failing CI steps.** The REST log-download endpoints return `403 "Must have admin rights to Repository."` for anonymous requests; the HTML job pages expose only the annotation text ("Process completed with exit code 1."). So the precise error text of `rollback-predecessor-qualification` #11 is **not** established — in particular, the cause of that failure is **not** the encoding defect (CI passes `-PredecessorSet`); it is most likely the predecessor `START_QA.cmd -SelfTest` non-pass, but that remains unconfirmed.
+* **Runs 424–923** of the 923 total were not enumerated (500 sampled across pages 1–6, ordered newest-first); a startup-failure pattern earlier in history cannot be fully excluded, though no such conclusion exists in the 500 sampled.
+* **The actual bytes the real machine's PS 5.1 produced** (the mojibake string) — not reproducible from Linux; the conclusion is derived from Microsoft's documented behaviour plus the observed failure signature.
+* **Whether the real machine's ANSI code page was1252 or 932** — not observable from the repo; either produces a non-matching string, so the conclusion is unaffected.
+* The GitHub API rate limit **did** reset mid-audit, so API data was used for run metadata; where the API was unavailable, HTML was used instead. Nothing was fabricated.
+
+監査を完了しました。以下が報告書です（全文もファイル添付します）。
+
+---
+
+# 1. Executive Verdict
+
+## RESTRUCTURE CURRENT ROUTE
+
+**confidence: 高 (0.86)**
+
+### 判定理由
+
+**(1) 現行ルートの"戦略"は正しく、"検証基盤"が壊れている。**
+`run_series.py` の Candidate freeze / fresh extraction / A-B-A 規律 / 陳腐化 Evidence 拒否、`coordinator.py` の3総本山独立Gate、`capability_contract.py` のfreeze、Evidence manifest、`prepare_target.py` のオフライン vendored target snapshot（hash検証済）は健全で**保全すべき正資産**。問題はこの層の外にある。
+
+**(2) 実機Runの連続停止は「handoff経路」でなく、2026-11-06に再導入された実機固有欠陥である。**
+2つのhandoff方式で同一エラーが出た時点で、変数はhandoffでないと確定している。そしてこれは **2026-11-05に「encoding-safe」として既に解決済み**だった（§8-1）。Issue #25の戦略再構成が静かに再導入した。
+
+**(3) 現行ルートは Issue #1 のDoDに到達不能である。** 技術PASSが出ても**構造的に到達不能なGateが2つ**（管理総本山Gate / 営業総本山Gate）。実機再多では Issue #1 は閉じない。
+
+### KEEP / REPLACE を採らない理由
+
+| 選択肢 | 不採用理由 |
+|---|---|
+| KEEP | 実機固有欠陥4件が未修正。加えて2 Gateが構造的に到達不能。再freeze回数は増えるだけ。 |
+| REPLACE | 意味論層は健全。再実装は「全面書き換えを目的にする」禁止事項にも反する。**置換すべきは「runner」ではない。「runnerが信用できる与否を判定する仕組み」である。** |
+
+### 1.1 実機固有欠陥（実測 / Git履歴で立証済み）
+
+| # | 欠陥 | 立証 | 実機での帰結 |
+|---|---|---|---|
+| **D1** | `RUN_LOCAL_COMPLETION.ps1` / `PREPARE_SOURCE.ps1` / `RESTORE_PREDECESSOR.ps1` が **UTF-8 without BOM + 非ASCIIリテラル `開発版/...`**。実機は `powershell.exe`（PS 5.1 → ANSI/ACPデコード） | 11 .ps1中3件が該当。`RUN_LOCAL_COMPLETION.cmd:4` が `powershell.exe` を呼ぶ | Mojibake パスになり `Test-Path` がFalse → **`TRANSFER_MANIFEST_MISSING`**（3回再現） |
+| **D2** | ローカルrunnerの `prepared_source_fingerprint` を **ACCEPTANCE overlayの「前」**に計算、builderは **「後」**で再計算 | `RUN_LOCAL_COMPLETION.ps1:741`→`:749-752`→`:761` / `PHASE3_OVERLAY_REBUILD.ps1:95-97` は不一致でthrow。**実測: 524→783 files、不一致を再現** | D1を直した**直後**に `SOURCE_BASELINE_MISMATCH` で停止（確定的） |
+| **D3** | offline観測が **fail-open**。`Get-NetIPAddress` 失敗 → 空配列 → `up_adapter_count=0` → 「offline PASS」 | `RUN_LOCAL_COMPLETION.ps1:123-135` と `phase3_run_evidence.py:145-160` の2箇所 | 「NOT_RUN/HARNESS_ERROR を PASS へ変換しない」に正面から違反。**offlineが偽PASSしうる** |
+| **D4** | CI と実機が**別ルート**。RollbackはCIが `-PredecessorSet` を渡してmanifest分岐を**スキップ**、実機は渡さない | `rollback-predecessor-qualification.yml:47` vs `RUN_LOCAL_COMPLETION.ps1:859-866` | D1をrunner側だけ直しても stage 6 rollback が同原因で失敗 |
+
+### 1.2 CI と実機の4つの非対称（これが「検証基盤の欠陥」）
+
+| # | 非対称 | 実測 |
+|---|---|---|
+| A | **インタプリタ**：CIのスクリプト実行は全て `shell: pwsh`（PS 7 = UTF-8）。実機は `powershell.exe`（PS 5.1 = ANSI） | `shell: powershell` は3箇所のみ — 全て**parseのみ**。`PREPARE_SOURCE.ps1` のCI実行4回すべて `pwsh` |
+| B | **引数**：CIのrollbackは `-PredecessorSet` で欠陥分岐を回避。実機は渡さない | 上述 |
+| C | **自己検査の盲点**：PS自己検査は `Get-Content -LiteralPath $PSCommandPath -Raw`（**`-Encoding` なし**）で自身を読み `$live.Contains('開発版/...')` → **Mojibake 対 Mojibake で常にTrue** | `:404`(Encoding無し) vs `:695`(UTF8あり) |
+| D | **Python側テスト**は `read_text(encoding="utf-8")` で正しく読む → リテラルは見えるが「PS 5.1がどう読むか」は訊かない | `TESTS/test_issue25_strategic_route_contract.py:9,20` |
+
+> **hosted CI に、この欠陥クラスを検出できる検査は1つも存在しない。** だから「実機で初めて気づく → 局所修正 → 再実行 → 次の境界」になる。
+
+### 1.3 現行ルートでは到達不能なGate
+
+| Gate | 状態 | 決定箇所 |
+|---|---|---|
+| **G-8 管理総本山Gate PASS** | **到達不能**。唯一のproducerは `scope:'same_run_seed_replay'` を出し、evaluatorは**そのscopeだけ**を `INCONCLUSIVE / MANAGEMENT_REPRODUCIBILITY_SCOPE_LIMITED` に強制downgrade。`management.reproducibility` は required=True | `phase3_run_evidence.py:252-262` vs `management_evaluator.py:428-434` |
+| **G-9 営業総本山Gate PASS** | **到達不能**。producerが `evidence_kind:'model_proxy'` / `human_test_performed:False` をハードコード、evaluatorの `sales.human_test`(required)はproxyをPromotionしない。4 phase gate にverdict源なし | `phase3_run_evidence.py:389-391` vs `sales_evaluator.py:637-642` |
+| A-3.5 / C-3.4 / C-3.5 | 観測器自身が「**Full offline always remains NOT_RUN**」「Program Files remain NOT_RUN」と明文化。**設計上 NOT_RUN** | `LOCAL_OBSERVATION_LIMITS.md` / `run_series.py:223` |
+
+---
+
+# 2. Issue #1 completion gap map
+
+Issue #1 本文 = **127 checked / 22 unchecked**（本文から実測、正本の数値と一致）。区分: **(a)** 能力はあるがEvidence待ち / **(b)** 本当のSource gap / **(c)** Gate・observer設計不足 / **(d)** 不要・重複。
+**合計: (a) 13 / (b) 0 / (c) 8 / (a/c) 1 / (d) 0**
+
+| # | Section.Item | 分類 | 決定的な証拠 | 根拠 |
+|---|---|---|---|---|
+| 1 | A-3.5 完全offline/非管理者/Registry・PATH不変 | **c** | `local_acceptance_observer.ps1:154-156`、`LOCAL_OBSERVATION_LIMITS.md`、`run_series.py:223` | PATH境界値は測れるが Registry全域監査・Program Files監査・offline恒常性は観測器が自らNOT_RUNと宣言 |
+| 2 | A-4.1 低負担でTarget/Profile生成・選択 | **a** | `target_intake.py:46-220`、`TESTS/test_target_intake_cli.py` | CLI完成・単体テスト済。最終パッケージ/実機Evidenceのみ不足 |
+| 3 | B-1.1 8引擎をProfile/Adapter方式で | **a** | `adapters.py:7-28`、`tools.py:45-108`、`TESTS/test_issue1_generic_profile_matrix.py:68-87` | 1契約で8系統を賄う（matrix test済）。受入targetはGodotのみ |
+| 4 | B-1.2 Black-box: Screenshot/Window/Input/OCR/Log | **a** | `adapters.py:29-62`、`windows.py:88-137`、`ocr_backend.py` | 5チャネル全部存在・provenance付き。bridge-lessは `internal_state:false` と正直に報告 |
+| 5 | B-1.4 Bridgeなしでも最低限Playable QA | **a** | `windows_runner.py:313,373,386-388`、`agents.py:150-212` | 画面差分学習 + bridge-less実targetあり |
+| 6 | B-4.3 保存→変更→再起動→復元 | **a/scoped** | `storage_qa.py:289,292-378`、`windows_runner.py:259-289`、**だが** `acceptance_targets/codegeas/profile.json` の `"storage": {"locations": [], "required": true, "contract": "persisted_save", "scenarios":[{"id":"restart_restore",...}]}` | 機構は完成・unit test済。**ただし実targetが storage locations を空宣言** → 実機で `HARNESS_ERROR / STORAGE_NO_DECLARED_LOCATIONS`。**緑の実機Runでも落ちる** |
+| 7 | B-4.4 壊れたStorage/旧Version/Migration/複数Slot/Autosave | **a** | `storage_qa.py:289,366-373`、`windows_runner.py:242-269`、`contracts.py:35` | 5機能すべて実装・test済。corrupt-saveはcodegeasでREQUIRED済。残る4つは「targetが宣言しない」ためNOT_RUN |
+| 8 | B-5.1 初見30秒評価Evidence | **c** | `windows_runner.py:417` — 判定が `INCONCLUSIVE`/`READABILITY_REQUIRES_VALIDATED_PROXY` に**ハードコード** | 記録はできるがPositive verdictを出す主体が存在しない |
+| 9 | B-5.2 5分行動→反応→判断→結果ループ | **a** | `windows_runner.py:418-419` — `ok = elapsed>=300 and changed>=10` → PASS（`claim='Automated proxy cycles only; does not establish enjoyment or comprehension'`） | 制作側はPASS可能。Sales側の読みは(c) |
+| 10 | B-5.3 操作/移動/Camera/Menu/Combat/UI/Sound等 | **a** | `contracts.py:24-75`、`observations.py:9-17`、`TESTS/test_issue1_generic_profile_matrix.py:18-28` | Profile駆動機構が存在し「profile data であり CORE にカテゴリをハードコードしない」ことをtestが担保 |
+| 11 | C-2.2 Profile順序反転でもRequired不変 | **a** | `TESTS/test_issue1_order_and_bindings.py:22-31` | AB vs BA の構造完全一致を自動化済み |
+| 12 | C-3.4 ネット接続要求なし | **c** | `phase3_run_evidence.py:279-285`、`LOCAL_OBSERVATION_LIMITS.md` | 受動的adapter countのみ。**かつD3のfail-openにより偽PASSしうる** |
+| 13 | C-3.5 Program Files/Registry/PATH恒久変更なし | **c** | `run_series.py:223`、`local_acceptance_observer.ps1:154-155`、**source/acceptance_targets内に "Program Files" の参照はゼロ** | PATH2値のみfingerprint。Registry全域・Program Files監査は未実装 |
+| 14 | D-1.1 事前知識なしの別Run/別Session保持 | **a/scoped** | `phase3_run_evidence.py:358-379` — `cold_start` + provenance `fresh_extraction_start_qa` | Session recordは生成される。ただし `session_id == run_id`、cold-startはmarkerから**推定**であり観察ではない |
+| 15 | D-1.3 初見30秒で目的・操作が読み取れるか | **c** | #8と同じ | 読みやすさゲートがpositive verdictを構造的に出せない |
+| 16 | D-1.4 5分で継続理由/フィードバックループ | **c** | `phase3_run_evidence.py:344-355` | phase recordはvideoを持つがverdict無し → `SALES_OBSERVATION_INCOMPLETE` |
+| 17 | D-2.1 ゲーム名/IP/無料条件に非依存商品名説明 | **a** | `audience_summary.py:42-92`、`windows_runner.py:659-665` | 実装済み。`player_review_packet.json` 実在すればPASS可能 |
+| 18 | D-2.2 「何をするゲームか」をEvidenceから要約 | **a** | `audience_summary.py:55-59`、`sales_evaluator.py:581-592` | #17と同じ経路 |
+| 19 | D-3.1 reportが技術者以外に読める | **a/c** | `audience_summary.py:95-119` → `AUDIENCE_SUMMARY.txt` は生成。**が** 認証するgate `sales.nontechnical_report` は `communication_readability == PASS` を要求しCOREはそれを出さない | 成果物(a)、ゲート(c) |
+| 20 | **G-8 管理総本山Gate PASS** | **c** | `phase3_run_evidence.py:252-262` vs `management_evaluator.py:428-434` | §1.3参照。producerとevaluatorが互いに矛盾 |
+| 21 | **G-9 営業総本山Gate PASS** | **c** | `phase3_run_evidence.py:389-391` vs `sales_evaluator.py:637-642` | §1.3参照。`sales.human_test` はproxyで充足不能 |
+| 22 | G-15 Rollback可能 | **a** | `RESTORE_PREDECESSOR.ps1`、`RUN_LOCAL_COMPLETION.ps1:852-891` | 実行可能entrypoint + CI job + 実機stage6が存在。実機未実行。**注意: 復元対象は preserved predecessor Candidate であり `安定版/`(READMEのみ)ではない** |
+
+### 分類から読み取れる構造
+
+1. **(b) 本当の Source gap は 22項目中ゼロ。** 再実行では閉じない。
+2. **(c) が8項目** — 特に **G-8 / G-9 は Issue #1 の DoD そのもの**。
+3. 残り13項目(a)も「実機1回で全部閉じる」ではない。**#6は緑の実機RunでもHARNESS_ERRORになる設定不備**。
+4. **22項目の外側にルートcao欠陥 D1–D4 が4件**。チェックリストには現れないが、22項目を閉じる前に必ず塞ぐ必要がある。
+
+---
+
+# 3. PR #27 decision
+
+## 部分採用 — ただし2点_chunkの書き直し必須
+
+PR #27 = `work/issue25-source-immutability-20261106` / head `304e556` / **base = `7a48d3e`（mainのPR #26 mergeそのもの）**
+
+### 採用する部分: `source_tree_immutability.py` + workflow配線
+
+| 評価点 | 実測 |
+|---|---|
+| 紅だったhosted gateが緑になるか | **なる**。`Phase 3 Windows Candidate Build` は base `7a48d3e` で **failure**、PR #27 head `304e556` で **success** |
+| 前提となる不変条件は実際に成立するか | **成立**。実測で prepared source(524 files)に対し Source回帰475 tests → **added 0 / removed 0 / changed 0** |
+
+→ この不変条件は PR #26 が持ち込んだ `SOURCE_BASELINE_MISMATCH` fail-closed の**前提そのもの**。**採用する。**
+
+### 棄却 / 書き直しが必要な部分: `SOURCE_TREE_FINGERPRINT.ps1`
+
+**このファイルは dead code。** PR #27 head を grepしても `SOURCE_TREE_FINGERPRINT` の参照は**どこにも0件**。さらに**アルゴリズムが4つ目に分岐**している:
+
+| 実装 | 場所 | ソート | 行結合 |
+|---|---|---|---|
+| A | `RUN_LOCAL_COMPLETION.ps1:216-229` | `Sort-Object FullName`（culture依存） | `[Environment]::NewLine` |
+| B | `PHASE3_OVERLAY_REBUILD.ps1:21-34` | 同上 | 同上 |
+| C | `phase3-windows-candidate-build.yml:99-112` | 同上 | 同上 |
+| **D** | **PR #27 `SOURCE_TREE_FINGERPRINT.ps1`** | **`[Array]::Sort(Ordinal)`** | **`[char]10`(LF)** |
+
+D は A/B/C と**別の値**を出す。このまま採用するとfingerprint定義が5個になるだけ。**D ではなく A/B/C を畳んで D を正本へ昇格させるのが正解。** なお現在の prepared source は全ファイル名ASCII（Recovery zip 460 entries 全部ASCII）のため culture差は今すぐに出ないが、定義の分散は将来の事故の温床。
+
+### PR #27 がカバーしていない重要穴
+
+PR #27 は hosted CI のSource回帰にcheckを足すだけ。**実機 local route の stage 3 には check が無い**。つまり **D2 の決定的バグ（ローカルrunnerのfingerprint計算順序）は PR #27 で直らない**。実機では「ACCEPTANCE overlayで259ファイル増えて不一致 → `SOURCE_BASELINE_MISMATCH`」が**確実**に起きる。
+
+**判定: 部分採用。** 採用= `source_tree_immutability.py`+配線（fingerprint定義統一が前提）。棄却= `SOURCE_TREE_FINGERPRINT.ps1` の現行形。追加= 実機local routeのstage3にもcheck。
+
+---
+
+# 4. PR #29 decision
+
+## 部分採用（再設計必須）— **現状のままの merge は不可**
+
+PR #29 = `work/issue25-handoff-preflight-20261107` / head `c80facb`
+
+### 4.1 現在の PR #29 は既に CI で赤
+
+| 事実 | 証拠 |
+|---|---|
+| PR #29 head で `Local completion runner syntax` が **failure** | Actions run（branch `work/issue25-handoff-preflight-20261107`, `c80facb`, 2026-11-06T16:36:52Z）— failing step = "Run repository-discovery contract test on Windows PowerShell 5.1" |
+| 原因 | PR #29 は `開発版/transfer/TRANSFER_MANIFEST.json` リテラルを main block の**外**（関数 `Assert-RealMachineHandoff`）へ移動。`Invoke-RepositoryDiscoveryContractTest` は `$live` = main block 以降のテキストしか見ないため**出現回数0 → `.Contains()` False** → `STRATEGIC_ROUTE_DECLARED_INPUT_OR_PROVENANCE_MISSING`。実測: ファイル全体2回 / `$live` 内0回 |
+
+**「自己検査がテキスト一致アサーションである」ことの実証**であり、機能変更ゼロで壊れる脆さ。
+
+### 4.2 実機での機能的ゲインはゼロ（むしろ逆）
+
+PR #29 は `Assert-RealMachineHandoff` に **非ASCII `開発版/...` リテラルを8個追加**。実机的PS 5.1では最初のチェックで `REAL_MACHINE_HANDOFF_PREFLIGHT_FAILED:TRANSFER_MANIFEST_MISSING` となり**Stage 0 で即死**。つまり「後で失敗する」が「最初に失敗する」に変わっただけで、**実機Runを1回消費して能力はゼロ**。
+
+### 4.3 ただし「Stage 0 preflight」という概念は正しい
+
+donor blocks数・`manifest.json`/`JOIN_COMPLETE.ps1` の存在・Recovery archiveの**SHA-256一致**・build script/FINAL_SERIES_PLAN/run_series.py/rollback entrypointの存在を**まとめて**検査する。これは「handoffを期待ではなく契約にする」正しい方向。
+
+### 4.4 判定 — 部分採用の具体形
+
+**採用する（概念）:** Stage 0 handoff preflight。チェック対象はmanifest/planから**導出**（ハードコード `開発版/...` 禁止）。検査は **hosted CI の PS 5.1 job で実行可能**にして、実機ではなくgateにする。
+
+**棄却する（実装）:** ① 非ASCIIリテラルの追加 ② ファイル存在チェック中心 → **「そのinterpreterで解決できるか」**へ変更 ③ `$live` 限定text needle の廃止。
+
+**したがって: 部分採用。ただし「PR #29 のコード」をmergeするのではなく、「PR #29 の意図」をHosted gate として再実装する。**
+
+---
+
+# 5. Architecture decision
+
+| ゾーン | 所有者 | 契約 | 禁止 |
+|---|---|---|---|
+| **repo**(`main`) | 権威Source + 契約 + CI | PS 5.1が実行する全`.ps1`は **ASCIIのみ or UTF-8+BOM**。宣言入力はmanifest/planから導出 | 非ASCIIリテラル、fingerprint実装の複製、ハードコード絶対Path |
+| **source**(prepared tree) | 不変のビルド入力 | `prepared_source_fingerprint` は**全overlay完了後**に計算。Source回帰は入力を変更しない | overlay前のfingerprint、回帰による入力改変 |
+| **candidate** | 凍結成果物 | `size`/`sha256` 固定。Run1前に `CANDIDATE_FREEZE.json`、Runごとに再検証 | runごとの再freeze、過去PASSの流用 |
+| **workspace** | 一時・repo外・短縮ドライブ | runごとにfresh、終了時削除、入力にならない | repo内work、前run再利用 |
+| **evidence** | 保全・repo外(sibling) | 書き込み後は不変、readback検証、Gate判定を含む | repo内保存、PASS/FAILによる削除 |
+| **rollback** | 独立資格（seriesの後） | byte identity + 実行可能なpredecessor selftest | rollbackが他Evidence収集を阻害 |
+| **real-machine acceptance** | 環境オラクル | offline / 非管理者 / 実ゲーム / 実GPU の事実のみ | **移植性(script portability)の判定** |
+
+### 中核原則（本次再構成の軸）
+
+> **実機は最後のゲートであり、最初の判定装置ではない。**
+
+現状は「実機Run」が**スクリプト可搬性の最初の判定装置**になっている。だから「実機で初めて気づく → 局所修正 → 再実行 → 次の境界」。**可搬性・引数契約・fingerprint順序・encoding は hosted CI で決定的に判定でき、実機に残すべきは環境事実だけ**にすべき。
+
+### CI / 実機の役割分担（再設計）
+
+| 判定 | 旧(CI) | 旧(実機) | 新(CI) | 新(実機) |
+|---|---|---|---|---|
+| script encoding / BOM | — | **初回判定(失敗)** | **PS 5.1 で判定** | 判定しない |
+| 宣言入力の解決可能性 | — | **初回判定(失敗)** | **PS 5.1 + 実引数で判定** | 判定しない |
+| rollback entrypoint | `-PredecessorSet` で**分岐回避** | 本来分岐 | **実機と同引数で判定** | 判定しない |
+| fingerprint baseline | overlay後 | **overlay前(不一致)** | **overlay後** | 同一ロジック |
+| Source回帰の非改変 | (PR #27予定) | なし | **あり** | **あり** |
+| offline/非管理者/PATH/Registry | — | 判定 | 判定不能ならNOT_MEASURED | **判定** |
+| 実ゲーム3周 / A-B-A | hosted(fixture) | 判定 | fixture probe | **判定** |
+| Management / Sales Gate | — | NOT_RUN | — | **判定（observers実装後）** |
+
+---
+
+# 6. Candidate freeze prerequisites
+
+**freeze前に必ずSource側で閉じるべき項目。** 1件でも欠けていれば freeze後の実機Runは失敗し、**Candidate再freeze**が必要になる。
+
+- **P0-1 PS 5.1 encoding契約**（最優先・3ファイル違反）: (a) ASCII化（PR #19方式の構造探索に寄せる）or (b) UTF-8 BOM付与。**推奨は両方**。hosted CI に「PS 5.1が実行する`.ps1`はBOMあり or ASCIIのみ」のgateを追加。*参照: PR #19 `ed15668` は "encoding-safe local completion path discovery — Remove non-ASCII path literals" として既に解決済み。**再導入ではなく復元。***
+- **P0-2 `.ps1`からの非ASCIIリテラル除去**: runner 6箇所(425,693,722,723,744,853)、`PREPARE_SOURCE.ps1:40`、`RESTORE_PREDECESSOR.ps1:52`
+- **P0-3 fingerprint定義の統一 + ローカルrunnerの計算順序修正**: `Get-TreeFingerprint` を1実装へ畳む（runner/builder/workflow/embedded 4コピー削除、PR #27のファイルを正本化）。**`RUN_LOCAL_COMPLETION.ps1:741` を `:752` の後へ移動**（これ Unless 直さないとD2が確定的に起きる）
+- **P0-4 offline観測のfail-closed化（2箇所）**: adapterごとにアドレス取得成功件数を保持し失敗があれば全体NOT_MEASURED。`Get-NetIPAddress` 失敗を `up_adapter_count=0` として扱わないことをunit testで固定
+- **P0-5 Management Gate の producer/evaluator 矛盾解消**: `management.reproducibility` は独立run間の再現性を要求。producer はrun内seed replayしか出せずevaluatorは拒否。**A-B-A level での独立run再現性を算出**、またはevaluatorが受容するscopeを追加。**required は削らない**
+- **P0-6 Sales Gate のobserver設計**: `sales.human_test` / `sales.nontechnical_report` / 4 phase gates。**「自動観測可能=required」「人間の実施有無=開示(非blocking)」という契約を明示的に定義・実装・Test固定**。ただし**proxy を human に昇格させない**（禁止事項）。30秒/5分は**機械観測可能項目だけverdict化**、Enjoyment/理解度はproxyのまま
+- **P0-7 codegeas の storage locations 宣言**: `"locations": []` を実save locationに置換（**これ無しでは緑の実機RunがB-4.3で落ちる**）
+- **P0-8 Registry / Program Files / offline恒常性の観測器**: `local_acceptance_observer.ps1` と `run_series.py:223` を拡張。**失敗はNOT_MEASURED**
+- **P0-9 hosted CI に「実機と同じ実行契約」jobを新設**: `shell: powershell`(PS 5.1)で ①encoding gate ②checkout からの `PREPARE_SOURCE.ps1` ③Candidate build + `SOURCE_BASELINE` 一致 ④**rollbackを実機と同じ引数(=`PredecessorSet` 省略)で** ⑤非ASCIIディレクトリを含む合成treeで実パス解決をassert
+- **P0-10 実機local route の Source回帰 immutability check**（PR #27のものをstage3にも適用）
+
+---
+
+# 7. Final acceptance sequence
+
+**Candidate は1つ。実機Runは1回。** Source 変更があればCandidateを再freezeし系列を最初から再開（`FINAL_SERIES_PLAN.json` の `target_update_policy: restart_series_after_candidate_profile_or_target_change` に一致）。
+
+**F0 — hosted preflight（実機に出る前に全部閉じる）**
+1. PS 5.1 encoding gate / 宣言入力解決 / Candidate build / rollback（実機同引数）が **緑**
+2. Management/Sales observer の contract test が緑
+3. `codegeas` storage locations 宣言済み
+4. ここで **Candidateをfreeze**（`CANDIDATE_FREEZE.json` + size/sha固定）
+
+**F1 — 実機の入手**: frozen commit の **fresh extraction**（overlay禁止、失敗runツリー再利用禁止）、標準ユーザー/非管理者/外部ネット切断
+
+**F2 — `RUN_LOCAL_COMPLETION.cmd` を1回だけ**
+
+| Stage | 内容 | 判定 |
+|---|---|---|
+| 0 | Handoff preflight（manifest駆動 / PS 5.1 実パス解決） | PASS/FAIL |
+| 1 | preserved v0.3.3 donor JOIN + byte identity | PASS |
+| 2 | Source再構築 → **overlay後** fingerprint → Candidate build + identity | PASS |
+| 3 | fresh Candidate の bundled Source回帰 + **immutability** | PASS |
+| 4 | fresh Candidate `START_QA.cmd -SelfTest` | PASS |
+| 5 | fresh PoliticsTrasport → codegeas → PoliticsTrasport（3 fresh extraction / frozen target / 過去Run不使用） | 3/3 PASS + Result ZIP 3件 |
+| 6 | preserved predecessor rollback（実機と同引数） | PASS |
+| 7 | environment readback（非管理者/offline start・series・end/PATH/Registry/Program Files） | PASS or NOT_MEASURED（FAIL化しない） |
+
+**F3 — 単一Evidence bundleからの総合判定**: Production/Management/Sales/Rollback/Offline/NonAdmin/PATH/Registry を**1つのreadback**で確定。`NOT_RUN`/`HARNESS_ERROR` は **PASSへ変換しない**（reason_codeをそのまま残す）
+
+**F4 — Issue #1 チェックリスト照合（同一Evidenceから）**: 閉じられないものは**未チェックのまま残す**。特に **G-8/G-9 は P0-5/P0-6 実装前は必ず未チェック**
+
+**F5 — Product Acceptance / Stable**: 全Gate成立まで **HOLD**。Humanは `NOT_RUN` のまま明示
+
+---
+
+# 8. Things to stop doing
+
+1. **handoff方式（overlay/fresh freeze）をblockerとして扱うことをやめる。** 2つのhandoffで同一エラーが出た時点で変数はhandoffではない。**変数は `84e7d1f`(2026-11-06 20:07)が再導入した非ASCIIリテラル**
+2. **「既知の解法」の再導入をやめる。** PR #19 `ed15668` は既に解いていた。**PR #26 は「構造的改善」として把它を静かに壊した。** 戦略PRは**既存PS 5.1 gateを赤くしてからmergeする**運用にすべき
+3. **自己検査による自己検証をやめる。** `$live.Contains(<自身のリテラル>)` は恒真。**振る舞いをassert**（hosted CIで実パスを解決して一致確認）へ置換
+4. **`Get-TreeFingerprint` を新しく複製しない。** 既に4定義。**1定義に畳んで他を削除**
+5. **「次のblockerを見つけるためのCandidate再構築」をやめる。** Sourceが変わればCandidateが変わる。**Source動かさずに再freezeする理由はない**
+6. **実機を「移植性の判定装置」として使わない。** 移植性はhosted CIのPS 5.1で判定、実機には環境事実だけを残す
+7. **PR #29型のpreflightを実機で回さない。** CIのPS 5.1 gateとしてhostingする
+8. **Management/SalesのNOT_RUNを「次回Runで解決される話」として扱わない。** observer設計の問題でありRun回数の問題ではない
+9. **`Get-NetAdapter` の「0 up adapters」をoffline PASSとしない。** アドレス取得失敗をNOT_MEASUREDに直す（禁止事項への直接違反）
+10. **Issue #1のchecked項目を「実装が存在する」だけで再確認しない。** 特に **G-8/G-9/A-3.5/C-3.4/C-3.5** はcheckedになるべきでない
+11. **過去Candidate/A-B-AのPASSを新Candidateへ流用しない**（現状は正しく運用されている。**維持**）
+12. **「ローカル修正→再実行」を改善 없이繰り返さない。** 次の修正は「どのhost gateを緑にするか」が定義されていなければ禁止
+
+---
+
+# 9. Concrete implementation plan
+
+単発バグ単位ではなく、**ファイル/領域単位**でまとめる。
+
+### A. PowerShell encoding 契約（最優先・3ファイル + gate）
+
+| 対象 | 変更 |
+|---|---|
+| `RUN_LOCAL_COMPLETION.ps1` | 非ASCIIリテラル6箇所(425,693,722,723,744,853)を宣言駆動へ。ASCII化 + BOM |
+| `開発版/source/scripts/PREPARE_SOURCE.ps1` | `:40` をmanifest駆動へ。ASCII化 + BOM |
+| `開発版/rollback/RESTORE_PREDECESSOR.ps1` | `:52` をmanifest駆動へ。ASCII化 + BOM |
+| `.github/workflows/local-completion-runner-syntax.yml` | **encoding gate追加**。自己テキスト照合を実パス解決へ置換 |
+
+*参照: PR #19 `ed15668` が既にこの形の解法を持つ。復元して構造的にBrother themする。*
+
+### B. fingerprint 正本化
+
+| 対象 | 変更 |
+|---|---|
+| `SOURCE_TREE_FINGERPRINT.ps1`(PR #27) | **正本へ昇格**。runner/builder の `Get-TreeFingerprint` を削除し正本へ委譲 |
+| `phase3-windows-candidate-build.yml:99-112` | embedded `Get-TreeFingerprint` を削除し正本Invokeに置換 |
+| `RUN_LOCAL_COMPLETION.ps1:741` | fingerprint計算を **ACCEPTANCE overlay後**(`:752` の後)へ移動 |
+| `PHASE3_OVERLAY_REBUILD.ps1:95-97` | 比較対象の定義を正本と一致 |
+
+### C. Runner 自己検査の電子化（行動ベースへ）
+
+| 対象 | 変更 |
+|---|---|
+| `RUN_LOCAL_COMPLETION.ps1:383-435` | `$live.Contains(<リテラル>)` 型のtext needleを廃止。**合成tree（非ASCIIディレクトリ名を含む）を作り実パス解決が実パスと一致することをassert** |
+| `TESTS/test_issue25_strategic_route_contract.py` | text検査を**PS 5.1の実デコード結果**検査へ置換（または追加） |
+
+### D. Hosted CI の実行契約 job（新設）
+
+| 対象 | 変更 |
+|---|---|
+| `.github/workflows/windows-powershell51-contract.yml`（新設） | `shell: powershell`(PS 5.1)で ①encoding gate ②checkout からの `PREPARE_SOURCE.ps1` ③Candidate build + `SOURCE_BASELINE` 一致 ④**rollbackを実機と同引数で** ⑤非ASCIIパスの実解決assert |
+| `phase2-source-tests.yml` | PR #27 の immutability 配線 + ④をhost |
+| `phase3-windows-candidate-build.yml` | PR #27 の immutability 配線 |
+| `rollback-predecessor-qualification.yml` | `-PredecessorSet` を外す／両分岐を走らせる |
+
+### E. Observer 実装（Management / Sales / environment）
+
+| 対象 | 変更 |
+|---|---|
+| `CORE/phase3_run_evidence.py:252-262` | `management.reproducibility` のscope拡張（独立run再現性）or evaluator受容scope追加 |
+| `CORE/management_evaluator.py:428-434` | 上記に追随。**requiredを削らない** |
+| `CORE/phase3_run_evidence.py:344-355` `_phase_evidence` | 30秒/5分に**機械観測可能なverdict**を付与。Enjoyment/理解度はproxyのまま |
+| `CORE/windows_runner.py:417` | 30秒行の `INCONCLUSIVE` ハードコードを分割（観測可能項目はPASS/NOT_RUN、proxy限定はproxyのまま） |
+| `CORE/sales_evaluator.py:637-656` / `:594-619` | `sales.human_test`/`sales.nontechnical_report` のrequired性を契約として明示。**proxyをhumanに昇格させない** |
+| `CORE/phase3_run_evidence.py:125-192` / `RUN_LOCAL_COMPLETION.ps1:118-152` | **offline観測fail-closed**。2箇所の実装を1つに |
+| `local_acceptance_kit/local_acceptance_observer.ps1` / `run_series.py:223` | Registry書込監査 / Program Files書込監査を実装。失敗はNOT_MEASURED |
+| `RUN_LOCAL_COMPLETION.ps1` Summary | `management`/`sales`/`offline`/`registry`/`program_files` の **Gate verdict をSummaryに明記**（現状総合判定に含まれない） |
+
+### F. Target / Profile データ
+
+| 対象 | 変更 |
+|---|---|
+| `acceptance_targets/codegeas/profile.json` | `"storage".locations` に実save locationを宣言（`[]` はHARNESS_ERROR原因） |
+| `acceptance_targets/politicstrasport/profile.json` | 同様にstorage契約を確認 |
+| `acceptance_targets/*/profile.json` | `verify_seed_replay` scenario の要否を再確認 |
+
+### G. テスト
+
+| 追加 | 意図 |
+|---|---|
+| `TESTS/test_windows_script_encoding.py` | 出荷`.ps1`すべてのencoding契約（BOM/ASCII）を固定 |
+| `TESTS/test_offline_observer_fail_closed.py` | 「アドレス取得失敗」と「up 0 adapters」の区別を固定 |
+| `TESTS/test_runner_fingerprint_ordering.py` | runnerのoverlay後fingerprint == builderの再計算、を固定 |
+| `TESTS/test_hq_gate_reachability.py` | Management/Salesのrequired rowがAutomated runでPASSしうるかを**構造的に**固定 |
+
+---
+
+# 10. Final recommendation
+
+## 次に何をするべきか（1本）
+
+> **「実機実行契約（Windows PowerShell 5.1）を hosted CI の gate として作り上げる」ことを、1つの作業単位として完了させる。**
+>
+> 具体的には、PR #19 `ed15668` が解いた encoding-safe な入力解決（構造探索 or manifest 駆動）を**3スクリプトへ復元し**、overlay後の fingerprint 順序を直し、offline 観測を fail-closed にし、その3点すべてを **`shell: powershell`（PS 5.1）の hosted job で緑にする**。
+> **それが緑になった後、Candidateを1つだけfreezeし、実機を1回だけ走らせる。**
+
+### なぜこれが「1本」か
+
+- 実機の3回の失敗は、**1つの原因（PS 5.1 + 非ASCIIリテラル）**の3つの表出であった
+- その原因は **CI が PS 5.1 で実パスを一度も解決していない**ことに起因する
+- したがって **「PS 5.1 で実パスを解決する hosted job」を1本作る**だけで、D1（解決）・D4（引数不一致）はまとめて消え、D2・D3も gate で塞がれる
+- 現状で実機を走らせると **確実に次の境界で止まる**（D2は確定的）。**実機Runの回数を増やさないこと自体が成果**
+
+### 同時に（同じ作業単位の一部として）片付ける3点
+
+- **P0-5 / P0-6**: Management / Sales の到達不能を解消する観測器。これ無しでは Issue #1 のDoD（3総本山Gate）に**原理的に到達しない**
+- **P0-7**: codegeas の storage locations。これ無しでは緑の実機Runが B-4.3 で落ちる
+- **PR #27 の取り込み**（fingerprint正本化 + immutability契約）と **PR #29 の取り込み**（preflight概念）を **上2点のCI job の中に統合**
+
+### やってはいけないこと（この1本の中）
+
+- 実機の再走（green gateが立つまで）／Candidateの再freeze（Sourceが変わらない限り）／Issue #1のchecked項目の再確認（Evidenceなしの昇格は禁止）／Management・Salesのrequiredを落とすこと／proxyをhumanにすること
+
+---
+
+### 監査の限界（未検証部分）
+
+- 失敗したhosted jobの**詳細ログは取得不能**（匿名でのjob log DLは `403 Must have admin rights`）。§3.1の「baseで赤 → PR #27 headで緑」は**前後の観測**でありログによる因果確認ではない
+- 実機が生成したMojibake実バイトはLinuxから再現不能。結論はMicrosoftのdocumented behavior（`about_Character_Encoding`: BOM無しのスクリプトはANSI codepageと解釈／`Get-Content`の既定はANSI）+ 3回の同一症状から導出
+- 実機の実ANSI codepageがCP932かCP1252かはリポジトリから観測不能。**いずれでも「一致しない文字列」が生成されるため結論は不変**
+- Actions全923runの全量ではなく、main 32 run + 分岐run + 近期runを列挙
+- Management/Salesの「required rowがAutomated runでPASSしうるか」は、忠実なbundleをCOREのproducer/evaluatorに投入して導出。**実機での再確認は未実施**
+- `安定版/` は `README.md` のみで、Rollbackの対象はpreserved predecessor Candidateである点に注意（Issue #1 G-15の解釈に影響）
+
+---
+
+**監査範囲の確認**: push / commit / branch作成 / PR作成 / merge / Issue編集 / Actions実行・変更 / repository内容の変更 — **いずれも一切行っておりません**。実施したのは clone・fetch・`git log`/`diff`・ファイル読解・Python等価実装による再現・GitHub公開HTML/APIの読取のみです。
+
+<deliver-assets>
+<media src="commit-id-460524741398634" caption="FullAutoQA Issue #1 完了経路 外部独立技術監査（全文レポート）" type="md" name="fullautoQA_issue1_completion_route_audit.md" />
+</deliver-assets>
