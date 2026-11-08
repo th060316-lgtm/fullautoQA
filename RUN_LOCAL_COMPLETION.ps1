@@ -212,15 +212,19 @@ function Get-NetworkSnapshot {
   # records UP interfaces that expose a usable default gateway. Query failure
   # is NOT_MEASURED and never becomes an offline PASS.
   try {
-    $active=New-Object 'System.Collections.Generic.List[object]'
-    $failures=New-Object 'System.Collections.Generic.List[string]'
+    # Use native PowerShell arrays here. Windows PowerShell 5.1 can throw
+    # "Argument types do not match" while adapting generic List[object] values
+    # that contain dictionary-shaped records. The number of interfaces is
+    # small, so the compatibility-safe array path is preferred.
+    $active=@()
+    $failures=@()
     foreach ($nic in @([Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces())) {
       if ($nic.OperationalStatus -ne [Net.NetworkInformation.OperationalStatus]::Up) { continue }
       $gateways=@()
       try {
         $gateways=@($nic.GetIPProperties().GatewayAddresses | ForEach-Object { [string]$_.Address })
       } catch {
-        $failures.Add('GATEWAY_QUERY_FAILED:'+[string]$nic.Name)
+        $failures += ('GATEWAY_QUERY_FAILED:'+[string]$nic.Name)
         continue
       }
       $usable=$false
@@ -236,11 +240,11 @@ function Get-NetworkSnapshot {
         }
       }
       if ($usable) {
-        $active.Add([ordered]@{
+        $active += [pscustomobject]@{
           name=[string]$nic.Name
           interface_description=[string]$nic.Description
-          gateways=$gateways
-        })
+          gateways=@($gateways)
+        }
       }
     }
     if ($failures.Count -gt 0) {
