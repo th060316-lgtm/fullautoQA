@@ -120,14 +120,14 @@ class SeriesIntegrityTests(unittest.TestCase):
     def test_series_environment_requires_all_runs_for_offline_and_nonadmin(self):
         plan={'series':['A','B','A']}
         obs={'admin_status':'STANDARD_USER',
-             'network_observation':{'status':'MEASURED','up_adapter_count':0},
+             'network_observation':{'status':'MEASURED','external_route_count':0},
              'automated_controller_marker':True}
         records=[{'environment_observation':copy.deepcopy(obs)} for _ in range(3)]
         data=summarize_execution_environment(records,plan,{'os':'nt'})
-        self.assertEqual(data['local_windows_offline'],'NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED')
+        self.assertEqual(data['local_windows_offline'],'NO_EXTERNAL_ROUTE_OBSERVED')
         self.assertEqual(data['non_admin_series'],'STANDARD_USER_ALL_RUNS')
         self.assertEqual(data['controller_only_series'],'AUTOMATED_CONTROLLER_ALL_RUNS')
-        records[1]['environment_observation']['network_observation']['up_adapter_count']=1
+        records[1]['environment_observation']['network_observation']['external_route_count']=1
         data=summarize_execution_environment(records,plan,{'os':'nt'})
         self.assertEqual(data['local_windows_offline'],'NOT_VERIFIED')
 
@@ -135,7 +135,7 @@ class SeriesIntegrityTests(unittest.TestCase):
         plan={'series':['A','B','A']}
         records=[{'environment_observation':{
             'admin_status':'STANDARD_USER',
-            'network_observation':{'status':'MEASURED','up_adapter_count':0},
+            'network_observation':{'status':'MEASURED','external_route_count':0},
             'automated_controller_marker':True}}]
         data=summarize_execution_environment(records,plan,{'os':'nt'})
         self.assertEqual(data['local_windows_offline'],'NOT_VERIFIED')

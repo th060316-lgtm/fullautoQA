@@ -98,7 +98,7 @@ class Phase3IntegratedTests(unittest.TestCase):
         fake_os=SimpleNamespace(name='nt',environ={'SystemRoot':r'C:\\Windows'})
         measured=SimpleNamespace(
             returncode=0,
-            stdout='[{"name":"Loopback","addresses":["127.0.0.1"]},{"name":"Ethernet","addresses":["192.0.2.10","fe80::1"]}]',
+            stdout='[{"name":"LocalOnly","gateways":[]},{"name":"Ethernet","gateways":["192.0.2.1"]}]',
             stderr=''
         )
         with patch.object(phase3_run_evidence,'os',fake_os), \
@@ -106,9 +106,9 @@ class Phase3IntegratedTests(unittest.TestCase):
              patch.object(phase3_run_evidence.subprocess,'run',return_value=measured) as run:
             data=phase3_run_evidence._network_adapter_snapshot()
         self.assertEqual(data['status'],'MEASURED')
-        self.assertEqual(data['up_adapter_count'],1)
-        self.assertEqual(data['up_adapters'],['Ethernet'])
-        self.assertEqual(data['method'],'windows_powershell_up_adapters_with_nonloopback_ip')
+        self.assertEqual(data['external_route_count'],1)
+        self.assertEqual(data['external_routes'],['Ethernet'])
+        self.assertEqual(data['method'],'dotnet_up_interfaces_with_default_gateway')
         self.assertIn('powershell.exe',str(run.call_args.args[0][0]).lower())
 
         disconnected=SimpleNamespace(returncode=0,stdout='[]',stderr='')
@@ -117,7 +117,7 @@ class Phase3IntegratedTests(unittest.TestCase):
              patch.object(phase3_run_evidence.subprocess,'run',return_value=disconnected):
             data=phase3_run_evidence._network_adapter_snapshot()
         self.assertEqual(data['status'],'MEASURED')
-        self.assertEqual(data['up_adapter_count'],0)
+        self.assertEqual(data['external_route_count'],0)
 
         failed=SimpleNamespace(returncode=1,stdout='',stderr='query failed')
         with patch.object(phase3_run_evidence,'os',fake_os), \
@@ -149,7 +149,7 @@ class Phase3IntegratedTests(unittest.TestCase):
             os.environ['FULLAUTOQA_AUTOMATED_CONTROLLER']='1'
             try:
                 with patch('phase3_run_evidence._network_adapter_snapshot',
-                           return_value={'status':'MEASURED','up_adapter_count':0}):
+                           return_value={'status':'MEASURED','external_route_count':0}):
                     data=build_management_evidence(
                         e=ev,sessions=[sess],results=results,run_mode='target',prepared=prepared)
             finally:
@@ -159,7 +159,7 @@ class Phase3IntegratedTests(unittest.TestCase):
             self.assertTrue(data['offline']['status'])
             environment=json.loads((root/'phase3_environment.json').read_text(encoding='utf-8'))
             self.assertTrue(environment['automated_controller_marker'])
-            self.assertEqual(environment['network_observation']['up_adapter_count'],0)
+            self.assertEqual(environment['network_observation']['external_route_count'],0)
 
     def test_management_offline_signal_absent_when_adapter_is_up(self):
         with tempfile.TemporaryDirectory() as td:
@@ -175,7 +175,7 @@ class Phase3IntegratedTests(unittest.TestCase):
             ]
             ev=Evidence(root,'run-phase3')
             with patch('phase3_run_evidence._network_adapter_snapshot',
-                       return_value={'status':'MEASURED','up_adapter_count':1}):
+                       return_value={'status':'MEASURED','external_route_count':1}):
                 data=build_management_evidence(
                     e=ev,sessions=[sess],results=results,run_mode='target',prepared=prepared)
             self.assertNotIn('offline',data)

@@ -138,26 +138,15 @@ def _network_adapter_snapshot():
 $ErrorActionPreference='Stop'
 $rows=@()
 $failures=@()
-$adapters=@(Get-NetAdapter -IncludeHidden -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' })
-foreach($adapter in $adapters){
-  $addresses=@()
+foreach($nic in @([Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces())){
+  if($nic.OperationalStatus -ne [Net.NetworkInformation.OperationalStatus]::Up){ continue }
+  $gateways=@()
   try{
-    # Windows PowerShell 5.1 refuses -InterfaceIndex with an Int32 value
-    # ("Argument types do not match"), so the index is cast explicitly.
-    $index=[uint32]$adapter.ifIndex
-    $addresses=@(Get-NetIPAddress -InterfaceIndex $index -ErrorAction Stop | ForEach-Object { [string]$_.IPAddress })
+    $gateways=@($nic.GetIPProperties().GatewayAddresses | ForEach-Object { [string]$_.Address })
   } catch {
-    # Only a genuine "this interface has no address" is tolerated, recognised
-    # by the error CATEGORY, which is not localised.  Every other failure
-    # means the observation did not happen and must not be reported as an
-    # offline machine.
-    if ($_.CategoryInfo -and $_.CategoryInfo.Category -eq [Management.Automation.ErrorCategory]::ObjectNotFound) {
-      $addresses=@()
-    } else {
-      $failures += ('ADDRESS_QUERY_FAILED:'+[string]$adapter.Name)
-    }
+    $failures += ('GATEWAY_QUERY_FAILED:'+[string]$nic.Name)
   }
-  $rows += [pscustomobject]@{name=[string]$adapter.Name;addresses=$addresses}
+  $rows += [pscustomobject]@{name=[string]$nic.Name;gateways=$gateways}
 }
 [pscustomobject]@{rows=$rows;failed=$failures} | ConvertTo-Json -Compress -Depth 4
 """
@@ -187,22 +176,22 @@ foreach($adapter in $adapters){
             # observation of "no external address".
             return {
                 "status": "NOT_MEASURED",
-                "reason": "NETWORK_ADDRESS_QUERY_FAILED",
+                "reason": "NETWORK_GATEWAY_QUERY_FAILED",
                 "failed_queries": sorted(str(name) for name in failed),
-                "method": "windows_powershell_up_adapters_with_nonloopback_ip",
+                "method": "dotnet_up_interfaces_with_default_gateway",
             }
         rows = payload.get("rows") or []
         if not isinstance(rows, list):
             raise ValueError("WINDOWS_NETWORK_QUERY_SCHEMA")
-        up_external = []
+        external_routes = []
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            addresses = row.get("addresses") or []
-            if isinstance(addresses, str):
-                addresses = [addresses]
+            gateways = row.get("gateways") or []
+            if isinstance(gateways, str):
+                gateways = [gateways]
             usable = False
-            for raw_address in addresses:
+            for raw_address in gateways:
                 raw_address = str(raw_address).split("%", 1)[0]
                 try:
                     ip = ipaddress.ip_address(raw_address)
@@ -212,12 +201,12 @@ foreach($adapter in $adapters){
                     usable = True
                     break
             if usable:
-                up_external.append(str(row.get("name") or "unnamed"))
+                external_routes.append(str(row.get("name") or "unnamed"))
         return {
             "status": "MEASURED",
-            "up_adapter_count": len(up_external),
-            "up_adapters": sorted(up_external),
-            "method": "windows_powershell_up_adapters_with_nonloopback_ip",
+            "external_route_count": len(external_routes),
+            "external_routes": sorted(external_routes),
+            "method": "dotnet_up_interfaces_with_default_gateway",
         }
     except Exception as ex:
         return {"status": "NOT_MEASURED", "reason": type(ex).__name__}
@@ -308,11 +297,11 @@ def _signals(results, start_qa, fresh, environment_evidence, root, environment=N
         }
 
     network = environment.get("network_observation") or {}
-    if network.get("status") == "MEASURED" and network.get("up_adapter_count") == 0:
+    if network.get("status") == "MEASURED" and network.get("external_route_count") == 0:
         out["offline"] = {
             "status": True,
             "evidence": [environment_evidence],
-            "scope": "no_up_non_loopback_ip_interfaces_observed",
+            "scope": "no_external_default_route_observed",
         }
 
     if os.name == "nt":

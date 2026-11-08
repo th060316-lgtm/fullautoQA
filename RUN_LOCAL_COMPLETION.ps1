@@ -200,41 +200,27 @@ function Get-PathSnapshot {
 function Get-NetworkSnapshot {
   # Fail-closed offline observation.
   #
-  # An address query that fails must never look like "no external address".
-  # Silently continuing on Get-NetIPAddress produced an empty address list,
-  # which was counted as zero up adapters and therefore reported the machine
-  # as offline even though nothing had been observed.  A failed observation is
-  # NOT_MEASURED; it is never a PASS and never an offline claim.
+  # A host can retain local-only addresses on Hyper-V, WSL, VPN or other
+  # virtual adapters after external networking is disconnected. A local IP
+  # address is therefore not evidence of an external route. This snapshot
+  # records UP interfaces that expose a usable default gateway. Query failure
+  # is NOT_MEASURED and never becomes an offline PASS.
   try {
     $active=New-Object 'System.Collections.Generic.List[object]'
     $failures=New-Object 'System.Collections.Generic.List[string]'
-    foreach ($adapter in @(Get-NetAdapter -IncludeHidden -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' })) {
-      $addresses=@()
-      $queryFailed=$false
+    foreach ($nic in @([Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces())) {
+      if ($nic.OperationalStatus -ne [Net.NetworkInformation.OperationalStatus]::Up) { continue }
+      $gateways=@()
       try {
-        # Windows PowerShell 5.1 refuses -InterfaceIndex with an Int32 value
-        # ("Argument types do not match"), so the index is cast explicitly.
-        $index=[uint32]$adapter.ifIndex
-        $addresses=@(Get-NetIPAddress -InterfaceIndex $index -ErrorAction Stop | ForEach-Object { [string]$_.IPAddress })
+        $gateways=@($nic.GetIPProperties().GatewayAddresses | ForEach-Object { [string]$_.Address })
       } catch {
-        # Only a genuine "this interface has no address" is tolerated, and it
-        # is recognised by the error CATEGORY, which is not localised.  Any
-        # other failure means the observation did not happen and must not be
-        # reported as an offline machine.
-        if ($_.CategoryInfo -and $_.CategoryInfo.Category -eq [Management.Automation.ErrorCategory]::ObjectNotFound) {
-          $addresses=@()
-        } else {
-          $queryFailed=$true
-          $failures.Add('ADDRESS_QUERY_FAILED:'+[string]$adapter.Name)
-        }
+        $failures.Add('GATEWAY_QUERY_FAILED:'+[string]$nic.Name)
+        continue
       }
-      if ($queryFailed) { continue }
       $usable=$false
-      foreach ($raw in $addresses) {
+      foreach ($raw in $gateways) {
         $candidate=([string]$raw).Split('%')[0]
         $ip=$null
-        # [Net.IPAddress]::TryParse with a $null [ref] target raises
-        # "Argument types do not match" under Windows PowerShell 5.1.
         try { $ip=[Net.IPAddress]::Parse($candidate) } catch { $ip=$null }
         if ($ip -and -not [Net.IPAddress]::IsLoopback($ip) -and
             -not $ip.Equals([Net.IPAddress]::Any) -and
@@ -245,29 +231,29 @@ function Get-NetworkSnapshot {
       }
       if ($usable) {
         $active.Add([ordered]@{
-          name=[string]$adapter.Name
-          interface_description=[string]$adapter.InterfaceDescription
-          addresses=$addresses
+          name=[string]$nic.Name
+          interface_description=[string]$nic.Description
+          gateways=$gateways
         })
       }
     }
     if ($failures.Count -gt 0) {
       return [ordered]@{
         status='NOT_MEASURED'
-        reason='NETWORK_ADDRESS_QUERY_FAILED'
+        reason='NETWORK_GATEWAY_QUERY_FAILED'
         failed_queries=@($failures)
-        up_adapter_count=$null
-        method='windows_powershell_up_adapters_with_nonloopback_ip'
+        external_route_count=$null
+        method='dotnet_up_interfaces_with_default_gateway'
       }
     }
     return [ordered]@{
       status='MEASURED'
-      up_adapter_count=$active.Count
-      up_adapters=@($active)
-      method='windows_powershell_up_adapters_with_nonloopback_ip'
+      external_route_count=$active.Count
+      external_routes=@($active)
+      method='dotnet_up_interfaces_with_default_gateway'
     }
   } catch {
-    return [ordered]@{status='NOT_MEASURED';reason=$_.Exception.Message;up_adapter_count=$null}
+    return [ordered]@{status='NOT_MEASURED';reason=$_.Exception.Message;external_route_count=$null}
   }
 }
 
@@ -305,8 +291,9 @@ public sealed class FqaEnvironmentChangeMonitor : IDisposable
     private readonly object networkLock = new object();
     private volatile bool programFilesChanged;
     private volatile bool programFilesError;
-    private volatile bool networkSeen;
+    private volatile bool networkRouteSeen;
     private volatile bool networkError;
+    private string networkRouteDetail;
     private long networkSamples;
     private bool networkSubscribed;
     private bool disposed;
@@ -463,7 +450,7 @@ public sealed class FqaEnvironmentChangeMonitor : IDisposable
                 {
                     if (nic.OperationalStatus != OperationalStatus.Up) continue;
                     IPInterfaceProperties properties = nic.GetIPProperties();
-                    foreach (UnicastIPAddressInformation info in properties.UnicastAddresses)
+                    foreach (GatewayIPAddressInformation info in properties.GatewayAddresses)
                     {
                         IPAddress ip = info.Address;
                         if (ip == null) continue;
@@ -471,7 +458,9 @@ public sealed class FqaEnvironmentChangeMonitor : IDisposable
                             !ip.Equals(IPAddress.Any) &&
                             !ip.Equals(IPAddress.IPv6Any))
                         {
-                            networkSeen = true;
+                            networkRouteSeen = true;
+                            if (String.IsNullOrEmpty(networkRouteDetail))
+                                networkRouteDetail = nic.Name + "|" + ip.ToString();
                         }
                     }
                 }
@@ -496,7 +485,8 @@ public sealed class FqaEnvironmentChangeMonitor : IDisposable
 
     public bool ProgramFilesChanged { get { return programFilesChanged; } }
     public bool ProgramFilesError { get { return programFilesError; } }
-    public bool NetworkAddressObserved { get { return networkSeen; } }
+    public bool NetworkExternalRouteObserved { get { return networkRouteSeen; } }
+    public string NetworkExternalRouteDetail { get { return networkRouteDetail; } }
     public bool NetworkError { get { return networkError; } }
     public long NetworkSampleCount { get { return Interlocked.Read(ref networkSamples); } }
 
@@ -579,13 +569,13 @@ function Complete-EnvironmentChangeMonitor {
         if (-not $script:EnvironmentMonitor.NetworkReady -or $script:EnvironmentMonitor.NetworkError) {
           $networkReason=[string]$script:EnvironmentMonitor.NetworkErrorDetail
           if (-not $networkReason) { $networkReason='CONTINUOUS_NETWORK_MONITOR_UNAVAILABLE' }
-        } elseif ($script:EnvironmentMonitor.NetworkAddressObserved) {
-          $networkStatus='FAIL_EXTERNAL_ADDRESS_OBSERVED'
-          $networkReason='UP_INTERFACE_WITH_NONLOOPBACK_ADDRESS_OBSERVED'
+        } elseif ($script:EnvironmentMonitor.NetworkExternalRouteObserved) {
+          $networkStatus='FAIL_EXTERNAL_ROUTE_OBSERVED'
+          $networkReason='UP_INTERFACE_WITH_DEFAULT_GATEWAY_OBSERVED'
         } elseif ([long]$script:EnvironmentMonitor.NetworkSampleCount -le 0) {
           $networkReason='NO_NETWORK_SAMPLES_RECORDED'
         } else {
-          $networkStatus='PASS_NO_UP_NONLOOPBACK_ADDRESS_OBSERVED_CONTINUOUSLY'
+          $networkStatus='PASS_NO_EXTERNAL_ROUTE_OBSERVED_CONTINUOUSLY'
         }
       }
 
@@ -616,11 +606,12 @@ function Complete-EnvironmentChangeMonitor {
           reason=$networkReason
           required=[bool]$RequireOffline
           ready=[bool]$script:EnvironmentMonitor.NetworkReady
-          address_observed=[bool]$script:EnvironmentMonitor.NetworkAddressObserved
+          external_route_observed=[bool]$script:EnvironmentMonitor.NetworkExternalRouteObserved
+          external_route_detail=[string]$script:EnvironmentMonitor.NetworkExternalRouteDetail
           monitor_error=[bool]$script:EnvironmentMonitor.NetworkError
           sample_count=[long]$script:EnvironmentMonitor.NetworkSampleCount
           scope='all local network interfaces for the monitored local-completion interval'
-          method='NetworkChange events plus 250ms NetworkInterface polling; any up non-loopback address fails'
+          method='NetworkChange events plus 250ms NetworkInterface polling; any up interface with a usable default gateway fails'
         }
       }
       if ($OutRoot) {
@@ -632,7 +623,7 @@ function Complete-EnvironmentChangeMonitor {
       $script:Summary.environment_change_monitor=$(if (
         $registryStatus -eq 'UNCHANGED_CONTINUOUS_HKCU_HKLM_SUBTREE' -and
         $programFilesStatus -eq 'UNCHANGED_CONTINUOUS_RECURSIVE_MONITOR' -and
-        ((-not $RequireOffline) -or $networkStatus -eq 'PASS_NO_UP_NONLOOPBACK_ADDRESS_OBSERVED_CONTINUOUSLY')
+        ((-not $RequireOffline) -or $networkStatus -eq 'PASS_NO_EXTERNAL_ROUTE_OBSERVED_CONTINUOUSLY')
       ) {'PASS'} elseif (
         $registryStatus -eq 'NOT_MEASURED' -or
         $programFilesStatus -eq 'NOT_MEASURED' -or
@@ -1362,8 +1353,8 @@ try {
     if (-not $EnvironmentMonitor.NetworkReady -or $EnvironmentMonitor.NetworkError -or [long]$EnvironmentMonitor.NetworkSampleCount -le 0) {
       throw ('ENVIRONMENT_MONITOR_PREFLIGHT_FAILED:NETWORK:'+[string]$EnvironmentMonitor.NetworkErrorDetail)
     }
-    if ($EnvironmentMonitor.NetworkAddressObserved) {
-      throw 'ENVIRONMENT_MONITOR_PREFLIGHT_FAILED:EXTERNAL_ADDRESS_OBSERVED'
+    if ($EnvironmentMonitor.NetworkExternalRouteObserved) {
+      throw ('ENVIRONMENT_MONITOR_PREFLIGHT_FAILED:EXTERNAL_ROUTE_OBSERVED:'+[string]$EnvironmentMonitor.NetworkExternalRouteDetail)
     }
   }
   $Summary.environment_change_monitor='RUNNING'
@@ -1520,8 +1511,8 @@ try {
   $seriesEnvironmentPath=Join-Path $SeriesOut 'EXECUTION_ENVIRONMENT.json'
   if (Test-Path -LiteralPath $seriesEnvironmentPath -PathType Leaf) {
     $seriesEnvironment=Get-Content -LiteralPath $seriesEnvironmentPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ($seriesEnvironment.local_windows_offline -eq 'NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED') {
-      $Summary.offline_internet_status='NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_ALL_FINAL_RUNS'
+    if ($seriesEnvironment.local_windows_offline -eq 'NO_EXTERNAL_ROUTE_OBSERVED') {
+      $Summary.offline_internet_status='NO_EXTERNAL_ROUTE_OBSERVED_ALL_FINAL_RUNS'
     }
   }
 
@@ -1620,11 +1611,11 @@ try {
   $Summary.persistent_path_status = if ((ConvertTo-Json $PathBefore -Depth 8 -Compress) -eq (ConvertTo-Json $PathAfter -Depth 8 -Compress)) {'UNCHANGED'} else {'CHANGED_REQUIRES_REVIEW'}
 
   if ($RequireOffline) {
-    $offlineStart=($Summary.network_snapshot.status -eq 'MEASURED' -and [int]$Summary.network_snapshot.up_adapter_count -eq 0)
-    $offlineEnd=($Summary.network_snapshot_end.status -eq 'MEASURED' -and [int]$Summary.network_snapshot_end.up_adapter_count -eq 0)
-    $offlineSeries=($Summary.offline_internet_status -eq 'NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_ALL_FINAL_RUNS')
+    $offlineStart=($Summary.network_snapshot.status -eq 'MEASURED' -and [int]$Summary.network_snapshot.external_route_count -eq 0)
+    $offlineEnd=($Summary.network_snapshot_end.status -eq 'MEASURED' -and [int]$Summary.network_snapshot_end.external_route_count -eq 0)
+    $offlineSeries=($Summary.offline_internet_status -eq 'NO_EXTERNAL_ROUTE_OBSERVED_ALL_FINAL_RUNS')
     if ($offlineStart -and $offlineEnd -and $offlineSeries) {
-      $Summary.offline_internet_status='PASS_NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_START_SERIES_END'
+      $Summary.offline_internet_status='PASS_NO_EXTERNAL_ROUTE_OBSERVED_START_SERIES_END'
     } else {
       $Summary.offline_internet_status='FAIL_OR_NOT_MEASURED'
     }
@@ -1644,10 +1635,10 @@ try {
   if ($Summary.program_files_write_audit -ne 'UNCHANGED_CONTINUOUS_RECURSIVE_MONITOR') {
     $finalFailures.Add('PROGRAM_FILES_WRITE_AUDIT_NONPASS')
   }
-  if ($RequireOffline -and $Summary.offline_internet_status -ne 'PASS_NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED_START_SERIES_END') {
+  if ($RequireOffline -and $Summary.offline_internet_status -ne 'PASS_NO_EXTERNAL_ROUTE_OBSERVED_START_SERIES_END') {
     $finalFailures.Add('OFFLINE_CHECKPOINT_REQUIREMENT_NONPASS')
   }
-  if ($RequireOffline -and $Summary.offline_continuous_audit -ne 'PASS_NO_UP_NONLOOPBACK_ADDRESS_OBSERVED_CONTINUOUSLY') {
+  if ($RequireOffline -and $Summary.offline_continuous_audit -ne 'PASS_NO_EXTERNAL_ROUTE_OBSERVED_CONTINUOUSLY') {
     $finalFailures.Add('OFFLINE_CONTINUOUS_REQUIREMENT_NONPASS')
   }
   if ($finalFailures.Count -gt 0) {

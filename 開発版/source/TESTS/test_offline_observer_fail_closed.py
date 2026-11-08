@@ -1,16 +1,14 @@
 """Contract for the fail-closed offline observation.
 
-The offline observation used to fail open.  The adapter address query ran
-with ``-ErrorAction SilentlyContinue`` and with an ``Int32`` interface index,
-which Windows PowerShell 5.1 rejects with "Argument types do not match".  The
-silenced failure produced an empty address list, an empty address list was
-counted as "no external address", and the machine was reported as offline
-although nothing had been observed.
+A local-only or virtual adapter can keep a non-loopback IP address while the
+machine has no external/default route. Offline acceptance must therefore
+measure external routability rather than reject every local address.
 
 The rules under test:
 
-* an address query that failed is NOT an offline machine;
-* a machine with a non-loopback address on an Up adapter is not offline;
+* an external-route query failure is NOT an offline machine;
+* an UP interface with a usable default gateway is not offline;
+* a local-only interface without a gateway does not fail offline acceptance;
 * the observation is reported with its own scope.
 """
 from __future__ import annotations
@@ -37,43 +35,37 @@ def _observer_script():
 
 
 class OfflineObserverFailClosedTests(unittest.TestCase):
-    def test_the_interface_index_is_cast_for_windows_powershell_51(self):
+    def test_observer_measures_default_gateway_not_local_ip_presence(self):
         script = _observer_script()
-        self.assertIn('[uint32]$adapter.ifIndex', script,
-                      'Windows PowerShell 5.1 rejects -InterfaceIndex with an Int32 value')
+        self.assertIn('NetworkInterface]::GetAllNetworkInterfaces()', script)
+        self.assertIn('GatewayAddresses', script)
+        self.assertNotIn('Get-NetIPAddress', script)
+        self.assertNotIn('UnicastAddresses', script)
 
-    def test_the_address_query_is_not_silenced(self):
-        script = _observer_script()
-        self.assertNotIn('Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue',
-                         script)
-        self.assertIn('Get-NetIPAddress -InterfaceIndex $index -ErrorAction Stop', script)
-
-    def test_a_failed_address_query_is_reported(self):
-        script = _observer_script()
-        self.assertIn('ADDRESS_QUERY_FAILED', script)
-        self.assertIn('ObjectNotFound', script,
-                      'only a genuine "no address on this interface" may be tolerated')
+    def test_a_failed_gateway_query_is_reported(self):
+        self.assertIn('GATEWAY_QUERY_FAILED', _observer_script())
 
     def test_the_python_wrapper_reports_not_measured_on_failure(self):
         source = Path(phase3_run_evidence.__file__).read_text(encoding='utf-8')
-        self.assertIn('NETWORK_ADDRESS_QUERY_FAILED', source)
+        self.assertIn('NETWORK_GATEWAY_QUERY_FAILED', source)
         self.assertIn('"status": "NOT_MEASURED"', source)
 
-    def test_the_offline_signal_requires_a_measured_observation(self):
+    def test_the_offline_signal_requires_a_measured_route_observation(self):
         source = Path(phase3_run_evidence.__file__).read_text(encoding='utf-8')
         self.assertIn('network.get("status") == "MEASURED"', source)
-        self.assertIn('network.get("up_adapter_count") == 0', source)
+        self.assertIn('network.get("external_route_count") == 0', source)
+        self.assertIn('"scope": "no_external_default_route_observed"', source)
 
     @unittest.skipIf(not RUNNER.is_file(),
                      'the repository checkout is not present (prepared Source tree)')
-    def test_the_runner_observer_is_fail_closed_too(self):
+    def test_the_runner_observer_uses_the_same_route_boundary(self):
         text = RUNNER.read_text(encoding='utf-8')
-        self.assertIn('[uint32]$adapter.ifIndex', text)
-        self.assertIn('Get-NetIPAddress -InterfaceIndex $index -ErrorAction Stop', text)
-        self.assertIn('ADDRESS_QUERY_FAILED', text)
+        self.assertIn('GatewayAddresses', text)
+        self.assertIn('NetworkExternalRouteObserved', text)
+        self.assertIn('NETWORK_GATEWAY_QUERY_FAILED', text)
         self.assertIn("status='NOT_MEASURED'", text)
-        self.assertNotIn('Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue',
-                         text)
+        self.assertNotIn('NetworkAddressObserved', text)
+        self.assertNotIn('UP_INTERFACE_WITH_NONLOOPBACK_ADDRESS_OBSERVED', text)
 
 
 if __name__ == '__main__':

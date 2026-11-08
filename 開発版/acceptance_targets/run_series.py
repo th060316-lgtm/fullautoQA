@@ -380,10 +380,10 @@ def summarize_execution_environment(records,plan,base):
     data['controller_only_series']='NOT_VERIFIED'
     if complete and all(
         (obs.get('network_observation') or {}).get('status')=='MEASURED'
-        and (obs.get('network_observation') or {}).get('up_adapter_count')==0
+        and (obs.get('network_observation') or {}).get('external_route_count')==0
         for obs in observations
     ):
-        data['local_windows_offline']='NO_UP_NON_LOOPBACK_INTERFACES_OBSERVED'
+        data['local_windows_offline']='NO_EXTERNAL_ROUTE_OBSERVED'
     if complete and all(obs.get('admin_status')=='STANDARD_USER' for obs in observations):
         data['non_admin_series']='STANDARD_USER_ALL_RUNS'
     if complete and all(obs.get('automated_controller_marker') is True for obs in observations):
