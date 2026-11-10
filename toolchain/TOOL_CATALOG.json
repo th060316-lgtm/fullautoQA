@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-11-10",
+  "platform": "Windows x64",
+  "policy": {
+    "blender": "excluded_by_user",
+    "prefer_portable": true,
+    "admin_required_by_default": false,
+    "permanent_path_change_required_by_default": false,
+    "fixed_absolute_path_required": false,
+    "binary_vendoring": "avoid for large or redistribution-sensitive packages; use official links"
+  },
+  "tools": [
+    {
+      "id": "git",
+      "name": "Git for Windows",
+      "priority": "P0",
+      "recommended_version": "2.56.0(4)",
+      "scopes": [
+        "shared",
+        "production",
+        "management",
+        "sales",
+        "myai"
+      ],
+      "official_url": "https://git-scm.com/install/windows",
+      "install_mode": "Portable preferred"
+    },
+    {
+      "id": "vscodium",
+      "name": "VSCodium",
+      "priority": "P0",
+      "recommended_version": "1.143.17232",
+      "scopes": [
+        "shared",
+        "production",
+        "sales",
+        "myai"
+      ],
+      "official_url": "https://github.com/VSCodium/vscodium/releases/latest",
+      "install_mode": "Windows x64 ZIP"
+    },
+    {
+      "id": "winpython",
+      "name": "WinPython",
+      "priority": "P0",
+      "recommended_version": "3.14.10.0",
+      "scopes": [
+        "shared",
+        "production",
+        "management",
+        "myai"
+      ],
+      "official_url": "https://winpython.github.io/",
+      "install_mode": "Portable; 3.14 recommended for general development"
+    },
+    {
+      "id": "uv",
+      "name": "uv",
+      "priority": "P0",
+      "recommended_version": "current stable",
+      "scopes": [
+        "shared",
+        "production",
+        "management",
+        "myai"
+      ],
+      "official_url": "https://docs.astral.sh/uv/getting-started/installation/",
+      "install_mode": "Standalone; configure without PATH mutation if desired"
+    },
+    {
+      "id": "node",
+      "name": "Node.js",
+      "priority": "P1",
+      "recommended_version": "26.13.0 LTS",
+      "scopes": [
+        "production",
+        "sales",
+        "myai"
+      ],
+      "official_url": "https://nodejs.org/en/download",
+      "install_mode": "Windows x64 ZIP/standalone preferred"
+    },
+    {
+      "id": "temurin21",
+      "name": "Eclipse Temurin OpenJDK",
+      "priority": "P1",
+      "recommended_version": "21.0.12.1+1 LTS",
+      "scopes": [
+        "production",
+        "myai"
+      ],
+      "official_url": "https://adoptium.net/temurin/releases/?version=21",
+      "install_mode": "Windows x64 ZIP"
+    },
+    {
+      "id": "w64devkit",
+      "name": "w64devkit",
+      "priority": "P1",
+      "recommended_version": "2.10.0",
+      "scopes": [
+        "production",
+        "myai"
+      ],
+      "official_url": "https://github.com/skeeto/w64devkit/releases/latest",
+      "install_mode": "Portable self-extracting/7z; includes GCC, GDB, Make, CMake, Ninja, NSIS"
+    },
+    {
+      "id": "godot",
+      "name": "Godot Engine",
+      "priority": "P0",
+      "recommended_version": "4.7.2 stable",
+      "scopes": [
+        "production"
+      ],
+      "official_url": "https://godotengine.org/download/archive/4.7.2-stable/",
+      "install_mode": "Portable ZIP"
+    },
+    {
+      "id": "krita",
+      "name": "Krita",
+      "priority": "P1",
+      "recommended_version": "5.3.4.1",
+      "scopes": [
+        "production",
+        "sales"
+      ],
+      "official_url": "https://krita.org/en/download/",
+      "install_mode": "Windows Portable preferred"
+    },
+    {
+      "id": "inkscape",
+      "name": "Inkscape",
+      "priority": "P1",
+      "recommended_version": "1.4.4",
+      "scopes": [
+        "production",
+        "sales"
+      ],
+      "official_url": "https://inkscape.org/release/inkscape-1.4.4/",
+      "install_mode": "Windows official package; portable if offered"
+    },
+    {
+      "id": "audacity",
+      "name": "Audacity",
+      "priority": "P1",
+      "recommended_version": "4.0.2",
+      "scopes": [
+        "production",
+        "sales"
+      ],
+      "official_url": "https://www.audacityteam.org/download/windows/",
+      "install_mode": "x86_64 portable archive preferred"
+    },
+    {
+      "id": "ffmpeg",
+      "name": "FFmpeg",
+      "priority": "P0",
+      "recommended_version": "9.0.2 source release; use linked Windows build",
+      "scopes": [
+        "production",
+        "management",
+        "sales",
+        "myai"
+      ],
+      "official_url": "https://ffmpeg.org/download.html",
+      "install_mode": "Windows static/portable build from FFmpeg-linked providers"
+    },
+    {
+      "id": "imagemagick",
+      "name": "ImageMagick",
+      "priority": "P1",
+      "recommended_version": "7.1.2-34",
+      "scopes": [
+        "production",
+        "management",
+        "sales",
+        "myai"
+      ],
+      "official_url": "https://imagemagick.org/download/",
+      "install_mode": "portable-Q16-x64 preferred"
+    },
+    {
+      "id": "obs",
+      "name": "OBS Studio",
+      "priority": "P0",
+      "recommended_version": "33.0.1",
+      "scopes": [
+        "production",
+        "sales"
+      ],
+      "official_url": "https://obsproject.com/download",
+      "install_mode": "Windows ZIP/portable layout where practical"
+    },
+    {
+      "id": "autohotkey",
+      "name": "AutoHotkey",
+      "priority": "P1",
+      "recommended_version": "2.0.31",
+      "scopes": [
+        "production"
+      ],
+      "official_url": "https://www.autohotkey.com/download/2.0/",
+      "install_mode": "ZIP"
+    },
+    {
+      "id": "oculix",
+      "name": "OculiX",
+      "priority": "P1",
+      "recommended_version": "4.0.0 stable",
+      "scopes": [
+        "production"
+      ],
+      "official_url": "https://github.com/oculix-org/Oculix/releases/latest",
+      "install_mode": "JAR; requires Java"
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "priority": "P1",
+      "recommended_version": "current stable compatible with Node 26 LTS",
+      "scopes": [
+        "production",
+        "sales"
+      ],
+      "official_url": "https://playwright.dev/docs/intro",
+      "install_mode": "npm project dependency; browsers downloaded per project/cache"
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite command-line tools",
+      "priority": "P1",
+      "recommended_version": "3.54.1",
+      "scopes": [
+        "shared",
+        "production",
+        "management",
+        "myai"
+      ],
+      "official_url": "https://www.sqlite.org/download.html",
+      "install_mode": "sqlite-tools-win-x64 ZIP"
+    },
+    {
+      "id": "ripgrep",
+      "name": "ripgrep",
+      "priority": "P0",
+      "recommended_version": "15.2.0",
+      "scopes": [
+        "shared",
+        "production",
+        "management",
+        "sales",
+        "myai"
+      ],
+      "official_url": "https://github.com/BurntSushi/ripgrep/releases/latest",
+      "install_mode": "Windows x64 ZIP"
+    },
+    {
+      "id": "7zip",
+      "name": "7-Zip",
+      "priority": "P0",
+      "recommended_version": "26.06",
+      "scopes": [
+        "shared",
+        "production",
+        "management",
+        "sales",
+        "myai"
+      ],
+      "official_url": "https://7-zip.org/download.html",
+      "install_mode": "7-Zip Extra standalone console preferred when avoiding installer"
+    },
+    {
+      "id": "github_cli",
+      "name": "GitHub CLI",
+      "priority": "P1",
+      "recommended_version": "current stable",
+      "scopes": [
+        "production",
+        "management",
+        "sales",
+        "myai"
+      ],
+      "official_url": "https://cli.github.com/",
+      "install_mode": "official Windows binary/MSI; authentication is separate"
+    },
+    {
+      "id": "pandoc",
+      "name": "Pandoc",
+      "priority": "P1",
+      "recommended_version": "3.11",
+      "scopes": [
+        "management",
+        "sales"
+      ],
+      "official_url": "https://pandoc.org/installing.html",
+      "install_mode": "Windows ZIP available; MSI not required"
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama",
+      "priority": "P0",
+      "recommended_version": "0.40.16",
+      "scopes": [
+        "myai"
+      ],
+      "official_url": "https://ollama.com/download/windows",
+      "install_mode": "Windows distribution; model storage kept outside Git"
+    },
+    {
+      "id": "mcp_python_sdk",
+      "name": "Official MCP Python SDK",
+      "priority": "P0",
+      "recommended_version": "2.0.0 stable line",
+      "scopes": [
+        "myai"
+      ],
+      "official_url": "https://py.sdk.modelcontextprotocol.io/",
+      "install_mode": "Python package: uv add mcp[cli] or pip install mcp[cli]"
+    },
+    {
+      "id": "pytorch",
+      "name": "PyTorch",
+      "priority": "P1",
+      "recommended_version": "current stable selected for Windows/GPU",
+      "scopes": [
+        "myai"
+      ],
+      "official_url": "https://pytorch.org/get-started/locally/",
+      "install_mode": "Use official selector; do not globally hardcode CUDA wheel"
+    }
+  ]
+}
