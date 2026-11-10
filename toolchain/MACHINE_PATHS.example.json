@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "note": "Copy to MACHINE_PATHS.json and fill only tools actually installed. Paths are machine-local data and are not requirements.",
+  "tool_root": null,
+  "tools": {
+    "git": null,
+    "vscodium": null,
+    "winpython": null,
+    "uv": null,
+    "node": null,
+    "temurin21": null,
+    "w64devkit": null,
+    "godot": null,
+    "krita": null,
+    "inkscape": null,
+    "audacity": null,
+    "ffmpeg": null,
+    "imagemagick": null,
+    "obs": null,
+    "autohotkey": null,
+    "oculix": null,
+    "sqlite": null,
+    "ripgrep": null,
+    "7zip": null,
+    "github_cli": null,
+    "pandoc": null,
+    "ollama": null
+  }
+}
